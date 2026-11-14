@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Build SPL + u-boot for the RG34XX-SP (task R1): one binary per DRAM type, written raw at 8 KiB of
+# the card by image/build-image.sh (UBOOT_BIN=...). Nothing here touches a device, card or disk image.
+#
+#   1. fetches TF-A and u-boot at pinned commits into $WORK (shallow)
+#   2. builds TF-A BL31 for sun50i_h616 once
+#   3. per DRAM type: anbernic_rg35xx_h700_defconfig + config/u-boot/rg34xxsp.config (+ lpddr3.config),
+#      patches/u-boot/*.patch, then make with BL31; checks every fragment line holds
+#   4. checks the binary: eGON SPL header and checksum, size within the card gap (8 KiB .. 1 MiB), the PE6 and R8
+#      code present; writes u-boot-rg34xxsp-<dram>-<uboot ver>.bin, its .config and SHA256SUMS to $OUT
+#
+# Usage:  scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources] [--jobs N]
+#   --sources  also write the corresponding source (GPL/BSD, task R9): pristine u-boot and TF-A
+#              tarballs at the pinned commits, plus this repo's u-boot patches, fragments and script
+#   WORK=<dir>  work directory (default ./.work);  OUT=<dir> results (default $WORK/u-boot-out)
+# Needs (Ubuntu 24.04): gcc-aarch64-linux-gnu make bison flex bc swig python3-dev libssl-dev
+#                       libgnutls28-dev device-tree-compiler, python3 pyelftools (binman)
+# NOT BOOTED: a wrong SPL for the board's DRAM can leave the card unbootable (recover by rewriting
+# the card); LPDDR3 SPL on an LPDDR4 board gives 1.2 V to 1.1 V memory (docs/r1-boot-chain.md).
+
+set -euo pipefail
+
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+WORK=${WORK:-$REPO/.work}
+OUT=${OUT:-$WORK/u-boot-out}
+DRAMS=(lpddr4 lpddr3)
+JOBS=$(nproc)
+SOURCES=0
+
+UBOOT_URL=https://github.com/u-boot/u-boot.git
+UBOOT_TAG=v2026.10
+UBOOT_SHA=5508406582f6f7120dce0c4b3059819a41788db2
+TFA_URL=https://github.com/ARM-software/arm-trusted-firmware.git
+TFA_TAG=v2.14.0
+TFA_SHA=1d5aa939bc8d3d892e2ed9945fa50e36a1a924cc
+DEFCONFIG=anbernic_rg35xx_h700_defconfig
+MAX_BYTES=$((1016 * 1024))   # 8 KiB .. 1 MiB: the gap image/genimage.cfg.in leaves before /boot
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--dram) case "${2:-}" in lpddr4|lpddr3) DRAMS=("$2") ;; all) ;; *) echo "--dram lpddr4|lpddr3|all" >&2; exit 2 ;; esac; shift ;;
+	--sources) SOURCES=1 ;;
+	--jobs) JOBS=$2; shift ;;
+	-h|--help) sed -n '2,21p' "$0"; exit 0 ;;
+	*) echo "unknown option: $1" >&2; exit 2 ;;
+	esac
+	shift
+done
+
+log() { printf '\n== %s\n' "$*"; }
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+
+fetch() {	# dir url tag sha
+	local d=$1
+	if [ ! -d "$d/.git" ]; then
+		git init -q "$d"
+		git -C "$d" remote add origin "$2"
+	fi
+	git -C "$d" cat-file -e "$4^{commit}" 2>/dev/null ||
+		git -C "$d" fetch -q --depth 1 origin "refs/tags/$3:refs/tags/$3"
+	[ "$(git -C "$d" rev-parse "$3^{commit}")" = "$4" ] || fail "$3 of $2 is not $4"
+	git -C "$d" checkout -q -f "$4"
+	git -C "$d" clean -q -fdx
+}
+
+mkdir -p "$WORK" "$OUT"
+log "1. Sources: u-boot $UBOOT_TAG (${UBOOT_SHA:0:12}), TF-A $TFA_TAG (${TFA_SHA:0:12})"
+fetch "$WORK/u-boot" "$UBOOT_URL" "$UBOOT_TAG" "$UBOOT_SHA"
+fetch "$WORK/tf-a" "$TFA_URL" "$TFA_TAG" "$TFA_SHA"
+for p in "$REPO"/patches/u-boot/*.patch; do
+	git -C "$WORK/u-boot" apply --index "$p" || fail "patch does not apply: $(basename "$p")"
+	echo "  applied $(basename "$p")"
+done
+
+# Reproducible: date from the u-boot commit; no host/user in the version string.
+SOURCE_DATE_EPOCH=$(git -C "$WORK/u-boot" log -1 --format=%ct)
+export SOURCE_DATE_EPOCH
+
+log "2. TF-A BL31 (PLAT=sun50i_h616)"
+make -s -C "$WORK/tf-a" CROSS_COMPILE=aarch64-linux-gnu- PLAT=sun50i_h616 DEBUG=0 \
+	BUILD_STRING="$TFA_TAG" -j"$JOBS" bl31 >"$WORK/tf-a-build.log" 2>&1 ||
+	{ tail -20 "$WORK/tf-a-build.log"; fail "TF-A build"; }
+BL31=$WORK/tf-a/build/sun50i_h616/release/bl31.bin
+[ -s "$BL31" ] || fail "no $BL31"
+echo "  bl31.bin $(stat -c %s "$BL31") bytes"
+
+: >"$OUT/SHA256SUMS"
+for dram in "${DRAMS[@]}"; do
+	log "3. u-boot for $dram"
+	B=$WORK/u-boot-build-$dram
+	rm -rf "$B"; mkdir -p "$B"
+	FRAGS=("$REPO/config/u-boot/rg34xxsp.config")
+	[ "$dram" = lpddr3 ] && FRAGS+=("$REPO/config/u-boot/lpddr3.config")
+	MAKE=(make -s -C "$WORK/u-boot" O="$B" CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION= -j"$JOBS")
+	"${MAKE[@]}" "$DEFCONFIG" >/dev/null
+	(cd "$WORK/u-boot" && KCONFIG_CONFIG="$B/.config" scripts/kconfig/merge_config.sh -m -O "$B" \
+		"$B/.config" "${FRAGS[@]}" >/dev/null)
+	"${MAKE[@]}" olddefconfig >/dev/null
+	bad=0
+	while IFS= read -r line; do
+		case "$line" in
+		CONFIG_*=*) sym=${line%%=*}; want=$line ;;
+		'# CONFIG_'*' is not set') sym=${line#\# }; sym=${sym%% *}; want="# $sym is not set" ;;
+		*) continue ;;
+		esac
+		have=$(grep -E "^($sym=|# $sym is not set)" "$B/.config" || true)
+		if [ "$have" != "$want" ] && ! { [ -z "$have" ] && [ "${want#\# }" != "$want" ]; }; then
+			printf '  wanted %s\n     got %s\n' "$want" "${have:-(absent)}"; bad=1
+		fi
+	done < <(cat "${FRAGS[@]}")
+	[ "$bad" = 0 ] || fail "$dram: config fragment did not apply cleanly"
+	echo "  all $(cat "${FRAGS[@]}" | grep -c -E '^(CONFIG_|# CONFIG_)') fragment lines hold"
+	"${MAKE[@]}" BL31="$BL31" SCP=/dev/null >"$B/build.log" 2>&1 ||
+		{ tail -30 "$B/build.log"; fail "$dram: u-boot build"; }
+
+	log "4. Checks ($dram)"
+	BIN=$B/u-boot-sunxi-with-spl.bin
+	[ -s "$BIN" ] || fail "$dram: no u-boot-sunxi-with-spl.bin"
+	size=$(stat -c %s "$BIN")
+	[ "$size" -le "$MAX_BYTES" ] || fail "$dram: $size bytes, more than the $MAX_BYTES-byte card gap"
+	[ "$(dd if="$BIN" bs=1 skip=4 count=8 status=none)" = "eGON.BT0" ] || fail "$dram: no eGON.BT0 SPL header"
+	# The boot ROM loads the SPL only if the eGON checksum matches (sum of the SPL's 32-bit words
+	# with the checksum field taken as 0x5F0A6C39).
+	python3 -I - "$BIN" <<'PY' || fail "$dram: eGON SPL checksum or length wrong"
+import struct, sys
+b = open(sys.argv[1], 'rb').read()
+chk, length = struct.unpack_from('<II', b, 0xc)
+if length % 512 or length > len(b):
+    sys.exit(1)
+d = bytearray(b[:length])
+struct.pack_into('<I', d, 0xc, 0x5F0A6C39)
+sys.exit(0 if sum(struct.unpack_from('<%dI' % (length // 4), d)) & 0xffffffff == chk else 1)
+PY
+	for s in "RG34XX-SP: panel ID PE6=" "sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb" \
+		 "R8: boot limit reached" "U-Boot SPL ${UBOOT_TAG#v}"; do
+		grep -qaF "$s" "$BIN" || fail "$dram: binary lacks \"$s\""
+	done
+	grep -q "^CONFIG_SUNXI_DRAM_H616_${dram^^}=y" "$B/.config" || fail "$dram: wrong DRAM type in .config"
+	name=u-boot-rg34xxsp-$dram-${UBOOT_TAG#v}
+	cp "$BIN" "$OUT/$name.bin"
+	cp "$B/.config" "$OUT/$name.config"
+	(cd "$OUT" && sha256sum "$name.bin" >>SHA256SUMS)
+	printf '  %s.bin  %s bytes (card gap %s), SPL header + checksum ok, PE6 + R8 code present\n' \
+		"$name" "$size" "$MAX_BYTES"
+done
+
+if [ "$SOURCES" = 1 ]; then
+	log "5. Corresponding source"
+	V=${UBOOT_TAG#v}
+	git -C "$WORK/u-boot" archive --format=tar --prefix="u-boot-$V/" "$UBOOT_SHA" |
+		xz -T0 -9 >"$OUT/u-boot-$V.tar.xz"
+	git -C "$WORK/tf-a" archive --format=tar --prefix="trusted-firmware-a-${TFA_TAG#v}/" "$TFA_SHA" |
+		xz -T0 -9 >"$OUT/trusted-firmware-a-${TFA_TAG#v}.tar.xz"
+	git -C "$REPO" archive --format=tar --prefix="rg34xxsp-u-boot-inputs-$V/" HEAD \
+		patches/u-boot config/u-boot scripts/build-uboot.sh | xz -9 >"$OUT/rg34xxsp-u-boot-inputs-$V.tar.xz"
+	(cd "$OUT" && sha256sum ./*.tar.xz | sed 's| \./| |' >>SHA256SUMS)
+	ls -la "$OUT"/*.tar.xz | awk '{print "  " $5 "  " $9}'
+fi
+
+log "Done. Binaries in $OUT. NOT BOOTED: first use only by FEL (docs/r2-fel-test-kit.md) or a spare card."

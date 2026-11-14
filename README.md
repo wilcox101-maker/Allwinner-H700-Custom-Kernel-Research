@@ -25,6 +25,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
+| [`scripts/build-uboot.sh`](scripts/build-uboot.sh) | Builds SPL + BL31 + u-boot per DRAM type (R1) from pinned sources + `patches/u-boot/` + `config/u-boot/`; checks and checksums; `--sources` for the release bundle |
 | [`scripts/build-kernel.sh`](scripts/build-kernel.sh) | Builds and checks the config, then the kernel `.deb` packages (R10) |
 | [`image/`](image/) | R7: card-image builder, package list, overlay, QEMU test; R9: licence checks and source bundle |
 | [`r5/`](r5/) | R5: noble userspace prototype (mmdebstrap + QEMU sizing scripts and results) |
@@ -36,6 +37,8 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
+| [`docs/r1-boot-chain.md`](docs/r1-boot-chain.md) | R1: boot chain and card layout; u-boot v2026.10 + TF-A per DRAM type, desk results, recovery |
+| [`docs/r2-fel-test-kit.md`](docs/r2-fel-test-kit.md) | R2: FEL test kit for K4: commands, expected console output, pass/fail |
 | [`docs/r11-upstream-check-2026-11.md`](docs/r11-upstream-check-2026-11.md) | R11 November upstream check: pinned series status, CPU cooling map adopted, watch list |
 | [`docs/r20-builtin-trim.md`](docs/r20-builtin-trim.md) | R20: trial fragment that turns off built-in code the board can't use (−5.8 MB Image, +6 MB free RAM in QEMU); boot path check |
 | [`docs/r18-kernel-in-qemu.md`](docs/r18-kernel-in-qemu.md) | R18: our kernel under the R5 noble rootfs in QEMU: memory and disk vs Ubuntu's kernel, initramfs optional |
