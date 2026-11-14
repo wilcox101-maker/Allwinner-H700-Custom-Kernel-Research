@@ -9,6 +9,8 @@ decoder also reads two further SID words, and document the optional
 nvmem-cell-names that name them. The speedbin cell stays first.
 
 Draft for the Redux project.
+
+This patch was drafted with an AI coding assistant (Claude).
 ---
  .../opp/allwinner,sun50i-h6-operating-points.yaml    | 12 ++++++++++++
  1 file changed, 12 insertions(+)
