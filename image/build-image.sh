@@ -11,8 +11,12 @@
 #   KERNEL=ubuntu  Ubuntu's linux-image-6.8.0-149-generic + modules-extra + initramfs, for QEMU tests only.
 #   UBOOT_BIN   SPL+u-boot for the board's DRAM type (R1/R3). Without it the image has NO bootloader
 #               and can only be tested in QEMU.
+#   PANEL_FW    directory holding panels/<compatible>.panel made by tools/gen_panel_firmware.py from
+#               YOUR OWN stock image (R19 option b). Copied to /usr/lib/firmware/panels; the image is
+#               named -private and must not be published (R9: stock-derived data).
 # Writes only under $OUT. It never touches a block device: writing the image to a card is a separate,
-# deliberate step (see docs/r7-image-tooling.md). Needs: mmdebstrap genimage dosfstools mtools e2fsprogs
+# deliberate step (see docs/r7-image-tooling.md). Publishing it needs the source bundle from
+# image/release-sources.sh (R9). Needs: mmdebstrap genimage dosfstools mtools e2fsprogs
 # qemu-user-static + binfmt (non-arm64 hosts), rsync.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(dirname "$HERE")
@@ -25,7 +29,11 @@ if [ -n "${KERNEL_DEB:-}" ]; then KMODE=deb; KERNEL_DEB=$(readlink -f "$KERNEL_D
 elif [ "${KERNEL:-}" = ubuntu ]; then KMODE=ubuntu
 else echo "set KERNEL_DEB=<our kernel .deb> or KERNEL=ubuntu (QEMU only)" >&2; exit 2; fi
 STAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d)
-NAME=rg34xxsp-noble-$STAMP-$KMODE${UBOOT_BIN:+-uboot}
+NAME=rg34xxsp-noble-$STAMP-$KMODE${UBOOT_BIN:+-uboot}${PANEL_FW:+-private}
+if [ -n "${PANEL_FW:-}" ]; then
+	PANEL_FW=$(readlink -f "$PANEL_FW")
+	ls "$PANEL_FW"/panels/*.panel >/dev/null 2>&1 || { echo "PANEL_FW=$PANEL_FW has no panels/*.panel" >&2; exit 2; }
+fi
 ROOT="root=PARTUUID=$(printf '%08x' $((DISK_SIG)))-02"
 log() { printf '== %s\n' "$*"; }
 
@@ -70,6 +78,13 @@ log "2. stage /boot content into the rootfs tree for genimage"
 echo uninitialized > "$OUT/rootfs/etc/machine-id"
 rm -rf "$OUT/rootfs/boot"; mkdir -p "$OUT/rootfs/boot"; cp -a "$OUT/tmp/boot/." "$OUT/rootfs/boot/"
 cp "$OUT/rootfs/root/manifest.tsv" "$OUT/$NAME.manifest.tsv"
+if [ -n "${PANEL_FW:-}" ]; then          # private image only (see PANEL_FW above)
+	install -d "$OUT/rootfs/usr/lib/firmware/panels"
+	install -m 0644 "$PANEL_FW"/panels/*.panel "$OUT/rootfs/usr/lib/firmware/panels/"
+fi
+# R9: source package list for image/release-sources.sh, then the licence checks (fail = no image)
+dpkg-query --admindir="$OUT/rootfs/var/lib/dpkg" -W -f='${source:Package}\t${source:Version}\n' | LC_ALL=C sort -u > "$OUT/$NAME.sources.tsv"
+PRIVATE=${PANEL_FW:+1} "$HERE/check-licences.sh" "$OUT/rootfs"
 ROOT_KB=$(du -sxk --exclude=./boot "$OUT/rootfs" | cut -f1)
 ROOT_MB=$(( ROOT_KB / 1024 * 120 / 100 + 64 ))           # content + 20 % + 64 MiB; grown on first boot
 log "   root content $((ROOT_KB / 1024)) MiB -> partition $ROOT_MB MiB; /boot $(du -sm "$OUT/rootfs/boot" | cut -f1) MiB of $BOOT_MB"
@@ -89,3 +104,5 @@ genimage --config "$OUT/genimage.cfg" --rootpath "$OUT/rootfs" --tmppath "$OUT/g
 mv "$OUT/genimage/$NAME.img" "$OUT/"
 (cd "$OUT" && sha256sum "$NAME.img" > "$NAME.img.sha256")
 log "done: $OUT/$NAME.img ($(du -h --apparent-size "$OUT/$NAME.img" | cut -f1)); $ROOT"
+if [ -n "${PANEL_FW:-}" ]; then log "PRIVATE image (stock-derived panel firmware): for your own devices only, do not publish"
+else log "before publishing: image/release-sources.sh $OUT/$NAME.sources.tsv (R9: the image's source bundle)"; fi
