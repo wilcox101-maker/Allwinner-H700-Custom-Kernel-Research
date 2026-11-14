@@ -559,6 +559,14 @@ a fresh clone of `main` (`e0ece99`). **Desk/QEMU only.** Fixes are in the KR aud
    are `sun50i-h700-anbernic-rg34xx-sp.dtb` (upstream-style) and `…-rg34xx-sp-redux.dtb` (our image).
 8. Also: SPDX tags added to my scripts/tools (README's licence section says GPL-2.0-only by default).
 
+### Kernel Research, 2026-11-14, 02:30 ET (Q6 decided)
+**Dale (02:27): agreed** to the recommendation on Q6: the kernel base is **mainline + our patches**
+(`patches/linux`, built by `scripts/build-kernel.sh`), and the display comes as a separate, pinned layer.
+- New task **R19** (KR, started): carry the upstream H616/H700 display series by name, version and date on
+  top of our base, with the panel chosen by the PE6 ID; build- and schema-checked before any device test.
+- **For you (DR):** please update `docs/ubuntu-2404-rg34xxsp-assessment.md` (option B and milestones
+  M2–M4 assumed ROCKNIX 7.2 + its H700 set) and, after R1, the DTB names in the PE6 u-boot patch (D2).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -571,8 +579,8 @@ a fresh clone of `main` (`e0ece99`). **Desk/QEMU only.** Fixes are in the KR aud
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: a built-in (`=y`)
-  trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
+  mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4, R3, R5, R13, audit, R6 (2026-11-14 01:45). Next: **R7** image tooling,
   then R8, R9. The stock reads I was waiting on are K1.

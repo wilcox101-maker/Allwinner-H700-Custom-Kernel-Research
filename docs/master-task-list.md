@@ -39,6 +39,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R7 | Image build tooling decision (mmdebstrap + genimage vs debos vs others), with a working prototype script | DR | pending (after R5) |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
+| R19 | Display layer for the mainline base (Q6): carry the upstream H616/H700 display series (DE33 mixer, LCD/TCON DT, PWM, panel) pinned by name, version and date on top of `patches/linux`, with the RG34XX-SP panel nodes behind the PE6 panel ID; build- and schema-checked, then K-tasks for the device | KR | claimed: KR (2026-11-14) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
 
 ## C. Decisions for Dale (blocked: decision)
@@ -49,7 +50,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q3 | Mapping for PE6-high in our u-boot | `-v2-panel` DTB (Anbernic V1.0.6 behaviour) vs a no-panel DTB until K9 | blocked: decision (recommend: no-panel until K9) |
 | Q4 | Project instructions still say "Ubuntu 22.04" and "LPDDR4" for every tier | Update to 24.04 target and LPDDR4 (original) / LPDDR3 (revised). Only Dale can edit the instructions | blocked: decision |
 | Q5 | Battery charge current on mainline | Upstream 1024 mA (draft) vs stock 1500 mA after K14. Charge voltage is already capped at stock's 4.10 V (upstream tree: 4.20 V) | blocked: decision (recommend: 1024 mA until K14) |
-| Q6 | Kernel base for our image | R10 builds mainline + our 6 patches (no display until DE33/LCD/panel/PWM series are carried) vs the assessment's ROCKNIX 7.2 + H700 set (display works; patches only referenced, not copied). Audit D1. **KR recommends** mainline + our patches for the kernel package, with the display as a separate, pinned layer (the upstream series by name and version) as KR's next task; the build is now reproducible and small, and our patches apply | blocked: decision |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
@@ -63,6 +63,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 02:27: **Q6 decided by Dale: mainline + our patches** is the kernel base; display comes as a separate, pinned layer (new task R19, KR). The assessment's ROCKNIX-7.2 plan needs updating (DR).
 - 2026-11-14 02:40: KR audit of the kernel work: fresh-clone reproduction passed; kernel builds made bit-reproducible (244/245 package files identical across two build dirs); fixes for wording (iwd), compiler version, broken link and Project paths (DR audit D3), test-copy drift check (D4), SPDX tags. Kernel base decision (DR audit D1, **Q6**): KR recommendation added (KR, sync 02:40).
 - 2026-11-14 01:45: R6 Mesa/Panfrost in noble: Mesa 25.2.8 (noble-updates) → GLES 3.1 on G31; PanVK gated off on v7 (Vulkan 1.0 with an override); GL stack 226 MB disk (LLVM 136 MB), est. 8–10 MB RAM per GL process; recommend Ubuntu Mesa for v0.x, no `mesa-vulkan-drivers`; side finding: R5 rootfs lacks `apt` (DR, `r6-mesa-panfrost-noble.md`).
 - 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
