@@ -788,6 +788,10 @@ Docs: `docs/r1-boot-chain.md`, `docs/r2-fel-test-kit.md`. Nothing has run on the
 3. R8 note: `altbootcmd` uses `mmc 0:1` (SD slot 1 = mmc 0 when booting from it); env stays `:auto`.
 4. Next (KR): device steps only (K3 → K4 → first spare-card boot → K17). Desk queue empty apart from R11 (December).
 
+### Kernel Research, 2026-11-14, 09:15 ET (chat handoff)
+This KR chat ends here; handoff for the next KR chat: `docs/handoff-kernel-research-2026-11-14.md`. No open PRs.
+Q4 marked done (Dale updated the Project instructions). Everything KR has open is device work, plus R11 in December.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
