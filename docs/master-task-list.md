@@ -23,7 +23,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K8 | Chip revision: stock SRAM-controller value vs mainline SMCCC SOC_ID | Trust the b0/b1 and c0/c1/c2 bins | custom-patches §2a | blocked: device |
 | K9 | Revised (v2-panel) unit reads PE6 = 1 | What PE6-high maps to (Q3) | panel doc §1 | blocked: needs a second unit / community report |
 | K10 *(proposed)* | Original panel with ROCKNIX's reg `0x23 = 0x00` (stock 0xA2): look for tearing/shift. Part of K2 | Confirms the panel file we ship | panel doc §1 | blocked: device |
-| K11 *(proposed)* | Panfrost vs stock Mali: frame rate on 3–4 reference games/cores, same settings | Validates the GPU choice; user expectations | assessment §7 | blocked: device |
+| K11 *(proposed)* | Panfrost vs stock Mali: frame rate on 3–4 reference games/cores, same settings; plus R6 §6 checks (`eglinfo -B` = GLES 3.1, `glmark2-es2-drm`, per-process GL memory from `smaps_rollup`, PanVK with the override flag). The GPU half can run headless on `renderD128` before the display works | Validates the GPU choice; user expectations | assessment §7 | blocked: device |
 | K12 *(proposed)* | Noble image on hardware: MemTotal/MemAvailable/Slab, PSS sum, boot time per stage, service list vs the QEMU numbers from R5 (`r5/r5-measure` prints them all) | Confirms RAM-tier defaults (R13) | R5 | blocked: device (needs our image) |
 | K13 | Rumble motor: does the RG34XX-SP have one (stock DT names PH2, but it is a family-wide DT)? Look inside, or try stock rumble in a game | Whether to add a vibrator node | custom-patches §8 | blocked: device |
 | K14 | Charging temperature at stock's 1500 mA (draft: 1024 mA, 4.10 V cap) | Charge current in the board DT | custom-patches §8 | blocked: device |
@@ -36,7 +36,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 |---|---|---|---|
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
-| R6 | Mesa/Panfrost in noble (+ noble-updates): version, G31 support, GLES/Vulkan level, `mesa-utils` checks to run on device | DR | pending |
 | R7 | Image build tooling decision (mmdebstrap + genimage vs debos vs others), with a working prototype script | DR | pending (after R5) |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
@@ -64,6 +63,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 01:45: R6 Mesa/Panfrost in noble: Mesa 25.2.8 (noble-updates) → GLES 3.1 on G31; PanVK gated off on v7 (Vulkan 1.0 with an override); GL stack 226 MB disk (LLVM 136 MB), est. 8–10 MB RAM per GL process; recommend Ubuntu Mesa for v0.x, no `mesa-vulkan-drivers`; side finding: R5 rootfs lacks `apt` (DR, `r6-mesa-panfrost-noble.md`).
 - 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
 - 2026-11-14 00:30: R13 RAM-tier defaults: one self-scaling config (zram `min(ram,1024)` zstd, swappiness 100, page-cluster 0, earlyoom, journald 32M); QEMU OOM stress: kernel/earlyoom/oomd all recover, userspace killers 25–70 s sooner (DR, `r13-ram-tier-defaults.md`, `config/rootfs/`, `r13/`).
 - 2026-11-14 00:30: R18 our kernel under R5's iwd rootfs in QEMU at 512 MB/1 GB/2 GB: boots without an initramfs, all services up, zram works; **+26 MB MemTotal, +31–37 MB MemAvailable** vs Ubuntu 6.8; rootfs 423 → 209 MB. QEMU only (KR, `r18-kernel-in-qemu.md`).
