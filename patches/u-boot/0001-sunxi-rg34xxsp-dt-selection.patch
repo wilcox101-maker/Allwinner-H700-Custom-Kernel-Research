@@ -1,4 +1,4 @@
-From 21ca4de083bf5ebf29e61a70abae5824403eb890 Mon Sep 17 00:00:00 2001
+From 5ebf3b737f32270c3a947d3ae7eae4d333fd1af3 Mon Sep 17 00:00:00 2001
 From: H700 Ubuntu project <noreply@localhost>
 Date: Fri, 13 Nov 2026 19:45:15 -0500
 Subject: [PATCH] sunxi: add Anbernic RG34XX-SP device tree selection by panel
@@ -13,9 +13,11 @@ panel (the V1.0.6 release sends the "v2" init sequence on that path).
 
 Repeat that check in misc_init_r() and set "fdtfile" accordingly, so a
 single image can boot both board revisions with the matching device
-tree. The device tree names are Kconfig strings. Setting the
-environment variable "panel_autodetect" to "no" keeps the existing
-"fdtfile".
+tree. The device tree names are Kconfig strings. The defaults are the
+project's trees: the original panel (NV3052C) gets the tree with the
+panel, the newer panel (controller not identified yet) gets the tree
+without display nodes. Setting the environment variable
+"panel_autodetect" to "no" keeps the existing "fdtfile".
 
 Gated by CONFIG_ANBERNIC_RG34XXSP_DT_SELECTION (default n) because it
 drives PI14 and changes the pull of PE6.
@@ -23,15 +25,15 @@ drives PI14 and changes the pull of PE6.
 Derived from read-only analysis of the stock bootloader binary; no
 vendor code is included. Not yet tested on hardware.
 ---
- arch/arm/mach-sunxi/Kconfig | 29 +++++++++++++++++
+ arch/arm/mach-sunxi/Kconfig | 32 ++++++++++++++++++
  board/sunxi/board.c         | 65 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 94 insertions(+)
+ 2 files changed, 97 insertions(+)
 
 diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
-index a52a64ea..66e1aeb1 100644
+index e979ee4a..1d65314f 100644
 --- a/arch/arm/mach-sunxi/Kconfig
 +++ b/arch/arm/mach-sunxi/Kconfig
-@@ -1215,6 +1215,35 @@ config PINEPHONE_DT_SELECTION
+@@ -1212,6 +1212,38 @@ config PINEPHONE_DT_SELECTION
  	  Enable this option to automatically select the device tree for the
  	  correct PinePhone hardware revision during boot.
  
@@ -57,21 +59,24 @@ index a52a64ea..66e1aeb1 100644
 +config ANBERNIC_RG34XXSP_DT_PE6_LOW
 +	string "Device tree for PE6 low (original panel)"
 +	depends on ANBERNIC_RG34XXSP_DT_SELECTION
-+	default "allwinner/sun50i-h700-anbernic-rg34xx-sp.dtb"
++	default "allwinner/sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb"
 +
 +config ANBERNIC_RG34XXSP_DT_PE6_HIGH
-+	string "Device tree for PE6 high (v2 panel)"
++	string "Device tree for PE6 high (newer panel)"
 +	depends on ANBERNIC_RG34XXSP_DT_SELECTION
-+	default "allwinner/sun50i-h700-anbernic-rg34xx-sp-v2-panel.dtb"
++	default "allwinner/sun50i-h700-anbernic-rg34xx-sp-redux.dtb"
++	help
++	  The newer panel's controller is not identified yet and has no
++	  kernel driver, so the default tree has no display nodes.
 +
  config BLUETOOTH_DT_DEVICE_FIXUP
  	string "Fixup the Bluetooth controller address"
  	default ""
 diff --git a/board/sunxi/board.c b/board/sunxi/board.c
-index 2669de68..b86d7dbb 100644
+index 2929bc17..a5dcd448 100644
 --- a/board/sunxi/board.c
 +++ b/board/sunxi/board.c
-@@ -829,6 +829,67 @@ static void setup_environment(const void *fdt)
+@@ -810,6 +810,67 @@ static void setup_environment(const void *fdt)
  	}
  }
  
@@ -139,7 +144,7 @@ index 2669de68..b86d7dbb 100644
  int misc_init_r(void)
  {
  	const char *spl_dt_name;
-@@ -860,6 +921,10 @@ int misc_init_r(void)
+@@ -841,6 +902,10 @@ int misc_init_r(void)
  		env_set("fdtfile", str);
  	}
  
