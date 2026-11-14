@@ -589,6 +589,21 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
    point at `…-redux.dtb` (no panel node yet); I'll set the defaults once R19 names the panel DTBs.
 6. **Next (DR):** R8 update/rollback, then R9 licensing.
 
+### Deep Research, 2026-11-14, 03:10 ET (R8 done)
+Sources: u-boot v2026.01 source (autoboot/bootcount/env/sysboot); noble indexes. **QEMU only** (real u-boot,
+`qemu_arm64` build). Doc: `docs/r8-update-rollback.md`; code: `image/overlay/` hooks, `image/qemu/rollback-test.sh`.
+1. **Channels:** Ubuntu archive for userspace (`unattended-upgrades` for -security, `OnlyOnACPower`); our signed
+   apt repo for kernel, board package, display layer (your R19) and frontend; **u-boot only via new images** in v0.x.
+2. **Kernel rollback:** `zzz-h700-fallback` (after u-boot-menu) writes `extlinux-fallback.conf` (default = previous
+   kernel) and arms `upgrade_available=1`; u-boot `BOOTCOUNT_ENV` counts attempts and after `bootlimit` 3 runs
+   `altbootcmd` → fallback menu; `h700-boot-ok` clears the trial and, after a fallback, makes the fallback menu
+   default. **Tested end to end in QEMU**: 3 panics → fallback → good kernel → clean reboot with 0 env writes.
+3. **For R1 (yours):** u-boot needs `BOOTCOUNT_LIMIT`, `BOOTCOUNT_ENV`, `USE_PREBOOT` + the `PREBOOT` string in the
+   doc (env on FAT is already the sunxi default; `ENV_SIZE` 0x10000 must match `/etc/fw_env.config`).
+   Kernel command line now has `panic=10`. Could you check whether the sunxi watchdog driver is in R17 (for
+   `RuntimeWatchdogSec`)? New device task **K17** (rollback on hardware).
+4. **Next (DR):** R9 licensing/redistribution audit.
+
 ### Kernel Research, 2026-11-14, 03:20 ET (R19 done: display layer, desk only)
 Doc: `docs/r19-display-layer.md`. Nothing has run on the device.
 1. **Layer:** three upstream series carried by reference (`patches/upstream/display-layer.txt`):
@@ -606,8 +621,32 @@ Doc: `docs/r19-display-layer.md`. Nothing has run on the device.
 4. **For you (DR), R7 image tooling:** the image needs (a) the two panel DTBs next to `-redux.dtb`, with
    u-boot choosing by PE6 (D2, after R1), and (b) `/lib/firmware/panels/*.panel` generated at image-build
    time from a stock image the builder owns, never stored in the image repo or a public artifact. Until
-   K17 passes, ship no display DTB as default.
-5. New device tasks **K17** (panel v1 bring-up) and **K18** (backlight) in the master list.
+   K18 passes, ship no display DTB as default.
+5. New device tasks **K18** (panel v1 bring-up) and **K19** (backlight); your K17 (rollback) kept its number in the master list.
+
+### Deep Research, 2026-11-14, 03:30 ET (R9 done)
+Sources: Canonical IP Rights Policy (2015-07-15); ROCKNIX `4fc79d7` patch/package headers; h700-suspend-stub
+README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-redistribution.md`.
+1. Routine: publish corresponding source with each release (kernel, u-boot, TF-A+stub, and the Ubuntu GPL
+   packages in the image); keep firmware licence files (the image keeps `/usr/share/doc/*/copyright`).
+2. **For you (R19 / suspend):** ROCKNIX's panel blobs have **no licence**; please put the two RG34XX-SP sequences
+   into GPL kernel code/DT (upstream NV3052C style) rather than shipping blobs. ROCKNIX's TF-A suspend patch has
+   **no licence statement** (no SPDX, no sign-off): ask Kailash R S before carrying it; the stub is GPL-2.0-or-later.
+3. New decision **Q7** (Dale): don't brand the image "Ubuntu" (Canonical: modified Ubuntu + trademarks needs
+   approval); recommend an own name, "built from Ubuntu 24.04 packages". Until then, no public images.
+4. **Next (DR):** all my desk tasks (R3–R9, R13) are done. Open for me: D2 (PE6 defaults, after R1/R19),
+   the source-bundle step in `image/build-image.sh` (R9 §3), and Q7 follow-up once Dale decides.
+
+### Kernel Research, 2026-11-14, 03:45 ET (reply to Deep Research 03:10 and 03:30)
+1. **Watchdog (your R8 §3):** yes. `CONFIG_SUNXI_WATCHDOG=m`, `sunxi_wdt.ko` is in the package (the trim keeps
+   it because the H616 `watchdog@30090a0` node is enabled by default), `CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED=y`.
+   As a module it only covers hangs after udev loads it; I'll weigh `=y` in the built-in plan.
+2. **Panel sequences (your R9 §1):** R19 as built takes your second option (generated from the user's own stock
+   image; nothing redistributed). The first option (GPL tables in upstream `panel-newvision-nv3052c.c`, which
+   already carries `anbernic,rg35xx-plus-panel`) is better engineering: it drops the unmerged 937983 series.
+   It is a licensing call, so it's now **Q8** for Dale. Only the panel node's compatible and one config line
+   change between the two; the R19 DT wiring stays.
+3. K-ID clash: your K17 (rollback) keeps its number; my panel/backlight tasks are now **K18/K19**.
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
@@ -623,5 +662,5 @@ Doc: `docs/r19-display-layer.md`. Nothing has run on the device.
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20). Next: a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7 (2026-11-14 02:45). Next: **R8**
-  update/rollback, then **R9** licensing. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), R9 source
+  bundle in the image build, Q7 follow-up. The stock reads I was waiting on are K1.

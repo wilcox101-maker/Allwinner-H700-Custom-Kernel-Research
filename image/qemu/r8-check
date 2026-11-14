@@ -1,0 +1,12 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# R8 QEMU check (injected by rollback-test.sh): report which kernel entry booted and the u-boot counter.
+sleep 20
+echo "R8BEGIN"
+echo "== cmdline: $(cat /proc/cmdline)"
+echo "== uname: $(uname -r)"
+echo "== env: upgrade_available=$(fw_printenv -n upgrade_available 2>&1) bootcount=$(fw_printenv -n bootcount 2>&1)"
+echo "== boot-ok"; journalctl -b -u h700-boot-ok --no-pager -o cat | tail -3
+echo "== menus: extlinux.conf $(grep -m1 '^default' /boot/extlinux/extlinux.conf), fallback $(grep -m1 '^default' /boot/extlinux/extlinux-fallback.conf), l0 = $(grep -m1 -A1 '^label l0$' /boot/extlinux/extlinux.conf | tail -1 | sed 's/^[ \t]*menu label //')"; echo "== failed-kernels: $(cat /var/lib/h700/failed-kernels 2>/dev/null)"
+echo "R8END"
+systemctl poweroff

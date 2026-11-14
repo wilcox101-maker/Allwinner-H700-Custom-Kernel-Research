@@ -7,7 +7,7 @@ U_BOOT_TIMEOUT="10"
 # root= is filled in by the image builder (PARTUUID of partition 2).
 U_BOOT_ROOT="@ROOT@"
 # 'ro': systemd-fsck checks the root fs, then remounts it rw (no initramfs needed, R18).
-U_BOOT_PARAMETERS="ro rootwait console=ttyS0,115200 quiet"
+U_BOOT_PARAMETERS="ro rootwait console=ttyS0,115200 panic=10 quiet"
 # /boot is a separate FAT partition: copy each kernel's DTBs there as /dtb-<version>/ and use FDTDIR,
 # so u-boot's fdtfile (allwinner/<board>.dtb, set by the PE6 patch) resolves on the card.
 U_BOOT_SYNC_DTBS="true"

@@ -123,9 +123,9 @@ builder owns (R9 still open).
 
 ## 7. Open device checks
 These need the device (after Redux v0.5) and are added to the master list as K-tasks:
-1. Does the panel come up with the v1 file on a PE6-low unit (image, no flicker, right colours)?
+1. **K18:** does the panel come up with the v1 file on a PE6-low unit (image, no flicker, right colours)?
    Try 26 MHz first; 52 MHz is the second mode in the file.
-2. Backlight: polarity and 25 kHz vs stock 50 kHz (audible whine, flicker at low levels); the
+2. **K19:** backlight polarity and 25 kHz vs stock 50 kHz (audible whine, flicker at low levels); the
    lowest level that is still visible.
 3. v2 panel (K9/Q3): confirm a PE6-high V1.0.6-era unit and its file.
 4. HDMI is not in this layer (separate later task).
@@ -133,6 +133,9 @@ These need the device (after Redux v0.5) and are added to the master list as K-t
 ## 8. Risks
 - Three out-of-tree series: each rebase may need new manifest fixes. The patch-id pin makes drift
   loud, not silent.
-- 937983 has not been merged in 20 months; carrying it is a maintenance cost. Fallback: an
-  NV3052C panel-driver entry, which would put the init sequence in kernel source (R9 decides).
+- 937983 has not been merged in 20 months and already needed a fix-up; carrying it is a
+  maintenance cost. Alternative: entries in upstream `panel-newvision-nv3052c.c` (which already
+  has `anbernic,rg35xx-plus-panel`), putting the two init sequences in GPL kernel source. R9
+  (`r9-licensing-redistribution.md` §1) left this to be decided with R19; it is decision **Q8**
+  for Dale. The DT wiring above does not change either way.
 - No hardware result yet. Do not ship a display DTB before item 1 above passes.
