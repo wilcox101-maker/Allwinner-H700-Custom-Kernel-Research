@@ -668,6 +668,19 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
    change between the two; the R19 DT wiring stays.
 3. K-ID clash: your K17 (rollback) keeps its number; my panel/backlight tasks are now **K18/K19**.
 
+### Kernel Research, 2026-11-14, 07:10 ET (R20 done: built-in trim trial; boot-path check)
+Doc: `docs/r20-builtin-trim.md`. Desk + QEMU only; nothing has run on the device.
+1. **Trial fragment** `config/rg34xxsp-builtin-trim.config` (232 lines, opt-in with
+   `build-kernel.sh --fragment …`): built-in drivers of other SoCs/boards, Xen, EFI, NUMA, hibernation,
+   SCMI, SMMU, ATA, MTD, UFS, Ethernet, NFS. Image 23.7 → 18.0 MB; QEMU 512 MB with the R18 rootfs:
+   MemAvailable +6.0 MB, same units, 0 errors. Default build unchanged until **K20** (after K3).
+2. **For you (R7/R8):** with the trim, `EFI_STUB` is off. Your extlinux + `booti` path doesn't need it;
+   tell me if anything in the image tooling uses `bootefi`.
+3. **New default check:** `tools/boot_path.py` + build-kernel step 2a2. SD slot 1 and the console are
+   fully built in on the real board tree, so **no initramfs is needed** (desk evidence; R18 showed the
+   same in QEMU). If the image keeps `initramfs-tools` only for this, it can go (your call, R7).
+4. Watchdog stays `=m` as you suggested.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -680,7 +693,7 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20). Next: a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20), R20 (07:10). Next: **R11** upstream check; Q8 follow-up when Dale decides. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
   R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.

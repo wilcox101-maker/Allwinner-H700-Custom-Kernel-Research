@@ -1,0 +1,85 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [   83.870403] r5-measure[236]: R5BEGIN
+[   83.876662] r5-measure[236]: == mem
+[   83.970496] r5-measure[242]:                total        used        free      shared  buff/cache   available
+[   83.977314] r5-measure[242]: Mem:             484          54         360           0          79         429
+[   83.978879] r5-measure[242]: Swap:            241           0         241
+[   84.082158] r5-measure[243]: MemTotal:         495800 kB
+[   84.090144] r5-measure[243]: MemFree:          368944 kB
+[   84.096937] r5-measure[243]: MemAvailable:     439768 kB
+[   84.098247] r5-measure[243]: Buffers:            3272 kB
+[   84.099369] r5-measure[243]: Cached:            73064 kB
+[   84.100337] r5-measure[243]: AnonPages:         11472 kB
+[   84.101242] r5-measure[243]: Shmem:               416 kB
+[   84.102074] r5-measure[243]: Slab:              18268 kB
+[   84.102934] r5-measure[243]: SReclaimable:       5588 kB
+[   84.104874] r5-measure[243]: SUnreclaim:        12680 kB
+[   84.105967] r5-measure[243]: KernelStack:        1460 kB
+[   84.107079] r5-measure[243]: PageTables:          980 kB
+[   84.108794] r5-measure[243]: Percpu:              896 kB
+[   84.110861] r5-measure[236]: == zram
+[   84.192711] r5-measure[244]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[   84.194479] r5-measure[244]: /dev/zram0 zstd          242M   4K   63B   20K         [SWAP]
+[   84.291737] r5-measure[245]: NAME       TYPE      SIZE USED PRIO
+[   84.294876] r5-measure[245]: /dev/zram0 partition 242M   0B  100
+[   84.302047] r5-measure[236]: == boot
+[   84.518613] r5-measure[247]: Startup finished in 1.132s (kernel) + 22.787s (userspace) = 23.920s
+[   84.522283] r5-measure[247]: graphical.target reached after 22.124s in userspace.
+[   92.375265] r5-measure[249]: 9.800s dev-vda.device
+[   92.379170] r5-measure[249]: 6.191s systemd-networkd.service
+[   92.382883] r5-measure[249]: 6.120s systemd-resolved.service
+[   92.384599] r5-measure[249]: 5.388s systemd-udev-trigger.service
+[   92.386038] r5-measure[249]: 4.891s systemd-timesyncd.service
+[   92.387496] r5-measure[249]: 4.785s ldconfig.service
+[   92.389746] r5-measure[249]: 4.063s systemd-zram-setup@zram0.service
+[   92.391290] r5-measure[249]: 3.484s iwd.service
+[   92.393275] r5-measure[249]: 3.138s systemd-update-utmp.service
+[   92.394671] r5-measure[249]: 2.979s systemd-journal-catalog-update.service
+[   92.396005] r5-measure[249]: 2.139s systemd-modules-load.service
+[   92.398773] r5-measure[249]: 2.054s systemd-network-generator.service
+[   92.406885] r5-measure[236]: == services
+[   92.658610] r5-measure[251]: dbus.service
+[   92.675549] r5-measure[251]: getty@tty1.service
+[   92.699316] r5-measure[251]: iwd.service
+[   92.703295] r5-measure[251]: measure.service
+[   92.704812] r5-measure[251]: serial-getty@ttyAMA0.service
+[   92.706127] r5-measure[251]: systemd-journald.service
+[   92.707366] r5-measure[251]: systemd-logind.service
+[   92.711024] r5-measure[251]: systemd-networkd.service
+[   92.713926] r5-measure[251]: systemd-resolved.service
+[   92.715352] r5-measure[251]: systemd-timesyncd.service
+[   92.717278] r5-measure[251]: systemd-udevd.service
+[   92.719259] r5-measure[236]: == rss_top
+[   92.977469] r5-measure[253]:   RSS COMMAND
+[   92.979375] r5-measure[253]: 12564 systemd-resolve
+[   92.981714] r5-measure[253]: 11984 systemd
+[   92.982944] r5-measure[253]:  8784 systemd-network
+[   92.986514] r5-measure[253]:  8588 systemd-journal
+[   92.987752] r5-measure[253]:  7284 systemd-logind
+[   92.990697] r5-measure[253]:  7220 systemd-timesyn
+[   92.992914] r5-measure[253]:  5812 systemd-udevd
+[   92.994468] r5-measure[253]:  4052 dbus-daemon
+[   92.997666] r5-measure[253]:  3616 ps
+[   93.001192] r5-measure[253]:  3256 r5-measure
+[   93.004752] r5-measure[253]:  3028 iwd
+[   93.226920] r5-measure[236]: == rss_sum_kB 83184
+[   93.385959] r5-measure[236]: == pss_sum_kB 33373
+[   93.390380] r5-measure[236]: == pss_top
+[  105.713172] r5-measure[262]: 6932 systemd-resolve
+[  105.721701] r5-measure[262]: 6174 systemd
+[  105.724558] r5-measure[262]: 3382 systemd-journal
+[  105.729168] r5-measure[262]: 3237 systemd-network
+[  105.731878] r5-measure[262]: 2989 systemd-udevd
+[  105.736945] r5-measure[262]: 2009 systemd-logind
+[  105.738378] r5-measure[262]: 1923 dbus-daemon
+[  105.739567] r5-measure[262]: 1834 systemd-timesyn
+[  105.741912] r5-measure[262]: 1647 iwd
+[  105.744531] r5-measure[262]: 1075 r5-measure
+[  105.973515] r5-measure[236]: == procs 89
+[  105.976872] r5-measure[236]: == disk
+[  106.067504] r5-measure[534]: /dev/root           1946   171      1658  10% /
+[  106.071625] r5-measure[236]: R5END
+[  111.244021] reboot: Power down
+done-trim-512

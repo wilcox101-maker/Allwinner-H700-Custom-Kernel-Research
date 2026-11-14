@@ -20,7 +20,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host test of the CPU speed-bin decoder (patch 0001) |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) and `gen_trim_config.py` (module allowlist → config fragment) |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
@@ -28,12 +28,14 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`image/`](image/) | R7: card-image builder, package list, overlay, QEMU test; R9: licence checks and source bundle |
 | [`r5/`](r5/) | R5: noble userspace prototype (mmdebstrap + QEMU sizing scripts and results) |
 | [`r18/`](r18/) | R18: QEMU boot script for our kernel (virtio over MMIO) and its results |
+| [`r20/`](r20/) | R20: kernel-swap helper for the R18 rootfs and the QEMU, config-diff and boot-path results of the built-in trim |
 
 ## Findings index
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, panel firmware generator, desk results, open device checks |
+| [`docs/r20-builtin-trim.md`](docs/r20-builtin-trim.md) | R20: trial fragment that turns off built-in code the board can't use (−5.8 MB Image, +6 MB free RAM in QEMU); boot path check |
 | [`docs/r18-kernel-in-qemu.md`](docs/r18-kernel-in-qemu.md) | R18: our kernel under the R5 noble rootfs in QEMU: memory and disk vs Ubuntu's kernel, initramfs optional |
 | [`docs/kernel-module-trim-r17.md`](docs/kernel-module-trim-r17.md) | R17: module allowlist, what it removed and kept, before/after sizes, the iwd and controller gaps it found |
 | [`docs/kernel-build-r10.md`](docs/kernel-build-r10.md) | R10: kernel config, cross-build and `.deb` packages for noble; why mainline and not ROCKNIX 7.2; sizes |
@@ -101,6 +103,7 @@ scripts/build-kernel.sh              # config checks only: fragment holds, every
 scripts/build-kernel.sh --build      # + make bindeb-pkg and size report
 scripts/build-kernel.sh --no-trim    # same, without the module allowlist (for comparison)
 scripts/build-kernel.sh --display --build   # with the display layer (after workbench.sh --display)
+scripts/build-kernel.sh --fragment config/rg34xxsp-builtin-trim.config --build   # R20 trial
 ```
 It works in `./.work/` (git-ignored; override with `WORK=`), never touches a device, card or image,
 and stops at the first failure. Last full run: see the newest Kernel Research entry in
