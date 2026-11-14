@@ -29,7 +29,7 @@ Stage 2 (research and compatibility assessment), 2026-11-13. Research only: noth
 | H700 board DTs | `sun50i-h700-anbernic-rg35xx-{2024,plus,h,sp}.dts` are upstream. The RG35XX SP DT has the lid as a `gpio-keys` switch on PE7. **There's no RG34XX-SP DT upstream.** | kernel tree |
 | PMIC | AXP717 driver upstream (MFD, regulators, battery, USB power). Andre Przywara's series notes the BSP's "AXP2202" appears to be the same chip | lore, 2024-03 |
 | CPU OPPs, audio codec | H616 codec upstream (applied for 6.13). Line-out routing for RG35XX boards included | linux-sunxi, 2024-10 |
-| GPU | Mali-G31 MP2 node + PRCM PPU power domain upstream; Panfrost H616 compatible. Mesa Panfrost: Bifrost v7 (G31) gets GLES 3.1 and Vulkan 1.3 (PanVK) | linux-sunxi 2025-04; docs.mesa3d.org |
+| GPU | Mali-G31 MP2 node + PRCM PPU power domain upstream; Panfrost H616 compatible. Mesa Panfrost: Bifrost v7 (G31) gets GLES 3.1. *Corrected 2026-11-14 (R6):* not Vulkan 1.3: noble's Mesa 25.2.8 PanVK refuses v7 unless `PAN_I_WANT_A_BROKEN_VULKAN_DRIVER=1` is set and then reports Vulkan 1.0 (`docs/r6-mesa-panfrost-noble.md`) | linux-sunxi 2025-04; docs.mesa3d.org |
 | Display (DE33 + RGB LCD) | **Not fully upstream.** The early DE33 code was a proof of concept, and the DE33 binding is being redone (planes shared between mixers; v2 series May–June 2026). Working LCD output still needs out-of-tree patches | dri-devel / LKML 2025-10 → 2026-06 |
 | Panel driver | Out of tree: generic `panel-mipi-dpi-spi` (kikuchan98 v2, 2025-02) plus a **per-panel init blob** loaded as firmware | ROCKNIX patch 0110 |
 | Wi-Fi | rtw88 SDIO with RTL8821CS upstream (`rtw88_8821cs`), firmware `rtw88/rtw8821c_fw.bin` | kernel tree |
