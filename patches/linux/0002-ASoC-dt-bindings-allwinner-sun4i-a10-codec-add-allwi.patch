@@ -9,6 +9,8 @@ external speaker amplifier and the speaker being ready. The driver keeps
 700 ms when the property is absent.
 
 Draft for the Redux project.
+
+This patch was drafted with an AI coding assistant (Claude).
 ---
  .../bindings/sound/allwinner,sun4i-a10-codec.yaml          | 7 +++++++
  1 file changed, 7 insertions(+)

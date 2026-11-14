@@ -385,6 +385,7 @@ SP tree lacks. Key *codes* follow upstream's gamepad convention, not stock's.
 - The kernel's AI-assistant rules (`Documentation/process/coding-assistants.rst` and
   `generated-content.rst` at `97d73c8`) say a tool must never add `Signed-off-by`; the human
   submitter adds it after reviewing. They also ask for the tool's part to be disclosed in the
-  changelog. Patch 0006 already says so; **0001–0005 need the same disclosure line added**.
+  changelog. All of 0001–0007 now carry a disclosure line (0001–0005 added
+  2026-11-14, `kr/disclosure-0001-0005`).
 - The author line `Redux Kernel Research <redux@invalid>` must become the submitter's identity.
 - `scripts/get_maintainer.pl` gives the recipients (sunxi maintainers, devicetree, linux-sunxi).

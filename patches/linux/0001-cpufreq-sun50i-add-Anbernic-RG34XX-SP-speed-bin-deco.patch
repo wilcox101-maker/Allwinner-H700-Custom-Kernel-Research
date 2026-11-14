@@ -10,6 +10,8 @@ vendor default when the SoC revision is not available over SMCCC. Two
 optional nvmem cells (speed-aux-a/b) feed the 0x5c00 split.
 
 Draft for the Redux project, compile-tested only.
+
+This patch was drafted with an AI coding assistant (Claude).
 ---
  drivers/cpufreq/sun50i-cpufreq-nvmem.c | 87 +++++++++++++++++++++++++-
  1 file changed, 86 insertions(+), 1 deletion(-)

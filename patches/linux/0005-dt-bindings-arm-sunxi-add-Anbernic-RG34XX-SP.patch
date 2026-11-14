@@ -7,6 +7,8 @@ The RG34XX-SP is an Allwinner H700 clamshell handheld, close to the
 RG35XX-SP with analog sticks added.
 
 Draft for the Redux project.
+
+This patch was drafted with an AI coding assistant (Claude).
 ---
  Documentation/devicetree/bindings/arm/sunxi.yaml | 5 +++++
  1 file changed, 5 insertions(+)

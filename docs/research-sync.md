@@ -876,3 +876,11 @@ Nothing ran on the device.
    ~450 mA offset (driver comment); ALSA card id `Codec`, mixer `Line Out`. New device task **K23**.
 5. **For DR:** nothing needed. The Redux side (a `platform_mainline.c`) goes to the Manager in KR package l.
 
+
+### Kernel Research, 2026-11-14, 17:45 ET (disclosure line in 0001–0005, desk)
+New KR chat (session renamed "Kernel Research 2026-11-14 to 2026-11-15"); tasks assigned by the Redux Manager for Dale.
+1. `patches/linux/0001-0005` now end their commit messages with "This patch was drafted with an AI coding assistant
+   (Claude)." (kernel `Documentation/process/coding-assistants.rst`). 0006/0007 already had it. No Signed-off-by added.
+2. Check: `git mailinfo` gives byte-identical diffs before and after for all five, so `git am` applies them as before;
+   CI (image-smoke) rebuilds the kernel on this PR.
+3. `docs/kernel-custom-patches.md` §10 updated. **For DR:** nothing needed; `patches/outgoing/` already carries the line.
