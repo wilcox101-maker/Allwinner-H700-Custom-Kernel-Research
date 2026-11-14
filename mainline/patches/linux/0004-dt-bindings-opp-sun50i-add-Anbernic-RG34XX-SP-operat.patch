@@ -1,0 +1,48 @@
+From ac4c452415fabb6302ad3e35faef15f16e3cd394 Mon Sep 17 00:00:00 2001
+From: Redux_Kernel_Research <redux@invalid>
+Date: Fri, 13 Nov 2026 21:22:32 -0500
+Subject: [PATCH 4/6] dt-bindings: opp: sun50i: add Anbernic RG34XX-SP
+ operating points
+
+Add the anbernic,rg34xx-sp-operating-points compatible, whose speedbin
+decoder also reads two further SID words, and document the optional
+nvmem-cell-names that name them. The speedbin cell stays first.
+
+Draft for the Redux project.
+---
+ .../opp/allwinner,sun50i-h6-operating-points.yaml    | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml b/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
+index 75ab552f6..91f3b9251 100644
+--- a/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
++++ b/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
+@@ -25,6 +25,7 @@ properties:
+       - allwinner,sun50i-a100-operating-points
+       - allwinner,sun50i-h6-operating-points
+       - allwinner,sun50i-h616-operating-points
++      - anbernic,rg34xx-sp-operating-points
+ 
+   nvmem-cells:
+     description: |
+@@ -35,6 +36,17 @@ properties:
+       Documentation/devicetree/bindings/nvmem/nvmem.yaml and also the
+       examples below.
+ 
++  nvmem-cell-names:
++    description: |
++      Needed when more than the speedbin cell is listed. The speedbin
++      cell must come first; the Anbernic RG34XX-SP decoder also reads two
++      further SID words.
++    minItems: 1
++    items:
++      - const: speed
++      - const: speed-aux-a
++      - const: speed-aux-b
++
+   opp-shared: true
+ 
+ required:
+-- 
+2.43.0
+
