@@ -43,6 +43,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | done (desk): `r1-boot-chain.md`, `scripts/build-uboot.sh` (u-boot v2026.10 + TF-A v2.14.0, LPDDR4 and LPDDR3 binaries, reproducible); device steps K3 → K4 |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | done (desk): `r2-fel-test-kit.md`; runs as K4 |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | recurring: November done (`r11-upstream-check-2026-11.md`); next ~2026-12-14 |
+| R22 | Upstream prep for patch 0006 (RG34XX SP DTS, with its binding 0005) and 0007 (OPP schema) | DR | done (desk): `r22-upstream-prep.md`, `patches/outgoing/`, `scripts/upstream-check.sh`; all checks pass on sunxi `dt-for-7.5` / `next-20261113`. **Not sent; Dale decides.** Recommended: DTS after K2 + K5; 0007 held until a board uses it |
+| R23 | QEMU boot smoke test of the image in CI (GitHub Actions) | DR | claimed: DR (Manager, Dale GO 2026-11-14) |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -67,6 +69,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 14:30: R22 upstream prep (desk): RG34XX SP binding + DTS (0005/0006, minus our unmerged `pa-delay-ms`) and the OPP schema patch (0007) rebased to sunxi `dt-for-7.5` / `next-20261113`; checkpatch --strict, dtbs_check W=1, dt_binding_check, before/after control, maintainers lists, cover letter; `scripts/upstream-check.sh` re-runs it all. Nothing sent (DR, `r22-upstream-prep.md`).
 - 2026-11-14 09:40: R1 + R2 (desk): `scripts/build-uboot.sh` builds SPL + BL31 + u-boot per DRAM type (u-boot **v2026.10**, which has the H616 LPDDR3 TPR6 fix that v2026.01 lacks; TF-A v2.14.0; PE6 DT selection + R8 boot counter); eGON checksum, size, strings and reproducibility checked; `--sources` writes the corresponding source for R9. Card layout confirmed (MBR, 8 KiB, FAT `/boot` @ 16 MiB). FEL kit for K4 (KR, `r1-boot-chain.md`, `r2-fel-test-kit.md`).
 - 2026-11-14 08:45: **Q1/Q2/Q5 decided by Dale** (via the Redux Manager): Q1 stock 115 °C, Q2 ROCKNIX H700 CPU table (1512 MHz boost-only, stress test K22), Q5 1024 mA until K14. Applied to `-redux` (+ new `…-cpu-opp.dtsi`, patch 0007 for the OPP schema); desk checks pass (KR).
 - 2026-11-14 08:30: **D2 done:** u-boot PE6 patch defaults PE6 low → `…-redux-panel.dtb`, PE6 high → `…-redux.dtb` (prompt "newer panel", help text); builds on v2026.01. Image build: `PANEL_FW`/`-private` path retired (no `.panel` consumer after Q8 a); new `image/check-display.sh` (panel DTB on the card ⇒ `panel-newvision-nv3052c` must match `anbernic,rg34xx-sp-panel`, module or built-in); initramfs hook now only for the QEMU Ubuntu-kernel mode. KR R20 answered: no `bootefi` in the image tooling (DR).

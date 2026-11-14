@@ -1,0 +1,49 @@
+From 4fa1669838aa1d3f06cfba9545c6e1ccb5484f27 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.invalid>
+Date: Sat, 14 Nov 2026 13:56:21 -0500
+Subject: [PATCH 0/2] arm64: dts: allwinner: h700: Add Anbernic RG34XX SP
+
+The Anbernic RG34XX SP is an Allwinner H700 clamshell handheld. Its
+board follows the RG35XX SP (same PMIC, keys, lid sensor and Wi-Fi/BT
+wiring), and adds two analog sticks with stick-click buttons, wired as on
+the RG35XX H. This series adds its compatible and a device tree that
+includes the RG35XX SP tree and adds:
+
+- the analog sticks (GPADC channel 0 behind a 4-way analog mux, as on
+  the RG35XX H), polled every 16 ms
+- the stick-click buttons on PE8/PE9
+- the battery values from the vendor device tree, including its 4.10 V
+  charge voltage limit
+
+Not described yet: the 3.4" 720x480 RGB/SPI panel and its backlight
+(they need the H616 display engine, TCON and PWM series still under
+review), and a rumble motor, which the vendor tree names but which is
+not confirmed on this model. As in the upstream RG35XX trees, only the
+first of the two microSD slots is described.
+
+Testing: [TODO before sending: replace this paragraph with what was
+actually run, e.g. "Booted on an RG34XX SP (LPDDR4, original panel):
+keys, both sticks and stick clicks checked with evtest; battery and
+charger report via sysfs; Wi-Fi and Bluetooth come up". Until then the
+honest line is: "Built and checked with dtbs_check (CHECK_DTBS=y, W=1)
+and dt_binding_check; not yet tested on hardware."]
+
+The patches were drafted with an AI coding assistant (Claude) from the
+vendor device tree and the upstream RG35XX H/SP trees; I reviewed them
+and take responsibility for them.
+
+Your Name (2):
+  dt-bindings: arm: sunxi: Add Anbernic RG34XX SP
+  arm64: dts: allwinner: h700: Add Anbernic RG34XX SP
+
+ .../devicetree/bindings/arm/sunxi.yaml        |   5 +
+ arch/arm64/boot/dts/allwinner/Makefile        |   1 +
+ .../sun50i-h700-anbernic-rg34xx-sp.dts        | 113 ++++++++++++++++++
+ 3 files changed, 119 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/allwinner/sun50i-h700-anbernic-rg34xx-sp.dts
+
+
+base-commit: a7f6e476aaedba0d8ec575acaeb3257f900a592f
+-- 
+2.43.0
+
