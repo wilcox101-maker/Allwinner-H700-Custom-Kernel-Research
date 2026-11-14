@@ -11,8 +11,8 @@ upstream sources, and copies no other project's patches.
 ## 1. Safe panel selection in u-boot (no guessing)
 
 > **Update 21:10. Superseded by the Deep Research chat's work**
-> (Project doc `claude/rg34xxsp-panel-detect-and-uboot-patch.md`; u-boot patch
-> `0001-sunxi-rg34xxsp-dt-selection.patch`, build-tested on u-boot v2026.01, not yet in this repo).
+> ([`rg34xxsp-panel-detect-and-uboot-patch.md`](rg34xxsp-panel-detect-and-uboot-patch.md); u-boot patch
+> [`patches/u-boot/0001-sunxi-rg34xxsp-dt-selection.patch`](../patches/u-boot/0001-sunxi-rg34xxsp-dt-selection.patch), build-tested on u-boot v2026.01).
 > - Stock reads a **single strap, PE6**, with the pull-up on, after a reset pulse on PI14:
 >   **low = original panel, high = v2 panel** (V1.0.6).
 > - The patch sets `fdtfile` in `misc_init_r()`. Setting `panel_autodetect=no` skips detection.
@@ -27,7 +27,7 @@ garbled. Our rule is never to drive an unknown panel.
 
 **What exists already:**
 - **Stock:** Anbernic's u-boot reads GPIO port E straps (`--allen--PE_pull` / `PE_data`) and passes
-  `lcd_type=` to the kernel (Deep Research, `claude/anbernic-kernel-build-methodology.md`).
+  `lcd_type=` to the kernel (Deep Research, [`anbernic-kernel-build-methodology.md`](anbernic-kernel-build-methodology.md)).
 - **Mainline u-boot** (`6487c50`, 2026-11-13) has a hook for exactly this:
   - `board_fit_config_name_match()` in `board/sunxi/board.c` picks the DT from GPIO straps or the
     DRAM size, as the PinePhone (PL6) and Pine64 (RAM size) options do.
@@ -123,7 +123,7 @@ All three go into the u-boot FIT (`CONFIG_OF_LIST`) and into `/boot/dtbs`.
 **Method.** Read-only disassembly of Dale's two stock kernels: the 2025 image partition 4
 (`#19`, decoder at file offset `0x5f41c0`) and V1.0.6 `3.boot.img` (`#9`, at `0x5f4a90`). Tools:
 `aarch64-linux-gnu-objdump` and `../tools/findconst.py`. The Deep Research chat decoded the same
-routine independently (`claude/stock-cpu-bin-decoder-and-dcdc2.md`), and the results agree except
+routine independently ([`stock-cpu-bin-decoder-and-dcdc2.md`](stock-cpu-bin-decoder-and-dcdc2.md)), and the results agree except
 for one fuse value (`0x7c00`, below).
 
 **Inputs:**
@@ -231,7 +231,7 @@ measuring. If it's high, the next step is an IIO buffered or triggered read.
 - **GPU 648 MHz:** left out for now; see §6.
 
 ## 6. GPU OPPs on a shared rail (draft: `../dts/sun50i-h700-redux-gpu-opp.dtsi`, included by the board DT)
-- **Update 21:10 (Deep Research, `claude/stock-cpu-bin-decoder-and-dcdc2.md`).** In the stock
+- **Update 21:10 (Deep Research, [`stock-cpu-bin-decoder-and-dcdc2.md`](stock-cpu-bin-decoder-and-dcdc2.md)).** In the stock
   DT, DCDC2's only consumer is a `virtual-dcdc2` test node, and Mali has no supply. So stock GPU
   DVFS most likely changes the clock only, and DCDC2 stays at its boot value. One read on stock
   (`/sys/class/regulator/*/microvolts`) gives that value; then set our fixed DCDC2 to it.
@@ -318,7 +318,7 @@ Sources: Redux `reference/stock-202505/board.dts`; torvalds/linux `97d73c8`
 | LEDs | low-power LED PI11 | gpio-leds PI12 power, PI11 status | inherited |
 | Rumble | `moto_pwm_gpio` PH2 | none | **not added**: Anbernic's one-DT-for-the-family; motor presence unconfirmed (device task) |
 
-Also found: `docs/hardware-map.md` says the SP lacks "the analog-stick mux". The same document
+Also found: Redux's `docs/hardware-map.md` says the SP lacks "the analog-stick mux". The same document
 confirms two sticks on Dale's unit, so that header note is stale for the mux.
 
 ## 9. Verification status (2026-11-13 21:50 ET, updated 22:10 ET; all desk)
@@ -365,7 +365,7 @@ binding entry is patch 0005.
 every stock key pin matches the upstream 2024 base (PA0–PA12, PE0–PE3) except L3/R3, which the
 SP tree lacks. Key *codes* follow upstream's gamepad convention, not stock's.
 
-**Checks** (torvalds/linux `97d73c8`, aarch64-linux-gnu-gcc 13.2, dtschema from PyPI):
+**Checks** (torvalds/linux `97d73c8`, aarch64-linux-gnu-gcc 13.3.0, dtschema from PyPI):
 - `make CHECK_DTBS=y allwinner/sun50i-h700-anbernic-rg34xx-sp.dtb`: 0 warnings. A deliberately
   wrong property (`poll-interval = "x"`) produced a warning, so the check is live.
 - The compiled DTB holds the intended values (read back with `fdtget`): L3/R3 codes 317/318,

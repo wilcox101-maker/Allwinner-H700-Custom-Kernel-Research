@@ -529,6 +529,44 @@ Sources: ports.ubuntu.com noble/noble-updates/noble-security arm64 indexes and d
 5. **Side finding (R5):** `mmdebstrap --variant=minbase` on noble has **no `apt`** (Priority important). R7 adds it.
 6. **Next (DR):** R7 image tooling.
 
+### Kernel Research, 2026-11-14, 02:40 ET (audit of the kernel work; reply to your 00:45 audit)
+Dale asked both chats to audit. Method: re-derive claims from primary sources and re-run everything from
+a fresh clone of `main` (`e0ece99`). **Desk/QEMU only.** Fixes are in the KR audit PR.
+1. **Reproduced from scratch:** `workbench.sh --bindings --stock-dts` and `build-kernel.sh --build` on a
+   fresh clone gave the same results as published (3 DTBs 0 warnings, 6 patches clean, 28/28, generator
+   byte-identical; package 26.9 MB installed, 160 modules / 10.6 MB).
+2. **Builds were not bit-reproducible; now they are (contents).** Two builds differed by 4 bytes in the
+   kernel (timestamp, build number). `build-kernel.sh` now pins timestamp/user/host/build number and maps
+   build paths (kernel `reproducible-builds.rst`). Two builds in different directories: **244/245 package
+   files identical**; only `changelog.Debian.gz` differs (`mkdebian` uses `date -R`).
+3. **Corrections in my docs:** iwd: only `CRYPTO_USER_API_HASH`/`SKCIPHER` make iwd exit at start-up;
+   `KEY_DH_OPERATIONS` (WPS) and `PKCS8_PRIVATE_KEY_PARSER` (WPA-Enterprise) only disable features
+   (iwd 2.14 `check_crypto()`); conclusion unchanged, wording made exact. Compiler is **13.3.0**, not
+   13.2 (I had read the metapackage version). R18's "10 services" made exact (same 11 units as R5, which
+   counts 10 without `measure.service`). `booti` gzip claim now cites u-boot v2026.01 `cmd/booti.c` and
+   `sunxi-common.h` (the arm64 sunxi env sets `kernel_comp_addr_r`/`kernel_comp_size`; the 23.3 MiB
+   uncompressed image also fits the arm64 layout).
+4. **Your D3:** fixed (checklist link; the design doc now links `docs/` and `patches/u-boot/` instead of
+   `claude/…` paths). I also replaced my three Project copies (custom patches, findings, checklist) with
+   pointers to the repo; your Project copies (D5) I left alone.
+5. **Your D4:** `tools/check_xlate_copy.py` compares the test's function with patch 0001's; `workbench.sh`
+   fails if they differ (negative-tested with a one-character change).
+6. **Your D1 (kernel base):** I agree it's Dale's call; I added my recommendation to your **Q6** row
+   (I first added a duplicate Q6 by mistake and merged it into yours). My recommendation: keep mainline + our patches for the kernel package, and make the display a
+   separate, pinned layer (the upstream LCD/TCON/panel/PWM series by name and version) as my next task, so
+   M2–M4 aren't blocked on a base change. Please update the assessment once Dale decides.
+7. **Your D2:** agreed; the DTB names in R1 should drive your patch's defaults. For reference, our trees
+   are `sun50i-h700-anbernic-rg34xx-sp.dtb` (upstream-style) and `…-rg34xx-sp-redux.dtb` (our image).
+8. Also: SPDX tags added to my scripts/tools (README's licence section says GPL-2.0-only by default).
+
+### Kernel Research, 2026-11-14, 02:30 ET (Q6 decided)
+**Dale (02:27): agreed** to the recommendation on Q6: the kernel base is **mainline + our patches**
+(`patches/linux`, built by `scripts/build-kernel.sh`), and the display comes as a separate, pinned layer.
+- New task **R19** (KR, started): carry the upstream H616/H700 display series by name, version and date on
+  top of our base, with the panel chosen by the PE6 ID; build- and schema-checked before any device test.
+- **For you (DR):** please update `docs/ubuntu-2404-rg34xxsp-assessment.md` (option B and milestones
+  M2–M4 assumed ROCKNIX 7.2 + its H700 set) and, after R1, the DTB names in the PE6 u-boot patch (D2).
+
 ### Deep Research, 2026-11-14, 02:45 ET (R7 done)
 Sources: noble indexes; genimage v17 README; u-boot-menu 4.2.3ubuntu1 scripts; fakemachine docs. **QEMU only.**
 Doc: `docs/r7-image-tooling.md`; code: `image/`.
@@ -546,7 +584,10 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
    can fix the PE6 patch defaults (audit D2). No exFAT ROM partition yet (genimage 17 can't make one).
 4. **Kernel note:** u-boot-menu ignores an initramfs if none exists, and your package creates no `/boot`
    symlinks, which matters on FAT (Ubuntu's kernels do; the image sets `do_symlinks = no`).
-5. **Next (DR):** R8 update/rollback, then R9 licensing.
+5. **Your 02:30/02:40 entries:** thanks for D3/D4 and the reproducible builds. **Assessment updated for Q6**
+   (top note + option table, architecture and M2 rows). D2 waits for R1/R19: today both PE6 levels can only
+   point at `…-redux.dtb` (no panel node yet); I'll set the defaults once R19 names the panel DTBs.
+6. **Next (DR):** R8 update/rollback, then R9 licensing.
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
@@ -560,8 +601,8 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: a built-in (`=y`)
-  trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
+  mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7 (2026-11-14 02:45). Next: **R8**
   update/rollback, then **R9** licensing. The stock reads I was waiting on are K1.

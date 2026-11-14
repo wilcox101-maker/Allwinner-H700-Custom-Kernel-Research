@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 # Configure, cross-build and package the RG34XX-SP kernel as Debian packages for Ubuntu 24.04.
 #
 # Run scripts/workbench.sh first: it prepares $WORK/linux (pinned Linux + patches/linux + dts/).
@@ -46,8 +47,21 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [ -d "$LINUX/.git" ] || fail "no $LINUX: run scripts/workbench.sh first"
 [ "$(git -C "$LINUX" rev-parse --abbrev-ref HEAD)" = workbench ] ||
 	fail "$LINUX is not on the workbench branch: run scripts/workbench.sh first"
+# Reproducible build (Documentation/kbuild/reproducible-builds.rst): fixed timestamp, user, host
+# and build number, and no absolute build paths in debug info. The timestamp is the commit date of
+# the last change to the kernel inputs, so a docs-only commit does not change the kernel's bytes.
+SOURCE_DATE_EPOCH=$(git -C "$REPO" log -1 --format=%ct -- patches/linux dts config \
+	scripts/build-kernel.sh tools/gen_trim_config.py tools/dt_driver_coverage.py \
+	tools/dt_driver_coverage.ignore)
+[ -n "$SOURCE_DATE_EPOCH" ] || fail "cannot date the kernel inputs from git (is $REPO a clone?)"
+export SOURCE_DATE_EPOCH
+KBUILD_BUILD_TIMESTAMP=$(LC_ALL=C date -u -d "@$SOURCE_DATE_EPOCH")   # shown in /proc/version
+export KBUILD_BUILD_TIMESTAMP
+export KBUILD_BUILD_USER=rg34xxsp KBUILD_BUILD_HOST=allwinner-h700-research
+export KBUILD_BUILD_VERSION=${PKGREL}
+PREFIX_MAP="-fdebug-prefix-map=$LINUX=/usr/src/linux -fdebug-prefix-map=$OUT=/usr/src/linux-build"
 MAKE=(make -s -C "$LINUX" O="$OUT" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-      LOCALVERSION="$LOCALVERSION" -j"$JOBS")
+      LOCALVERSION="$LOCALVERSION" KCFLAGS="$PREFIX_MAP" KAFLAGS="$PREFIX_MAP" -j"$JOBS")
 
 log "1. Config"
 mkdir -p "$OUT"
@@ -168,6 +182,8 @@ log "4. Sizes (what the image package installs)"
 krel=$(cat "$OUT/include/config/kernel.release")
 deb=$(ls "$WORK"/linux-image-"$krel"_*.deb)
 printf '  kernel release   %s\n' "$krel"
+printf '  compiler         %s\n' "$(aarch64-linux-gnu-gcc --version | head -1)"
+printf '  source date      %s (SOURCE_DATE_EPOCH %s)\n' "$(date -u -d "@$SOURCE_DATE_EPOCH" +%F)" "$SOURCE_DATE_EPOCH"
 printf '  package          %s\n' "$(basename "$deb")"
 printf '  .deb file        %.1f MB\n' "$(echo "$(stat -c %s "$deb") / 1048576" | bc -l)"
 printf '  installed size   %.1f MB\n' "$(echo "$(dpkg-deb -f "$deb" Installed-Size) / 1024" | bc -l)"

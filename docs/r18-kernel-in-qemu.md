@@ -34,7 +34,8 @@ own memory and disk cost and that Ubuntu's userspace runs on it, not that any bo
   (AnonPages, PSS) match R5, so the gain is the kernel's: less memory reserved for the kernel image
   and less slab (19.5 vs 32 MB).
 - **zram works with our kernel**: `/dev/zram0`, zstd, 239.5 MB at 512 MB (R5's `ram / 2` setting).
-- **All 10 services R5 saw are running**, iwd among them, and no console line contains "error" or
+- **The same running services as R5's iwd run** (the same 11 units, which R5 counts as 10 without
+  its own `measure.service`), iwd among them, and no console line contains "error" or
   "fail" in any of the four boots. iwd started with no missing-option message; its required kernel
   options were added in R17.
 

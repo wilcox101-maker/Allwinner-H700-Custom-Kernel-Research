@@ -4,9 +4,10 @@ Kernel Research chat, 2026-11-13. **Desk work only: the packages below were buil
 Installing them on a device waits for a serial console (K3) and a first FEL boot (K4), on a spare
 card only.
 
-> **Correction (R17, 2026-11-14):** the R10 package below lacked four options that **iwd** requires
-> (`CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`, `PKCS8_PRIVATE_KEY_PARSER`),
-> so Wi-Fi under iwd, the daemon R5 recommends, would not have started. Found while trimming modules
+> **Correction (R17, 2026-11-14):** the R10 package below lacked four options **iwd** checks for
+> (`CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`, `PKCS8_PRIVATE_KEY_PARSER`).
+> Without the first two iwd exits at start-up, so Wi-Fi under iwd, the daemon R5 recommends, would
+> not have started; the other two only disable WPS and WPA-Enterprise. Found while trimming modules
 > (iwd 2.14 checks these at start-up, `src/main.c`). The fragment now carries iwd's full required list,
 > and the R17 build replaces this package. See `kernel-module-trim-r17.md`.
 
@@ -62,7 +63,7 @@ The task note said "ROCKNIX 7.2 + H700 set". This build uses **torvalds/linux `9
   libdw-dev libelf-dev libssl-dev`, besides the workbench tools.
 
 ## Results
-Built 2026-11-13 on an Ubuntu 24.04 x86-64 host with 2 CPUs and `aarch64-linux-gnu-gcc` 13.2
+Built 2026-11-13 on an Ubuntu 24.04 x86-64 host with 2 CPUs and `aarch64-linux-gnu-gcc` 13.3.0 (Ubuntu `13.3.0-6ubuntu2~24.04.1`)
 (`WORK=/tmp/wb scripts/build-kernel.sh --build`, after `scripts/workbench.sh`).
 
 | Item | Result |
@@ -78,11 +79,29 @@ Built 2026-11-13 on an Ubuntu 24.04 x86-64 host with 2 CPUs and `aarch64-linux-g
 - **Modules are the bulk** and mostly not ours: 924 modules come from the generic `defconfig`
   (USB gadgets, network, sound and media drivers for other boards). Trimming them is next step 2;
   most of the 38.5 MB should go, but no figure is claimed until it is measured.
-- **The kernel is 9.3 MB compressed.** u-boot's `booti` can load the gzip image directly (it
-  decompresses it), so the boot partition needs room for about 10 MB per kernel, plus the
+- **The kernel is 9.3 MB compressed.** u-boot's `booti` can load the gzip image directly: it
+  decompresses it when `kernel_comp_addr_r` and `kernel_comp_size` are set, and the arm64 sunxi
+  default environment sets both (u-boot v2026.01 `127a42c`: `cmd/booti.c`,
+  `include/configs/sunxi-common.h`). The uncompressed kernel (`image_size` 23.3 MiB) also fits
+  the arm64 sunxi layout, which leaves about 63 MB between `kernel_addr_r` and the compressed-kernel
+  area. So the boot partition needs room for about 10 MB per kernel, plus the
   initramfs, times two for a fallback entry (R1/R8 sizing). Not yet tried on a device.
 - **The version is stable:** the release name and package version contain no hash of the local
   patch commits, so rebuilding the same tree gives the same names.
+
+## Reproducible builds (added in the 2026-11-14 audit)
+`scripts/build-kernel.sh` now follows the kernel's `Documentation/kbuild/reproducible-builds.rst`:
+a fixed build timestamp (the commit date of the last change to the kernel inputs: `patches/linux`,
+`dts`, `config` and the build tools), fixed build user and host (`rg34xxsp@allwinner-h700-research`),
+build number = `PKGREL`, `-fdebug-prefix-map` for both source and build directories, and
+`SOURCE_DATE_EPOCH` exported for the packaging. The build report prints the compiler and that date.
+
+**Checked:** two full builds of the same commit in different work directories (`/tmp/wb`,
+`/tmp/audit/work`) produced packages whose contents are **byte-identical: 244 of 245 files**, kernel
+image, all 160 modules and all DTBs included (same combined SHA-256, `99c1a58471a25d55…`). The one
+difference is `changelog.Debian.gz`: the kernel's `scripts/package/mkdebian` dates it with
+`date -R` and offers no override, so the `.deb` files themselves still differ. Before this change
+the kernel image differed by 4 bytes between builds (timestamp and build number).
 
 
 ## What this does not tell us (needs hardware)
