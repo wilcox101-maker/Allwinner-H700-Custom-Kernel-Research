@@ -15,6 +15,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/research-sync.md`](docs/research-sync.md) | Running log between the Deep Research and Kernel Research chats |
 | `docs/*.md` | Findings, one document per topic (index below) |
 | [`patches/linux/`](patches/linux/) | Our Linux patches: a 6-patch `git am` series against torvalds/linux `97d73c8` (compile- and schema-checked, not booted) |
+| [`patches/upstream/base-layer.txt`](patches/upstream/base-layer.txt) | Base layer (R11): upstream patches by reference for every build, today the H616 CPU cooling map; dropped once merged |
 | [`patches/upstream/display-layer.txt`](patches/upstream/display-layer.txt) | Display layer (R19): upstream H616 display and PWM series, pinned by patchwork ID and `git patch-id`; applied by `tools/apply_upstream.py`, never copied here |
 | [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer: RG34XX-SP entry in the upstream NV3052C panel driver (init table from stock u-boot, decision Q8) and its binding |
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
@@ -35,6 +36,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
+| [`docs/r11-upstream-check-2026-11.md`](docs/r11-upstream-check-2026-11.md) | R11 November upstream check: pinned series status, CPU cooling map adopted, watch list |
 | [`docs/r20-builtin-trim.md`](docs/r20-builtin-trim.md) | R20: trial fragment that turns off built-in code the board can't use (−5.8 MB Image, +6 MB free RAM in QEMU); boot path check |
 | [`docs/r18-kernel-in-qemu.md`](docs/r18-kernel-in-qemu.md) | R18: our kernel under the R5 noble rootfs in QEMU: memory and disk vs Ubuntu's kernel, initramfs optional |
 | [`docs/kernel-module-trim-r17.md`](docs/kernel-module-trim-r17.md) | R17: module allowlist, what it removed and kept, before/after sizes, the iwd and controller gaps it found |

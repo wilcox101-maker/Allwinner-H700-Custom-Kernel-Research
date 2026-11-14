@@ -4,7 +4,8 @@
 #
 # What it does (nothing here touches a device, a card or a disk image):
 #   1. fetches torvalds/linux at the pinned snapshot into $WORK/linux
-#   2. applies patches/linux/*.patch on a local branch
+#   2. applies patches/linux/*.patch on a local branch, then the base layer
+#      (patches/upstream/base-layer.txt: upstream patches by reference)
 #   3. copies dts/* in, generates the "reduxstock" variant, adds local Makefile lines
 #   4. builds and schema-checks the three RG34XX-SP DTBs (CHECK_DTBS=y): any warning fails;
 #      then builds every C file the patches touch with W=1: any warning fails
@@ -75,6 +76,9 @@ git -C "$LINUX" checkout -q -f -B workbench "$LINUX_SHA"
 git -C "$LINUX" clean -q -fd -- "$DTS"
 git -C "$LINUX" -c user.name=workbench -c user.email=workbench@invalid \
 	am -q "$REPO"/patches/linux/*.patch
+log "2a. Base layer (upstream patches by reference, patches/upstream/base-layer.txt)"
+python3 -I "$REPO/tools/apply_upstream.py" "$REPO/patches/upstream/base-layer.txt" \
+	"$LINUX" --cache "$WORK/upstream-cache"
 if [ "$DISPLAY" = 1 ]; then
 	log "2b. Display layer (upstream series by reference) and our display patches"
 	git -C "$LINUX" clean -q -fd -- drivers/gpu/drm/panel

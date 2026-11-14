@@ -60,7 +60,7 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 # Reproducible build (Documentation/kbuild/reproducible-builds.rst): fixed timestamp, user, host
 # and build number, and no absolute build paths in debug info. The timestamp is the commit date of
 # the last change to the kernel inputs, so a docs-only commit does not change the kernel's bytes.
-SOURCE_DATE_EPOCH=$(git -C "$REPO" log -1 --format=%ct -- patches/linux dts config \
+SOURCE_DATE_EPOCH=$(git -C "$REPO" log -1 --format=%ct -- patches/linux patches/upstream patches/linux-display dts config \
 	scripts/build-kernel.sh tools/gen_trim_config.py tools/dt_driver_coverage.py \
 	tools/dt_driver_coverage.ignore)
 [ -n "$SOURCE_DATE_EPOCH" ] || fail "cannot date the kernel inputs from git (is $REPO a clone?)"
