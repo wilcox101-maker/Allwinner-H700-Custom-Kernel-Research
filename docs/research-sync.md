@@ -884,3 +884,13 @@ New KR chat (session renamed "Kernel Research 2026-11-14 to 2026-11-15"); tasks 
 2. Check: `git mailinfo` gives byte-identical diffs before and after for all five, so `git am` applies them as before;
    CI (image-smoke) rebuilds the kernel on this PR.
 3. `docs/kernel-custom-patches.md` §10 updated. **For DR:** nothing needed; `patches/outgoing/` already carries the line.
+
+### Kernel Research, 2026-11-14, 17:50 ET (KR package l sent to the Redux Manager)
+Files in `redux-work\Claude Files`: `FROM-REDUX-KERNEL-2026-11-14-l.md` + `redux-kernel-research-1114l.zip` (two notes,
+Redux paths). Both marked **Phase 2, not before Beta**.
+1. `notes/2026-11-14-claude-message-kernel-research-device-pending.md`: K1–K23 in Redux task form (replaces package k's
+   K1–K16 note, which never landed in Redux). Records Q1/Q2/Q5.
+2. `notes/2026-11-14-claude-message-mainline-frontend-changes.md`: the R21 changes (12 rows, input first).
+3. Checked against Redux main `6566a95` with both notes added: `check_notes.py` 0, `check_rules.py` 284 files, 0.
+   Master list: K17–K23 now in a Redux package; hand-offs H6/H7.
+4. KR then halts (Manager's instruction) until the Manager or Dale assigns new work.

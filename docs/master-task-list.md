@@ -9,7 +9,7 @@ How to use it:
 - Either chat may change a row's status or add rows. When claiming or finishing a task, add a line to `docs/research-sync.md` too. Done tasks move to the bottom.
 
 ## A. Device tasks: pending until v0.5 (blocked: device)
-IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17** is a Deep Research addition (from R8). **K18–K22** are Kernel Research additions (from R19, R20, R11, Q2). K23 is a Kernel Research addition (from R21). K17–K23 are not yet in any Redux package. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
+IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17** is a Deep Research addition (from R8). **K18–K22** are Kernel Research additions (from R19, R20, R11, Q2). K23 is a Kernel Research addition (from R21). KR package **l** (2026-11-14, `FROM-REDUX-KERNEL-2026-11-14-l.md`) carries K1–K23 to Redux in a new note, `notes/2026-11-14-claude-message-kernel-research-device-pending.md`, replacing the K1–K16 note of package k. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
 
 | ID | Task | Why / what it unblocks | Source | Status |
 |---|---|---|---|---|
@@ -67,6 +67,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | H3 | `STATUS.md` says Dale's local clone is at `0afecd9`; it was at `d0de8e0` on 2026-11-13 | pending |
 | H4 | Proposed device tasks K10–K12 for the Redux kernel-research note | done: in KR package j's note (K1–K15) |
 | H5 | `hardware-map.md` header says the SP lacks the analog-stick mux; the same file confirms two sticks (KR finding) | pending (KR package i) |
+| H6 | Device tasks K1–K23 as a Redux note (Phase 2, not before Beta) | sent 2026-11-14: KR package l |
+| H7 | R21 frontend changes for mainline (`platform_mainline.c`, input by name + second remap table, backlight sysfs, `hw:CARD=Codec`, mixer `Line Out`, battery/thermal by type, vsync flag) as a Redux note, Phase 2, not before Beta | sent 2026-11-14: KR package l |
 
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
