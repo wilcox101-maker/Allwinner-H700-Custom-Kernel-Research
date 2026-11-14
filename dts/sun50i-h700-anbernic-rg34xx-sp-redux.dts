@@ -5,12 +5,12 @@
  * DRAFT, NOT BOOTED. Written 2026-11-13 by the Redux Kernel Research chat from:
  *  - upstream sun50i-h700-anbernic-rg35xx-sp.dts (torvalds/linux 97d73c8, v7.4-rc2), included below;
  *  - the stick wiring in stock reference/stock-202505/board.dts (ANBERNIC-keys node);
- *  - stock's own CPU OPP values (same file, opp_l_table).
  * Original text, not copied from any other project's patches.
  *
  * What this adds on top of the upstream RG35XX SP tree:
  *  1. Analog sticks via upstream adc-joystick + io-channel-mux (no out-of-tree driver).
- *  2. A stock-parity, speed-bin-agnostic CPU OPP table (see the comment there).
+ *  2. The CPU OPP table of decision Q2: upstream's H616 table with ROCKNIX's H700 changes, 1512 MHz
+ *     as boost (off by default) (sun50i-h700-redux-cpu-opp.dtsi).
  *  3. GPU OPPs 420-600 MHz on the fixed 0.94 V shared rail (sun50i-h700-redux-gpu-opp.dtsi).
  *  4. Battery charge voltage capped at stock's 4.10 V (upstream's RG35XX tree says 4.20 V).
  *  5. Speaker amplifier delay 100 ms, as stock (needs the Redux sun4i-codec patch; without it the
@@ -19,12 +19,15 @@
  * What it deliberately does NOT add:
  *  - Display/panel nodes. Mainline has none for the H616 yet; the panel must come from the
  *    display patch set AND a panel identified at boot (u-boot DT selection). Never guess a panel.
- *  - Thermal changes: see sun50i-h700-redux-stock-thermal.dtsi, included only if Dale picks
- *    "stock 115 C" for the critical trip.
+ *
+ * Thermal: decision Q1 (Dale, 2026-11-14) keeps stock's thermal settings, so
+ * sun50i-h700-redux-stock-thermal.dtsi is included: CPU critical trip 115 C, no GPU/VE/DDR trips.
  */
 
 #include "sun50i-h700-anbernic-rg35xx-sp.dts"
 #include "sun50i-h700-redux-gpu-opp.dtsi"
+#include "sun50i-h700-redux-cpu-opp.dtsi"
+#include "sun50i-h700-redux-stock-thermal.dtsi"
 
 / {
 	model = "Anbernic RG34XX-SP";
@@ -96,67 +99,13 @@
 			    <&pio 8 2 GPIO_ACTIVE_LOW>;	/* PI2 = stock A1 */
 		#mux-control-cells = <0>;
 	};
-
-	/*
-	 * CPU OPPs: interim "stock-parity, bin-agnostic" table.
-	 *
-	 * Upstream's sun50i-h616-cpu-opp.dtsi runs lower voltages than stock at some steps
-	 * (1416 MHz: 1.10 V upstream vs 1.15/1.16 V stock) and its speed bins can't yet be mapped
-	 * to stock's. Until the mapping is known, offer only the steps every stock bin has
-	 * (480, 1008, 1200 MHz), each at the HIGHEST voltage any stock bin uses for it. That never
-	 * undervolts a chip relative to stock and never exceeds a stock frequency or voltage.
-	 * The full per-bin table returns once the fuse-to-bin mapping is recovered.
-	 * Fuse: 16 bits at SID 0x03006200 (stock and upstream read the same cell).
-	 */
-	redux_cpu_opp_table: opp-table-reduxcpu {
-		compatible = "allwinner,sun50i-h616-operating-points";
-		nvmem-cells = <&cpu_speed_grade>;
-		opp-shared;
-
-		opp-480000000 {
-			opp-hz = /bits/ 64 <480000000>;
-			opp-microvolt = <900000>;	/* stock: 900 mV in every bin */
-			clock-latency-ns = <244144>;
-			opp-supported-hw = <0x3f>;
-		};
-
-		opp-1008000000 {
-			opp-hz = /bits/ 64 <1008000000>;
-			opp-microvolt = <1020000>;	/* stock: 900-1020 mV by bin; max taken */
-			clock-latency-ns = <244144>;
-			opp-supported-hw = <0x3f>;
-		};
-
-		opp-1200000000 {
-			opp-hz = /bits/ 64 <1200000000>;
-			opp-microvolt = <1100000>;	/* stock: 960-1100 mV by bin; max taken */
-			clock-latency-ns = <244144>;
-			opp-supported-hw = <0x3f>;
-		};
-	};
-};
-
-&cpu0 {
-	operating-points-v2 = <&redux_cpu_opp_table>;
-};
-
-&cpu1 {
-	operating-points-v2 = <&redux_cpu_opp_table>;
-};
-
-&cpu2 {
-	operating-points-v2 = <&redux_cpu_opp_table>;
-};
-
-&cpu3 {
-	operating-points-v2 = <&redux_cpu_opp_table>;
 };
 
 /*
  * Battery, from stock's AXP2202 settings (board.dts bat-power-supply): charge target 4100 mV
  * (pmu_init_chgvol), capacity 3000 mAh (pmu_battery_cap), resistance 170 mOhm (pmu_battery_rdc).
- * Charge current stays at upstream's 1024 mA (stock: 1500 mA); raise it only after a charging
- * temperature check on the device.
+ * Charge current stays at upstream's 1024 mA (stock: 1500 mA): decision Q5 (Dale, 2026-11-14),
+ * until the charging temperature check K14 on the device.
  */
 &battery {
 	voltage-max-design-microvolt = <4100000>;

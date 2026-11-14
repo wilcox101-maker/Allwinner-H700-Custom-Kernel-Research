@@ -100,8 +100,14 @@ All three go into the u-boot FIT (`CONFIG_OF_LIST`) and into `/boot/dtbs`.
   decoder lives only in the stock kernel binary.
 - **Superseded:** an early fit-by-shape attempt is replaced by the decoded mapping in §2a.
 
-**Design, in three stages:**
-1. **Now (in the draft DT): a bin-agnostic table.**
+**Decided 2026-11-14 (Q2, Dale):** the Redux trees use ROCKNIX's H700 table, i.e. upstream's H616
+table with ROCKNIX's changes (1032 MHz dropped, 1320 MHz also for speed5, 1512 MHz boost-only via
+Expert Mode, 480 MHz as suspend OPP), in `dts/sun50i-h700-redux-cpu-opp.dtsi`; stress test on
+Dale's unit before use, raise a failing step to stock's voltage. The bin-agnostic stage below is
+**dropped**; stages 2–3 (stock per-bin tables, `-reduxstock`) stay as the fallback.
+
+**Design, in three stages (history):**
+1. **Was (until 2026-11-14): a bin-agnostic table.**
    - It offers only the steps **every** stock bin has: 480, 1008 and 1200 MHz.
    - Each runs at the **highest** voltage any stock bin uses for it: 900, 1020 and 1100 mV.
    - It can't undervolt any chip relative to stock, and it stays inside stock frequencies and the
@@ -194,7 +200,7 @@ by `../tools/gen_cpu_opp_stock.py`:
   - It compiles with the board DT, and the decompiled DTB round-trips to exactly the nine tables
     above.
   - It replaces the interim table once the patch is in.
-- **Interim table, until then.** 480/1008/1200 MHz at 900/1020/1100 mV for every chip.
+- **Interim table (dropped by Q2, 2026-11-14).** 480/1008/1200 MHz at 900/1020/1100 mV for every chip.
   - That is at or above every stock bin's voltage at those steps.
   - Note that stock bin a1 has no 1008 step (it has 1032 at 900 mV). 1008 at 1020 mV sits
     inside a1's own curve (1032 at 900, 1104 at 950), so it overvolts but never undervolts.

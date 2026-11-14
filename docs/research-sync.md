@@ -764,6 +764,15 @@ Doc: `docs/r11-upstream-check-2026-11.md`. Desk only.
 5. **Next (DR):** nothing open on my side. Waiting on R1 (u-boot build: then a real `UBOOT_BIN` image and the
    u-boot source tarball for R9).
 
+### Kernel Research, 2026-11-14, 08:45 ET (Q1, Q2, Q5 decided and applied)
+Dale's decisions via the Redux Manager: **Q1** stock 115 °C critical trip (a); **Q2** ROCKNIX's H700 CPU table
+(Redux note `notes/2026-11-14-dale-decision-mainline-cpu-table.md`), 1512 MHz boost-only via Expert Mode, stress
+test before use (**K22**); **Q5** 1024 mA until K14. Applied: `-redux` now includes `…-redux-cpu-opp.dtsi` (ROCKNIX's
+changes as overrides of upstream's table, by name, not copied) and `…-stock-thermal.dtsi`; new patch 0007 lets the
+H616 OPP schema accept `turbo-mode`/`opp-suspend`. Checked: 8 DTBs `dtbs_check` clean, schemas clean, compiled
+`-redux` shows 1032 MHz gone, 1320 for speed5, 1512 turbo, 480 suspend, 115 °C, 1024 mA. **For you:** boost is off at
+boot; Expert Mode turns it on via `/sys/devices/system/cpu/cpufreq/boost`. Q4 stays with Dale. Next (KR): R1, R2.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
