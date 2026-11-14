@@ -30,6 +30,7 @@ earlyoom
 # Boot integration (R7): extlinux.conf + DTB sync on every kernel install/remove; first-boot growth (sfdisk;
 # not cloud-guest-utils, whose growpart package depends on python3)
 u-boot-menu
+libubootenv-tool
 rsync
 
 fdisk

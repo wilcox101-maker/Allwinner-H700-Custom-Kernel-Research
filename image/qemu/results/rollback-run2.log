@@ -1,0 +1,289 @@
+Bloblist at 0 not found (err=-2)
+alloc space exhausted ptr 400 limit 0
+Bloblist at 0 not found (err=-2)
+
+
+U-Boot 2026.01 (Nov 14 2026 - 02:52:10 -0500)
+
+DRAM:  512 MiB
+using memory 0x5e68c000-0x5f69c000 for malloc()
+Core:  51 devices, 14 uclasses, devicetree: board
+Flash: 64 MiB
+Loading Environment from FAT... OK
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+No USB controllers found
+Net:   eth0: virtio-net#30
+[?25h
+Saving Environment to FAT... OK
+Hit any key to stop autoboot:  2 Hit any key to stop autoboot: 1[KHit any key to stop autoboot: 0[K
+Scanning for bootflows in all bootdevs
+Seq  Method       State   Uclass    Part  Name                      Filename
+---  -----------  ------  --------  ----  ------------------------  ----------------
+Scanning global bootmeth 'efi_mgr':
+7[r[999;999H[6n8Cannot persist EFI variables without system partition
+Missing TPMv2 device for EFI_TCG_PROTOCOL
+Missing RNG device for EFI_RNG_PROTOCOL
+  0  efi_mgr      ready   (none)       0  <NULL>                    
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'virtio 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+Scanning bootdev 'fw-cfg@9020000.bootdev':
+fatal: no kernel available
+scanning bus for devices...
+Scanning bootdev 'virtio-blk#31.bootdev':
+  1  extlinux     ready   virtio       1  virtio-blk#31.bootdev.par /extlinux/extlinux.conf
+** Booting bootflow 'virtio-blk#31.bootdev.part_1' with extlinux
+U-Boot menu
+1:	NEW (simulated bad kernel)
+2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+3:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp (rescue target)
+Enter choice: 1:	NEW (simulated bad kernel)
+Retrieving file: /vmlinuz-7.4.0-rc2-rg34xxsp
+append: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 init=/bin/false quiet
+   Uncompressing Kernel Image to 0
+## Flattened Device Tree blob at 40000000
+   Booting using the fdt blob at 0x40000000
+Working FDT set to 40000000
+   Loading Device Tree to 000000005d435000, end 000000005d537fff ... OK
+Working FDT set to 5d435000
+
+Starting kernel ...
+
+[    1.055995] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
+[    1.057205] CPU: 1 UID: 0 PID: 1 Comm: false Not tainted 7.4.0-rc2-rg34xxsp #1 PREEMPT(full) 
+[    1.057425] Hardware name: linux,dummy-virt (DT)
+[    1.057638] Call trace:
+[    1.057812]  show_stack+0x18/0x24 (C)
+[    1.058417]  dump_stack_lvl+0x34/0x8c
+[    1.058509]  dump_stack+0x18/0x24
+[    1.058560]  vpanic+0x380/0x3ac
+[    1.058610]  do_panic_on_target_cpu+0x0/0x1c
+[    1.058672]  do_exit+0x7c8/0x904
+[    1.058723]  do_group_exit+0x34/0x90
+[    1.058775]  pid_child_should_wake+0x0/0x5c
+[    1.058835]  invoke_syscall+0x54/0x108
+[    1.058892]  el0_svc_common.constprop.0+0x40/0xe0
+[    1.058959]  do_el0_svc+0x1c/0x28
+[    1.059010]  el0_svc+0x38/0x1d0
+[    1.059080]  el0t_64_sync_handler+0xa0/0xe4
+[    1.059148]  el0t_64_sync+0x198/0x19c
+[    1.059451] SMP: stopping secondary CPUs
+[    1.060238] Kernel Offset: 0x396ee4600000 from 0xffff800080000000
+[    1.060337] PHYS_OFFSET: 0xfff1000040000000
+[    1.060446] CPU features: 0x0,00000000,0d000020,00100000,0800820b
+[    1.060557] Memory Limit: none
+[    1.061094] Rebooting in 10 seconds..
+Bloblist at 0 not found (err=-2)
+alloc space exhausted ptr 400 limit 0
+Bloblist at 0 not found (err=-2)
+
+
+U-Boot 2026.01 (Nov 14 2026 - 02:52:10 -0500)
+
+DRAM:  512 MiB
+using memory 0x5e68c000-0x5f69c000 for malloc()
+Core:  51 devices, 14 uclasses, devicetree: board
+Flash: 64 MiB
+Loading Environment from FAT... OK
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+No USB controllers found
+Net:   eth0: virtio-net#30
+[?25h
+Saving Environment to FAT... OK
+Hit any key to stop autoboot:  2 Hit any key to stop autoboot: 1[KHit any key to stop autoboot: 0[K
+Scanning for bootflows in all bootdevs
+Seq  Method       State   Uclass    Part  Name                      Filename
+---  -----------  ------  --------  ----  ------------------------  ----------------
+Scanning global bootmeth 'efi_mgr':
+7[r[999;999H[6n8Cannot persist EFI variables without system partition
+Missing TPMv2 device for EFI_TCG_PROTOCOL
+Missing RNG device for EFI_RNG_PROTOCOL
+  0  efi_mgr      ready   (none)       0  <NULL>                    
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'virtio 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+Scanning bootdev 'fw-cfg@9020000.bootdev':
+fatal: no kernel available
+scanning bus for devices...
+Scanning bootdev 'virtio-blk#31.bootdev':
+  1  extlinux     ready   virtio       1  virtio-blk#31.bootdev.par /extlinux/extlinux.conf
+** Booting bootflow 'virtio-blk#31.bootdev.part_1' with extlinux
+U-Boot menu
+1:	NEW (simulated bad kernel)
+2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+3:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp (rescue target)
+Enter choice: 1:	NEW (simulated bad kernel)
+Retrieving file: /vmlinuz-7.4.0-rc2-rg34xxsp
+append: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 init=/bin/false quiet
+   Uncompressing Kernel Image to 0
+## Flattened Device Tree blob at 40000000
+   Booting using the fdt blob at 0x40000000
+Working FDT set to 40000000
+   Loading Device Tree to 000000005d435000, end 000000005d537fff ... OK
+Working FDT set to 5d435000
+
+Starting kernel ...
+
+[    0.950429] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
+[    0.951480] CPU: 0 UID: 0 PID: 1 Comm: false Not tainted 7.4.0-rc2-rg34xxsp #1 PREEMPT(full) 
+[    0.951716] Hardware name: linux,dummy-virt (DT)
+[    0.951940] Call trace:
+[    0.952147]  show_stack+0x18/0x24 (C)
+[    0.952743]  dump_stack_lvl+0x34/0x8c
+[    0.952844]  dump_stack+0x18/0x24
+[    0.952896]  vpanic+0x380/0x3ac
+[    0.952947]  do_panic_on_target_cpu+0x0/0x1c
+[    0.953041]  do_exit+0x7c8/0x904
+[    0.953101]  do_group_exit+0x34/0x90
+[    0.953155]  pid_child_should_wake+0x0/0x5c
+[    0.953213]  invoke_syscall+0x54/0x108
+[    0.953289]  el0_svc_common.constprop.0+0x40/0xe0
+[    0.953378]  do_el0_svc+0x1c/0x28
+[    0.953442]  el0_svc+0x38/0x1d0
+[    0.953495]  el0t_64_sync_handler+0xa0/0xe4
+[    0.953553]  el0t_64_sync+0x198/0x19c
+[    0.953884] SMP: stopping secondary CPUs
+[    0.954567] Kernel Offset: 0x396ee4600000 from 0xffff800080000000
+[    0.954661] PHYS_OFFSET: 0xfff1000040000000
+[    0.954755] CPU features: 0x0,00000000,0d000020,00100000,0800820b
+[    0.954864] Memory Limit: none
+[    0.955364] Rebooting in 10 seconds..
+Bloblist at 0 not found (err=-2)
+alloc space exhausted ptr 400 limit 0
+Bloblist at 0 not found (err=-2)
+
+
+U-Boot 2026.01 (Nov 14 2026 - 02:52:10 -0500)
+
+DRAM:  512 MiB
+using memory 0x5e68c000-0x5f69c000 for malloc()
+Core:  51 devices, 14 uclasses, devicetree: board
+Flash: 64 MiB
+Loading Environment from FAT... OK
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+No USB controllers found
+Net:   eth0: virtio-net#30
+[?25h
+Saving Environment to FAT... OK
+Hit any key to stop autoboot:  2 Hit any key to stop autoboot: 1[KHit any key to stop autoboot: 0[K
+Scanning for bootflows in all bootdevs
+Seq  Method       State   Uclass    Part  Name                      Filename
+---  -----------  ------  --------  ----  ------------------------  ----------------
+Scanning global bootmeth 'efi_mgr':
+7[r[999;999H[6n8Cannot persist EFI variables without system partition
+Missing TPMv2 device for EFI_TCG_PROTOCOL
+Missing RNG device for EFI_RNG_PROTOCOL
+  0  efi_mgr      ready   (none)       0  <NULL>                    
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'virtio 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+Scanning bootdev 'fw-cfg@9020000.bootdev':
+fatal: no kernel available
+scanning bus for devices...
+Scanning bootdev 'virtio-blk#31.bootdev':
+  1  extlinux     ready   virtio       1  virtio-blk#31.bootdev.par /extlinux/extlinux.conf
+** Booting bootflow 'virtio-blk#31.bootdev.part_1' with extlinux
+U-Boot menu
+1:	NEW (simulated bad kernel)
+2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+3:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp (rescue target)
+Enter choice: 1:	NEW (simulated bad kernel)
+Retrieving file: /vmlinuz-7.4.0-rc2-rg34xxsp
+append: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 init=/bin/false quiet
+   Uncompressing Kernel Image to 0
+## Flattened Device Tree blob at 40000000
+   Booting using the fdt blob at 0x40000000
+Working FDT set to 40000000
+   Loading Device Tree to 000000005d435000, end 000000005d537fff ... OK
+Working FDT set to 5d435000
+
+Starting kernel ...
+
+[    0.891900] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
+[    0.892924] CPU: 1 UID: 0 PID: 1 Comm: false Not tainted 7.4.0-rc2-rg34xxsp #1 PREEMPT(full) 
+[    0.893171] Hardware name: linux,dummy-virt (DT)
+[    0.893400] Call trace:
+[    0.893577]  show_stack+0x18/0x24 (C)
+[    0.894218]  dump_stack_lvl+0x34/0x8c
+[    0.894315]  dump_stack+0x18/0x24
+[    0.894369]  vpanic+0x380/0x3ac
+[    0.894419]  do_panic_on_target_cpu+0x0/0x1c
+[    0.894480]  do_exit+0x7c8/0x904
+[    0.894531]  do_group_exit+0x34/0x90
+[    0.894583]  pid_child_should_wake+0x0/0x5c
+[    0.894643]  invoke_syscall+0x54/0x108
+[    0.894699]  el0_svc_common.constprop.0+0x40/0xe0
+[    0.894765]  do_el0_svc+0x1c/0x28
+[    0.894816]  el0_svc+0x38/0x1d0
+[    0.894884]  el0t_64_sync_handler+0xa0/0xe4
+[    0.894950]  el0t_64_sync+0x198/0x19c
+[    0.895242] SMP: stopping secondary CPUs
+[    0.896045] Kernel Offset: 0x396ee4600000 from 0xffff800080000000
+[    0.896141] PHYS_OFFSET: 0xfff1000040000000
+[    0.896230] CPU features: 0x0,00000000,0d000020,00100000,0800820b
+[    0.896335] Memory Limit: none
+[    0.896869] Rebooting in 10 seconds..
+Bloblist at 0 not found (err=-2)
+alloc space exhausted ptr 400 limit 0
+Bloblist at 0 not found (err=-2)
+
+
+U-Boot 2026.01 (Nov 14 2026 - 02:52:10 -0500)
+
+DRAM:  512 MiB
+using memory 0x5e68c000-0x5f69c000 for malloc()
+Core:  51 devices, 14 uclasses, devicetree: board
+Flash: 64 MiB
+Loading Environment from FAT... OK
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+No USB controllers found
+Net:   eth0: virtio-net#30
+[?25h
+Saving Environment to FAT... OK
+Warning: Bootlimit (3) exceeded. Using altbootcmd.
+Hit any key to stop autoboot:  2 Hit any key to stop autoboot: 1[KHit any key to stop autoboot: 0[K
+R8: boot limit reached, booting fallback
+Saving Environment to FAT... OK
+Retrieving file: /extlinux/extlinux-fallback.conf
+U-Boot menu
+1:	NEW (simulated bad kernel)
+2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+3:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp (rescue target)
+Enter choice: 2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+Retrieving file: /vmlinuz-7.4.0-rc2-rg34xxsp
+append: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 quiet
+   Uncompressing Kernel Image to 0
+## Flattened Device Tree blob at 40000000
+   Booting using the fdt blob at 0x40000000
+Working FDT set to 40000000
+   Loading Device Tree to 000000005d45e000, end 000000005d560fff ... OK
+Working FDT set to 5d45e000
+
+Starting kernel ...
+
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [   44.913677] r8-check[233]: R8BEGIN
+[   44.971075] r8-check[233]: == cmdline: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 quiet
+[   45.045404] r8-check[233]: == uname: 7.4.0-rc2-rg34xxsp
+[   45.202970] r8-check[233]: == env: upgrade_available=0 bootcount=0
+[   45.205385] r8-check[233]: == boot-ok
+[   45.375715] r8-check[245]: h700-boot-ok: fell back from kernel 7.4.0-rc2-rg34xxsp to 7.4.0-rc2-rg34xxsp; fallback menu made default
+[   45.378316] r8-check[245]: h700-boot-ok.service: Deactivated successfully.
+[   45.380324] r8-check[245]: Finished h700-boot-ok.service - RG34XX-SP: mark this boot good (clears u-boot's boot counter after a kernel update).
+[   45.724643] r8-check[233]: == menus: extlinux.conf default l1, fallback default l1, l0 = NEW (simulated bad kernel)
+[   45.798438] r8-check[233]: == failed-kernels: 2026-11-14T08:01:30Z kernel 7.4.0-rc2-rg34xxsp failed 3 boot attempts; running 7.4.0-rc2-rg34xxsp
+[   45.800365] r8-check[233]: R8END
+[   50.222417] reboot: Power down
