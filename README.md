@@ -52,6 +52,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/r6-mesa-panfrost-noble.md`](docs/r6-mesa-panfrost-noble.md) | R6: Mesa 25.2.8 in noble for the Mali-G31: GLES 3.1, PanVK gated off, LLVM cost, package list |
 | [`docs/r7-image-tooling.md`](docs/r7-image-tooling.md) | R7: image tooling (mmdebstrap + genimage + u-boot-menu); prototype `image/build-image.sh`, QEMU-booted with our kernel |
 | [`docs/r8-update-rollback.md`](docs/r8-update-rollback.md) | R8: apt channels, u-boot boot-counter kernel rollback (tested in QEMU with real u-boot), recovery ladder |
+| [`docs/handoff-deep-research-2026-11-14.md`](docs/handoff-deep-research-2026-11-14.md) | Deep Research chat handoff (2026-11-14): rules, decisions Q1–Q8, state, next steps |
 | [`docs/r9-licensing-redistribution.md`](docs/r9-licensing-redistribution.md) | R9: licences per component, source obligations, "Ubuntu" trademark (Q7: name is ReduxOS), release checklist (automated by `image/check-licences.sh` and `image/release-sources.sh`) |
 | [`docs/r13-ram-tier-defaults.md`](docs/r13-ram-tier-defaults.md) | R13: RAM-tier defaults (zram, swappiness, earlyoom, journald) + QEMU OOM stress test |
 | [`docs/r3-v106-boot0-dram-sets.md`](docs/r3-v106-boot0-dram-sets.md) | R3: stock boot0 DRAM.ext table, PH6/7/8/10 straps → LPDDR3/LPDDR4 sets |
