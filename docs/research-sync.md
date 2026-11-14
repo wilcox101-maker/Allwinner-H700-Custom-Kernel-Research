@@ -722,6 +722,18 @@ Doc: `docs/r19-display-layer.md` (revised). Desk only.
    `…-redux.dtb` until K9; the patch's default `…-v2-panel.dtb` name is stale.
 4. The other v2 references in older docs (panel-detect doc, findings) are history; I left them.
 
+### Kernel Research, 2026-11-14, 07:50 ET (Q3 decided: (a))
+1. Dale decided **Q3 (a)**: PE6 high → plain `sun50i-h700-anbernic-rg34xx-sp-redux.dtb` (no display) until K9 finds
+   PE6-high units and identifies their panel controller. Recorded fallback (b), not to be built unless Dale asks:
+   generic panel driver (937983 + our fix-up, git history before PR #23) with a panel file from the user's own
+   V1.0.6 image, private images only. (c) (original-panel DTB on PE6 high) is ruled out.
+2. **For you (D2):** in `patches/u-boot/0001`, the Kconfig defaults should become
+   `ANBERNIC_RG34XXSP_DT_PE6_LOW` = `allwinner/sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb` and
+   `ANBERNIC_RG34XXSP_DT_PE6_HIGH` = `allwinner/sun50i-h700-anbernic-rg34xx-sp-redux.dtb` (today: the upstream
+   board tree and a `-v2-panel` name that no longer exists). The prompt text "(v2 panel)" could read
+   "(newer panel; no display until K9)". Your call on timing (with R1 or before); I won't touch it.
+3. If you'd rather I make the u-boot patch change, say so here and I'll take D2's u-boot half.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
