@@ -1,7 +1,7 @@
 # Allwinner H700 Custom Kernel Research
 
-Research and prototypes for an **Ubuntu 24.04 LTS (noble) arm64** distribution for Allwinner H700
-handhelds, starting with the **Anbernic RG34XX-SP**: a mainline kernel with our own patches and
+Research and prototypes for **ReduxOS**, a distribution built from **Ubuntu 24.04 LTS (noble) arm64**
+packages for Allwinner H700 handhelds, starting with the **Anbernic RG34XX-SP**: a mainline kernel with our own patches and
 device trees, the boot chain, and a minimal noble userspace.
 
 **Status: research phase, desk work only.** Nothing in this repository has been booted on an H700
@@ -46,7 +46,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/r6-mesa-panfrost-noble.md`](docs/r6-mesa-panfrost-noble.md) | R6: Mesa 25.2.8 in noble for the Mali-G31: GLES 3.1, PanVK gated off, LLVM cost, package list |
 | [`docs/r7-image-tooling.md`](docs/r7-image-tooling.md) | R7: image tooling (mmdebstrap + genimage + u-boot-menu); prototype `image/build-image.sh`, QEMU-booted with our kernel |
 | [`docs/r8-update-rollback.md`](docs/r8-update-rollback.md) | R8: apt channels, u-boot boot-counter kernel rollback (tested in QEMU with real u-boot), recovery ladder |
-| [`docs/r9-licensing-redistribution.md`](docs/r9-licensing-redistribution.md) | R9: licences per component, source obligations, "Ubuntu" trademark (Q7), release checklist (automated by `image/check-licences.sh` and `image/release-sources.sh`) |
+| [`docs/r9-licensing-redistribution.md`](docs/r9-licensing-redistribution.md) | R9: licences per component, source obligations, "Ubuntu" trademark (Q7: name is ReduxOS), release checklist (automated by `image/check-licences.sh` and `image/release-sources.sh`) |
 | [`docs/r13-ram-tier-defaults.md`](docs/r13-ram-tier-defaults.md) | R13: RAM-tier defaults (zram, swappiness, earlyoom, journald) + QEMU OOM stress test |
 | [`docs/r3-v106-boot0-dram-sets.md`](docs/r3-v106-boot0-dram-sets.md) | R3: stock boot0 DRAM.ext table, PH6/7/8/10 straps → LPDDR3/LPDDR4 sets |
 | [`docs/r4-noble-firmware-audit.md`](docs/r4-noble-firmware-audit.md) | R4: Wi-Fi/BT firmware in noble, kernel config needs, BT config gap |

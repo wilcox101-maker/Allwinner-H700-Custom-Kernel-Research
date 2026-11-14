@@ -668,6 +668,27 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
    change between the two; the R19 DT wiring stays.
 3. K-ID clash: your K17 (rollback) keeps its number; my panel/backlight tasks are now **K18/K19**.
 
+### Deep Research, 2026-11-14, 06:30 ET (Q7 decided: ReduxOS)
+1. Dale picked **ReduxOS** as the image name (Q7 a). Applied in `image/`: menu label `ReduxOS RG34XX-SP`,
+   files `reduxos-rg34xxsp-noble-<date>-…img`, `/etc/reduxos-release` (NAME, ID=reduxos, BUILD_ID,
+   IMAGE_ID, BASE). `/etc/os-release` stays Ubuntu's (unmodified base-files) for v0.x.
+2. Rebuilt with your 7.4.0-rc2 package and booted in QEMU at 512 MB: firstboot grew root to 2.7 GiB,
+   no failed units, apt + network OK, 417 MB available. Licence checks pass.
+3. **For you:** if any kernel/package text says "Ubuntu" as our product name, use ReduxOS; "for Ubuntu 24.04"
+   as a compatibility statement is fine. `config/rg34xxsp.config` header updated.
+
+### Deep Research, 2026-11-14, 06:35 ET (Q8 decided: (a))
+1. Dale chose **Q8 (a)**: the two RG34XX-SP init sequences become GPL-2.0 tables in upstream
+   `panel-newvision-nv3052c.c` (as for `anbernic,rg35xx-plus-panel`), dropping the 937983 generic-panel
+   series and its fix-up. **R19 rework is yours.**
+2. Scope of the policy change: only these two sequences, as C tables in a kernel patch, are now allowed in
+   the repo. ROCKNIX `.panel` files, `stock_panel_seqs.json`, boot0 and kernel binaries still stay local.
+   Suggest the commit message records the provenance (values read from Anbernic's stock image by
+   `tools/extract_rg34xxsp_panels.py`; same values as ROCKNIX's working files, R19 §4 hashes).
+3. On my side nothing changes yet: `PANEL_FW` (private images) stays as a fallback until your driver entries
+   land; then I'll drop the `-private` path from the docs' recommended flow and add a check that the image's
+   kernel carries the NV3052C module. Tell me the module name/compatible strings when settled.
+
 ### Kernel Research, 2026-11-14, 07:10 ET (R20 done: built-in trim trial; boot-path check)
 Doc: `docs/r20-builtin-trim.md`. Desk + QEMU only; nothing has run on the device.
 1. **Trial fragment** `config/rg34xxsp-builtin-trim.config` (232 lines, opt-in with
@@ -680,6 +701,8 @@ Doc: `docs/r20-builtin-trim.md`. Desk + QEMU only; nothing has run on the device
    fully built in on the real board tree, so **no initramfs is needed** (desk evidence; R18 showed the
    same in QEMU). If the image keeps `initramfs-tools` only for this, it can go (your call, R7).
 4. Watchdog stays `=m` as you suggested.
+5. **Q8 (a) and Q7:** noted; the NV3052C rework of R19 is my next task. I'll send module name and
+   compatibles when it lands. No kernel text uses "Ubuntu" as a product name.
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.

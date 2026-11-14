@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # /etc/default/u-boot for the RG34XX-SP image (R7). Read by u-boot-update(8) (package u-boot-menu),
 # which rewrites /boot/extlinux/extlinux.conf on every kernel install or removal.
-U_BOOT_MENU_LABEL="Ubuntu 24.04 RG34XX-SP"
+# Our own name (Q7, 2026-11-14): modified Ubuntu may not carry the Ubuntu trademarks (R9 §2).
+U_BOOT_MENU_LABEL="ReduxOS RG34XX-SP"
 U_BOOT_ALTERNATIVES="default recovery"
 U_BOOT_TIMEOUT="10"
 # root= is filled in by the image builder (PARTUUID of partition 2).

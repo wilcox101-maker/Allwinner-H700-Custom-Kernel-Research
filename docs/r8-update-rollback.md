@@ -54,7 +54,7 @@ So the full loop works with real u-boot code: counting only during a trial, the 
 - **Power:** updates run only on mains power (`OnlyOnACPower`); manual `apt upgrade` on battery is the user's call. Battery level gating can be added to the frontend's update UI.
 
 ## 5. Versioning and recovery
-- **Image name:** `rg34xxsp-noble-<YYYYMMDD>-<kernel>-<lpddr4|lpddr3>.img` + `.sha256` + `.manifest.tsv` (R7 already writes the first part, the manifest and the checksum; the DRAM suffix comes with `UBOOT_BIN`).
+- **Image name:** `reduxos-rg34xxsp-noble-<YYYYMMDD>-<kernel>-<lpddr4|lpddr3>.img` (ReduxOS name: Q7) + `.sha256` + `.manifest.tsv` (R7 already writes the first part, the manifest and the checksum; the DRAM suffix comes with `UBOOT_BIN`).
 - **Kernel retention:** apt's built-in protection (`APT::VersionedKernelPackages` includes `linux-.*` in `/etc/apt/apt.conf.d/01autoremove`) keeps the running and newest kernels out of `autoremove`; check with two of our kernels installed before relying on it (QEMU, same test harness).
 - **/boot space:** 256 MiB FAT; each of our kernels needs ~9.3 MB `vmlinuz` + its DTBs (~1–2 MB for 67 Allwinner DTBs) ≈ 12 MB, so many kernels fit.
 - **Recovery ladder:** (1) automatic fallback (§2); (2) rescue entry (`single`) from the u-boot menu over serial; (3) rewrite the card from the release image; user data on a separate games card is unaffected.
