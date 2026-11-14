@@ -11,9 +11,8 @@ upstream sources, and copies no other project's patches.
 ## 1. Safe panel selection in u-boot (no guessing)
 
 > **Update 21:10. Superseded by the Deep Research chat's work**
-> (`claude/rg34xxsp-panel-detect-and-uboot-patch.md`; patch
-> `Claude Files\h700-ubuntu-research\0001-sunxi-rg34xxsp-dt-selection.patch`, build-tested on
-> u-boot v2026.01).
+> (Project doc `claude/rg34xxsp-panel-detect-and-uboot-patch.md`; u-boot patch
+> `0001-sunxi-rg34xxsp-dt-selection.patch`, build-tested on u-boot v2026.01, not yet in this repo).
 > - Stock reads a **single strap, PE6**, with the pull-up on, after a reset pulse on PI14:
 >   **low = original panel, high = v2 panel** (V1.0.6).
 > - The patch sets `fdtfile` in `misc_init_r()`. Setting `panel_autodetect=no` skips detection.
