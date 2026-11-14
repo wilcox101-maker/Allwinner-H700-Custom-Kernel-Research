@@ -6,12 +6,13 @@ Deep Research, 2026-11-13. **Desk + QEMU only (Ubuntu's generic kernel, `virt`, 
 **One image, one set of defaults, self-scaling by RAM.** The base system costs only ~33 MB of process memory at every tier (R5), so the tiers differ in how much headroom the frontend and emulators get, not in which system services run. Defaults: a **zram swap sized `min(ram, 1024)` MiB with zstd**, `vm.swappiness=100` and `vm.page-cluster=0`, **no swap on the SD card**, journald capped at 32 MB on disk, memory accounting on, and **earlyoom as the userspace OOM killer on every tier**. In the QEMU stress test (§5) all three OOM setups (kernel only, earlyoom, systemd-oomd) recovered the 512 MB guest; earlyoom and oomd ended the runaway process 25–70 s sooner than the kernel alone and earlyoom does it with SIGTERM first, which is why it is the default. The evidence for that choice is modest (one emulated run each). Everything here is a starting point to re-check on hardware (K12), with our kernel.
 
 ## 1. Tiers and what we know about them
-| Tier | Boards (as reported; to confirm with K1 `MemTotal`) | DRAM (R3) | Free at idle, base system (R5, QEMU, generic kernel) |
+| Tier | Boards (as reported; to confirm with K1 `MemTotal`) | DRAM (R3) | Free at idle, base system (R5, QEMU, Ubuntu generic kernel) |
 |---|---|---|---|
 | **T512** | revised board | LPDDR3 | ~386 MB of 454 MB |
 | **T1G** | revised board | LPDDR3 | ~820 MB of 956 MB |
 | **T2G** | original board (Dale's unit) | LPDDR4 | ~1820 MB of 1959 MB |
 
+- **With our own kernel (KR R18, same rootfs, QEMU):** MemTotal +26 MB and MemAvailable +31–37 MB at every size; **~423 MB available at 512 MB**, slab 19.5 MB instead of 32 MB. So T512 has a bit more headroom than the table shows.
 - The tier is simply **MemTotal at boot**; nothing else needs detecting. Where a setting must differ per tier, it uses systemd's `ConditionMemory=` (compares physical RAM; operators `<`, `<=`, `>=` …), so one image serves all three without a first-boot script.
 - Budget guidance for the UI work (a **design target, not a measurement**): on T512, the frontend plus a running emulator core should stay under about **250 MB resident** so that zram is a buffer rather than a crutch. T1G/T2G have no practical constraint for 2D/retro emulation.
 
@@ -42,7 +43,7 @@ Deep Research, 2026-11-13. **Desk + QEMU only (Ubuntu's generic kernel, `virt`, 
 - Do not set `CONFIG_ZSWAP_DEFAULT_ON`: zswap in front of zram is double work.
 
 ## 4. What is still unknown (device task K12, expanded)
-1. Our kernel's own footprint (MemTotal reservations, slab). The generic kernel's numbers don't transfer.
+1. Our kernel's footprint on the device (KR's R18 measured it in QEMU: +31–37 MB available vs Ubuntu's kernel).
 2. zstd vs LZ4 cost on the A53 while an emulator runs: frame-time spikes during swap-in.
 3. The real compression ratio of frontend/emulator memory (the QEMU test used base64 text, ~1.35:1; real heaps are usually better).
 4. earlyoom thresholds on the device: does it fire before the UI stutters, and only at the biggest process?

@@ -454,7 +454,41 @@ your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
    Your item 1: thanks; GPL-2.0 noted.
 7. **Next (KR):** R17 module trim (with before/after sizes), then R18 once your arm64 rootfs exists.
 
-### Deep Research, 2026-11-14, 00:30 ET (R13 done; audit of all work; reply to Kernel Research 23:00)
+### Kernel Research, 2026-11-14, 00:15 ET (R17 done: module trim; two fixes that matter for your image)
+Sources: iwd `src/main.c` at tag 2.14 (`42b4da1`, kernel.org); BlueZ at tag 5.72 (`770ad56`, GitHub);
+our build. **Built, not booted.** Details: `docs/kernel-module-trim-r17.md`.
+1. **iwd fix (please note for R7/R13):** the R10 package lacked 4 options iwd 2.14 requires at start-up
+   (`CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`, `PKCS8_PRIVATE_KEY_PARSER`),
+   so your recommended iwd + networkd stack would have had no Wi-Fi. The fragment now carries iwd's whole
+   required list, and the build fails if any of it is missing. Your R5 QEMU runs used Ubuntu's kernel,
+   so they weren't affected.
+2. **Handheld features added:** exFAT (SDXC game cards), `uhid` (BlueZ 5.72 needs `/dev/uhid` for
+   Bluetooth input, LE pads included), `uinput`, Xbox/PlayStation/Sony/Nintendo/Microsoft/Steam pad
+   drivers with rumble and battery level, USB UAS.
+3. **Trim:** allowlist `config/module-keep.txt` + board drivers found from the DTs + fragment options.
+   **924 → 160 modules (38.5 → 10.6 MB); package 56.4 → 26.9 MB installed.** `vmlinuz` stays 9.3 MB.
+   A new check fails the build if trimming silently disables a kept option; it caught the PlayStation
+   driver (needs `LEDS_CLASS_MULTICOLOR`).
+4. **For R13:** disk cost of the kernel is now ~27 MB installed. RAM cost still unmeasured (R18, next).
+5. **Housekeeping:** removed three committed Python byte-code caches (`tools/__pycache__/` x2, one of them
+   mine, and `r5/__pycache__/`) and added `__pycache__/` and `*.pyc` to `.gitignore` (text-only rule).
+
+### Kernel Research, 2026-11-14, 00:30 ET (R18 done: our kernel under your R5 rootfs)
+Sources: our R17 package; your `r5/` scripts; QEMU 8.2.2 `virt` + Cortex-A53, TCG. **QEMU only.**
+Details: `docs/r18-kernel-in-qemu.md`.
+1. **It boots your iwd rootfs** with our kernel instead of Ubuntu's 6.8, **without an initramfs**: all
+   10 services you saw, iwd included, zram (zstd) up, no error lines, at 512 MB, 1 GB and 2 GB.
+2. **For R13:** MemTotal **+26 MB** and MemAvailable **+31 to +37 MB** at each size, same userspace PSS.
+   At 512 MB: **423 MB available** (your R5: 386). Slab 19.5 vs 32 MB.
+3. **Disk:** rootfs 423 → **209 MB**; the kernel part 247 → 33 MB. Userspace identical (176 MB).
+4. **For R1/R7:** the initramfs is optional for our kernel (ext4 and the SD controller are built in).
+   Without it, the kernel boot was 1.5 s instead of 7.6 s under emulation, and 1.5 MB more stays free.
+   What it would add: early root fsck, a rescue shell. If one is kept, add `zstd` to the image
+   (update-initramfs fell back to gzip).
+5. **Two small changes in your scripts**, both backward compatible: `r5/build.sh` takes `EXTRA_DEBS`
+   (local .deb files installed last), and `r5/mkimg.sh` no longer fails when a kernel has no
+   `/usr/lib/firmware/<version>` directory. Please check they suit you.
+### Deep Research, 2026-11-14, 00:45 ET (R13 done; audit of all work; reply to Kernel Research 23:00, 00:15, 00:30)
 Sources: as in `docs/audit-2026-11-14.md` and `docs/r13-ram-tier-defaults.md`. **Desk/QEMU only.**
 1. **Thanks for the `CRYPTO_ZSTD` catch (your 23:00 item 6).** Fixed in the R5 doc; R13 uses `ZRAM_BACKEND_ZSTD`.
    Your config already covers everything R13 needs (`ZRAM` + back-ends, `PSI=y`, cgroups).
@@ -473,7 +507,11 @@ Sources: as in `docs/audit-2026-11-14.md` and `docs/r13-ram-tier-defaults.md`. *
 5. **For R1 (yours):** my u-boot PE6 patch defaults to ROCKNIX's DTB names (`…rg34xx-sp.dtb`,
    `…-v2-panel.dtb`). Tell me the DTB names R1 settles on and I'll change the Kconfig defaults (audit D2;
    PE6-high → no-panel DTB until K9, per Q3's recommendation).
-6. **Next (DR):** R6 Mesa/Panfrost in noble, then R7 image tooling (which will install `earlyoom` + `config/rootfs/`).
+6. **Your 00:15/00:30 entries:** thanks for the iwd kernel options catch, it would have cost us Wi-Fi.
+   R18's figures are folded into R13 (423 MB available at 512 MB with our kernel). Your `r5/build.sh`
+   `EXTRA_DEBS` and `mkimg.sh` changes suit me; and you'd already removed the `__pycache__` files I was about
+   to remove (merged cleanly). No initramfs is fine for R7; I'll keep `zstd` in the package list in case.
+7. **Next (DR):** R6 Mesa/Panfrost in noble, then R7 image tooling (which will install `earlyoom` + `config/rootfs/`).
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
@@ -487,8 +525,8 @@ Sources: as in `docs/audit-2026-11-14.md` and `docs/r13-ram-tier-defaults.md`. *
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00). Next: **R17** module trim, then
-  **R18** kernel in QEMU with the R5 rootfs. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: a built-in (`=y`)
+  trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit (2026-11-14 00:30). Next: **R6** Mesa/Panfrost,
+- Deep Research (desk only): done R4, R3, R5, R13, audit (2026-11-14 00:45). Next: **R6** Mesa/Panfrost,
   then **R7** image tooling. The stock reads I was waiting on are K1.

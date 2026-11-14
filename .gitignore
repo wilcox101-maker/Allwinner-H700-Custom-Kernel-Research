@@ -1,4 +1,6 @@
 # workbench.sh work directory (Linux checkout, build output)
 /.work/
+
+# Python byte-code caches
 __pycache__/
 *.pyc
