@@ -21,9 +21,15 @@ stored in this repository.
 | [1202273](https://patchwork.kernel.org/series/1202273/) | v12, 2026-11-04, James Hilliard (patches by Richard Genoud) | 1–5 | H616 PWM support in `pwm-sun8i`, its binding and DT node (backlight on PWM0 / PD28) |
 | [937983](https://patchwork.kernel.org/series/937983/) | v2, 2025-02-26, Hironori KIKUCHI | 1–3 | Generic MIPI DPI+SPI panel driver (`panel-mipi.c`) that reads the panel's init sequence and timing from a firmware file |
 
-Our own addition on top: `patches/linux-display/0001` adds `anbernic,rg34xx-sp-panel` and
-`anbernic,rg34xx-sp-v2-panel` to the `panel-mipi.yaml` binding, and `spi-3wire` (the RG34XX-SP
-panel is driven over 3-wire SPI). checkpatch and `dt_binding_check` are clean.
+Our own patches on top (`patches/linux-display/`, checkpatch clean):
+- `0001` adds `anbernic,rg34xx-sp-panel` and `anbernic,rg34xx-sp-v2-panel` to the
+  `panel-mipi.yaml` binding, and `spi-3wire` (the RG34XX-SP panel is driven over 3-wire SPI).
+  `dt_binding_check` is clean.
+- `0002` makes the generic panel driver build on today's mainline: `drm_panel_init()` is gone,
+  so the driver now allocates with `devm_drm_panel_alloc()`; it also rejects DSI pixel formats it
+  has no bus format for (`MIPI_DSI_FMT_RGB101010` is new since the series). It is a fix-up for an
+  unmerged series, to be folded into its next version rather than sent alone. Found by the first
+  full package build of the layer (2026-11-14): the patch applied cleanly but did not compile.
 
 ### Why these three
 - 984067 is the newest version of the H616 LCD series found on patchwork. ROCKNIX runs an LCD
@@ -92,9 +98,11 @@ builder owns (R9 still open).
 
 ## 5. Build integration
 - `scripts/workbench.sh --display`: after our 6 patches, applies the layer and
-  `patches/linux-display/`, then builds and `dtbs_check`s 9 DTBs (our 5 + the 4 upstream RG35XX
-  trees that share the H616 include, to catch breakage the layer causes elsewhere), checkpatches
-  our display patch and, with `--bindings`, runs `dt_binding_check` on 6 more schemas.
+  `patches/linux-display/`, builds and `dtbs_check`s 9 DTBs (our 5 + the 4 upstream RG35XX trees
+  that share the H616 include, to catch breakage the layer causes elsewhere), builds every C file
+  that any patch touches with `W=1` (any warning fails; added after the `drm_panel_init()` break
+  above, which only a full build had caught), checkpatches our display patches and, with
+  `--bindings`, runs `dt_binding_check` on 6 more schemas.
 - `scripts/build-kernel.sh --display`: merges `config/rg34xxsp-display.config` (PWM_SUN8I,
   BACKLIGHT_PWM, SPI_GPIO, DRM_PANEL_MIPI, all modules) after the base fragment, keeps them through
   the module trim, checks every fragment line holds and every enabled DT node of the panel trees
@@ -103,13 +111,15 @@ builder owns (R9 still open).
 ## 6. Results (desk, 2026-11-14)
 | Check | Result |
 |---|---|
-| Layer applies on `97d73c8` + 0001–0006 | 18/18 patches, patch-ids verified |
+| Layer applies on `97d73c8` + 0001–0006 | 18/18 upstream patches (patch-ids verified) + our 2 |
 | `dtbs_check`, 9 DTBs | 0 warnings each |
 | `dt_binding_check`, 9 schemas | clean |
-| checkpatch, our 7 patches | clean (`--no-signoff`) |
+| `W=1` build of the 6 touched C files (cpufreq, codec, sun4i DRM ×2, PWM, panel) | 0 warnings |
+| checkpatch, our 8 patches | clean (`--no-signoff`) |
 | Config: fragment lines held | 111/111 |
 | DT node → driver coverage, panel DTBs | 75 enabled nodes, 0 without a driver |
-| Package build | RESULT_PENDING |
+| Package build (`build-kernel.sh --display --build`, 2 jobs, 16 min) | builds; 12.8 MB `.deb`, 27.2 MB installed, 165 module files / 10.8 MB, vmlinuz 9.3 MB (R17 without the layer: 26.9 MB installed, 160 files / 10.6 MB) |
+| Display modules in the package | `sun4i-drm`, `sun4i-tcon`, `sun8i-mixer`, `pwm-sun8i`, `pwm_bl`, `spi-gpio`, `panel-mipi`; both panel DTBs |
 
 ## 7. Open device checks
 These need the device (after Redux v0.5) and are added to the master list as K-tasks:

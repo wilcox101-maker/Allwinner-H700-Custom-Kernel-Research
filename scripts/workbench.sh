@@ -6,7 +6,8 @@
 #   1. fetches torvalds/linux at the pinned snapshot into $WORK/linux
 #   2. applies patches/linux/*.patch on a local branch
 #   3. copies dts/* in, generates the "reduxstock" variant, adds local Makefile lines
-#   4. builds and schema-checks the three RG34XX-SP DTBs (CHECK_DTBS=y): any warning fails
+#   4. builds and schema-checks the three RG34XX-SP DTBs (CHECK_DTBS=y): any warning fails;
+#      then builds every C file the patches touch with W=1: any warning fails
 #   5. runs checkpatch on every patch, the xlate host test (after checking that its copy of the
 #      function still matches patch 0001), and the OPP generator round trip
 #   6. with --bindings, also runs dt_binding_check for the touched schemas (slow)
@@ -117,6 +118,27 @@ if [ -n "$msgs" ]; then
 fi
 for d in "${DTBS[@]}"; do
 	printf '  %-45s %6d bytes, 0 warnings\n' "$d.dtb" "$(stat -c %s "$OUT/$DTS/$d.dtb")"
+done
+
+log "4b. W=1 build of every C file the patches touch (any warning counts as a failure)"
+# Turn on the drivers that defconfig lacks, so each touched file is part of the build.
+"$LINUX/scripts/config" --file "$OUT/.config" -m SND_SUN4I_CODEC -m ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM \
+	-m DRM_SUN4I
+[ "$DISPLAY" = 1 ] && "$LINUX/scripts/config" --file "$OUT/.config" -m PWM_SUN8I -m SPI_GPIO \
+	-m DRM_PANEL_MIPI
+"${MAKE[@]}" olddefconfig >/dev/null
+mapfile -t CFILES < <(git -C "$LINUX" diff --name-only "$LINUX_SHA" HEAD -- '*.c')
+[ "${#CFILES[@]}" -gt 0 ] || fail "no touched C files found"
+for c in "${CFILES[@]}"; do
+	o=${c%.c}.o
+	rm -f "$OUT/$o"
+	msgs=$("${MAKE[@]}" W=1 "$o" 2>&1) || { printf '%s\n' "$msgs"; fail "W=1 build: $c"; }
+	if [ -n "$msgs" ]; then
+		printf '%s\n' "$msgs"
+		fail "W=1 warnings: $c"
+	fi
+	[ -f "$OUT/$o" ] || fail "W=1 build: $o not produced (driver not enabled?)"
+	echo "  ok  $c"
 done
 
 log "5a. checkpatch (--no-signoff; Signed-off-by is added by a human, never by a tool)"

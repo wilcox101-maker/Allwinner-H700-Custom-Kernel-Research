@@ -589,6 +589,26 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
    point at `…-redux.dtb` (no panel node yet); I'll set the defaults once R19 names the panel DTBs.
 6. **Next (DR):** R8 update/rollback, then R9 licensing.
 
+### Kernel Research, 2026-11-14, 03:20 ET (R19 done: display layer, desk only)
+Doc: `docs/r19-display-layer.md`. Nothing has run on the device.
+1. **Layer:** three upstream series carried by reference (`patches/upstream/display-layer.txt`):
+   H616 DE/TCON + DT nodes (patchwork 984067 v2, Ryan Walklin), H616 PWM (1202273 v12), generic MIPI
+   DPI+SPI panel driver (937983 v2, Hironori KIKUCHI). Each patch is pinned by `git patch-id --stable`;
+   three small drift fixes are written in the manifest. Plus our 2 patches (`patches/linux-display/`):
+   panel binding, and a fix-up because the panel driver no longer built on mainline (`drm_panel_init()`
+   is gone). The workbench now builds every touched C file with W=1, so a break like that is caught on
+   the desk.
+2. **Panel DT:** `-redux-panel.dtb` (v1, PE6 low) and `-redux-v2-panel.dtb` (v2); the plain `-redux.dtb`
+   has no display nodes. Wiring from the stock tree: SPI PI8/9/10, reset PI14, power PI15, PWM0 PD28.
+3. **Panel data stays out of the repo (R9):** the driver loads `panels/<compatible>.panel`;
+   `tools/gen_panel_firmware.py` makes it from the user's own stock image. Its v1/v2 output is
+   byte-identical to ROCKNIX 20261101's working files.
+4. **For you (DR), R7 image tooling:** the image needs (a) the two panel DTBs next to `-redux.dtb`, with
+   u-boot choosing by PE6 (D2, after R1), and (b) `/lib/firmware/panels/*.panel` generated at image-build
+   time from a stock image the builder owns, never stored in the image repo or a public artifact. Until
+   K17 passes, ship no display DTB as default.
+5. New device tasks **K17** (panel v1 bring-up) and **K18** (backlight) in the master list.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -601,8 +621,7 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
-  mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20). Next: a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7 (2026-11-14 02:45). Next: **R8**
   update/rollback, then **R9** licensing. The stock reads I was waiting on are K1.

@@ -9,7 +9,7 @@ How to use it:
 - Either chat may change a row's status or add rows. When claiming or finishing a task, add a line to `docs/research-sync.md` too. Done tasks move to the bottom.
 
 ## A. Device tasks: pending until v0.5 (blocked: device)
-IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
+IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17–K18** are Kernel Research additions (from R19), not yet in any Redux package. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
 
 | ID | Task | Why / what it unblocks | Source | Status |
 |---|---|---|---|---|
@@ -29,6 +29,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K14 | Charging temperature at stock's 1500 mA (draft: 1024 mA, 4.10 V cap) | Charge current in the board DT | custom-patches §8 | blocked: device |
 | K15 | Speaker start-up: UI sounds with the 100 ms amp delay (patches 0002/0003) vs mainline's fixed 700 ms | Keep 100 ms or adjust | custom-patches §8 | blocked: device |
 | K16 *(proposed)* | Bluetooth config check: on mainline with upstream `rtl_bt/rtl8821cs_config.bin` (lacks stock's 4 extra entries `0xd9=0f, 0xe4=08, 0x8d=fa, 0x8f=bf`), pair a controller + headset; check range, audio dropouts, `btmon` errors. If bad, retry with stock's config on a spare card | Whether we ship upstream's BT config or need a board-specific one (licensing → R9) | `r4-noble-firmware-audit.md` | blocked: device |
+| K17 *(proposed)* | Panel v1 on our kernel (spare card, PE6-low unit): `-redux-panel.dtb` + `panels/anbernic,rg34xx-sp-panel.panel` from `tools/gen_panel_firmware.py`. Picture, colours, no shift or flicker; 26 MHz mode first, then the 52 MHz mode; `dmesg` for panel-mipi/sun4i errors | Whether the R19 display layer works at all; no display DTB ships before this passes | `r19-display-layer.md` §7 | blocked: device |
+| K18 *(proposed)* | Backlight on PWM0 at 25 kHz (ROCKNIX) vs stock 50 kHz: polarity right, whine, flicker at low levels, lowest visible level | `pwms` and `brightness-levels` in `sun50i-h700-redux-display.dtsi` | `r19-display-layer.md` §3 | blocked: device |
 | — | Full release test matrix (M6): tiers, both SD slots, display, input, audio, Wi-Fi, BT, HDMI, charging, battery, suspend, recovery | Release 0.1 | assessment §5–6 | blocked: device, later |
 
 ## B. Desk tasks (no device needed)
@@ -38,7 +40,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
-| R19 | Display layer for the mainline base (Q6): carry the upstream H616/H700 display series (DE33 mixer, LCD/TCON DT, PWM, panel) pinned by name, version and date on top of `patches/linux`, with the RG34XX-SP panel nodes behind the PE6 panel ID; build- and schema-checked, then K-tasks for the device | KR | claimed: KR (2026-11-14) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
 
 ## C. Decisions for Dale (blocked: decision)
@@ -62,6 +63,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 03:20: R19 display layer (desk): 3 upstream series (H616 DE/TCON 984067 v2, H616 PWM 1202273 v12, generic MIPI panel 937983 v2) pinned by patch-id and applied by `tools/apply_upstream.py`; our panel binding + a fix-up so the panel driver builds on today's mainline; panel DTBs for v1/v2 behind PE6; panel firmware generated from the user's own image, byte-identical to ROCKNIX's working files. 9 DTBs `dtbs_check` clean, 6 touched C files W=1 clean, package builds. Device checks K17, K18 (KR, `r19-display-layer.md`).
 - 2026-11-14 02:40: R7 image tooling: mmdebstrap + genimage + u-boot-menu; `image/build-image.sh` builds an MBR card image (u-boot slot at 8 KiB, FAT32 /boot with extlinux + synced DTBs, ext4 root grown on first boot); with our kernel it boots in QEMU at 512 MB without initramfs, firstboot/apt/network OK, 189 pkgs / 440 MB, no Python. Card layout still provisional on R1 (DR, `r7-image-tooling.md`).
 - 2026-11-14 02:27: **Q6 decided by Dale: mainline + our patches** is the kernel base; display comes as a separate, pinned layer (new task R19, KR). The assessment's ROCKNIX-7.2 plan needs updating (DR).
 - 2026-11-14 02:40: KR audit of the kernel work: fresh-clone reproduction passed; kernel builds made bit-reproducible (244/245 package files identical across two build dirs); fixes for wording (iwd), compiler version, broken link and Project paths (DR audit D3), test-copy drift check (D4), SPDX tags. Kernel base decision (DR audit D1, **Q6**): KR recommendation added (KR, sync 02:40).
