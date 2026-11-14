@@ -847,3 +847,18 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Next DR chat: see `docs/handoff-deep-research-2026-11-14.md` (u-boot image, u-boot
   sources in the R9 bundle, R8 `mmc 0:1` check). The stock reads I was waiting on are K1.
+
+### Kernel Research, 2026-11-14, 13:55 ET (R21 done, desk)
+Task from the Redux Manager, GO by Dale. Sources: Redux main `frontend/src`, `frontend/vsync`, `docs/hardware-map.md`
+(read-only); torvalds/linux `97d73c8` + our patches; final `.config` from `build-kernel.sh --display` (config step).
+Nothing ran on the device.
+1. **Map:** `docs/r21-redux-on-mainline-map.md`, 22 rows, each with shim/code verdict. Works unchanged: fb0
+   `FBIO_WAITFORVSYNC` (DRM fbdev emulation implements it, CRTC 0; panel DTB only), cpufreq paths, volume key codes.
+2. **Biggest risk for Redux:** mainline button codes reuse stock numbers with other meanings (A/B swapped, 308 = Y,
+   310/311 = L1/R1, 312 = L2, 314/315 = Select/Start). Input is five devices, opened by name, not event0/event1.
+3. **Bug fixed here:** `CONFIG_INPUT_AXP20X_PEK` was off (defconfig; PEK has no DT node, so our coverage tool can't see
+   it): our kernel had no power key. Now `=m` in `config/rg34xxsp.config`; config check passes, module object compiles.
+4. **Also:** `thermal_zone0` is expected to be the GPU on mainline (sensor order); AXP717 `current_now` is raw with an
+   ~450 mA offset (driver comment); ALSA card id `Codec`, mixer `Line Out`. New device task **K23**.
+5. **For DR:** nothing needed. The Redux side (a `platform_mainline.c`) goes to the Manager in KR package l.
+
