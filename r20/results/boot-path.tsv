@@ -1,0 +1,15 @@
+/osc24M-clk	fixed-clock	(always built)	always	clocks of /soc/pinctrl@300b000
+/regulator-vcc5v	regulator-fixed	REGULATOR_FIXED_VOLTAGE	y	vin1-supply of /soc/i2c@7081400/pmic@34
+/soc	simple-bus	(always built)	always	parent of /soc/serial@5000000
+/soc/clock@3001000	allwinner,sun50i-h616-ccu	SUN50I_H616_CCU	y	clocks of /soc/serial@5000000
+/soc/clock@7010000	allwinner,sun50i-h616-r-ccu	SUN50I_H6_R_CCU	y	clocks of /soc/i2c@7081400
+/soc/dma-controller@3002000	allwinner,sun50i-a100-dma	DMA_SUN6I	m (optional)	dmas of /soc/serial@5000000
+/soc/i2c@7081400	allwinner,sun6i-a31-i2c	I2C_MV64XXX	y	parent of /soc/i2c@7081400/pmic@34
+/soc/i2c@7081400/pmic@34	x-powers,axp717	MFD_AXP20X_I2C	y	parent of /soc/i2c@7081400/pmic@34/regulators
+/soc/interrupt-controller@3021000	arm,gic-400	ARM_GIC	y	interrupt-parent (inherited) of /soc/serial@5000000
+/soc/interrupt-controller@7010320	allwinner,sun9i-a80-nmi	SUNXI_NMI_INTC	y	interrupt-parent of /soc/i2c@7081400/pmic@34
+/soc/mmc@4020000	allwinner,sun50i-h616-mmc	MMC_SUNXI	y	start
+/soc/pinctrl@300b000	allwinner,sun50i-h616-pinctrl	PINCTRL_SUN50I_H616	y	parent of /soc/pinctrl@300b000/uart0-ph-pins
+/soc/pinctrl@7022000	allwinner,sun50i-h616-r-pinctrl	PINCTRL_SUN50I_H616_R	y	parent of /soc/pinctrl@7022000/r-i2c-pins
+/soc/rtc@7000000	allwinner,sun50i-h616-rtc	RTC_DRV_SUN6I	y	clocks of /soc/pinctrl@300b000
+/soc/serial@5000000	snps,dw-apb-uart	SERIAL_8250_CONSOLE	y	start
