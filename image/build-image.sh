@@ -1,6 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-2.0-only
-# R7 prototype: build an Ubuntu 24.04 (noble) arm64 card image for the Anbernic RG34XX-SP.
+# R7 prototype: build a ReduxOS card image for the Anbernic RG34XX-SP: Ubuntu 24.04 (noble) arm64
+# packages plus our kernel and boot setup. Named ReduxOS, not Ubuntu (Q7; R9 §2).
 #
 #   mmdebstrap (rootfs from image/packages.txt)  ->  chroot stage (kernel .deb, overlays, extlinux
 #   via u-boot-menu)  ->  genimage (MBR: u-boot @ 8 KiB, FAT32 /boot @ 16 MiB, ext4 root)
@@ -29,7 +30,7 @@ if [ -n "${KERNEL_DEB:-}" ]; then KMODE=deb; KERNEL_DEB=$(readlink -f "$KERNEL_D
 elif [ "${KERNEL:-}" = ubuntu ]; then KMODE=ubuntu
 else echo "set KERNEL_DEB=<our kernel .deb> or KERNEL=ubuntu (QEMU only)" >&2; exit 2; fi
 STAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d)
-NAME=rg34xxsp-noble-$STAMP-$KMODE${UBOOT_BIN:+-uboot}${PANEL_FW:+-private}
+NAME=reduxos-rg34xxsp-noble-$STAMP-$KMODE${UBOOT_BIN:+-uboot}${PANEL_FW:+-private}
 if [ -n "${PANEL_FW:-}" ]; then
 	PANEL_FW=$(readlink -f "$PANEL_FW")
 	ls "$PANEL_FW"/panels/*.panel >/dev/null 2>&1 || { echo "PANEL_FW=$PANEL_FW has no panels/*.panel" >&2; exit 2; }
@@ -78,6 +79,9 @@ log "2. stage /boot content into the rootfs tree for genimage"
 echo uninitialized > "$OUT/rootfs/etc/machine-id"
 rm -rf "$OUT/rootfs/boot"; mkdir -p "$OUT/rootfs/boot"; cp -a "$OUT/tmp/boot/." "$OUT/rootfs/boot/"
 cp "$OUT/rootfs/root/manifest.tsv" "$OUT/$NAME.manifest.tsv"
+# Our identity file. /etc/os-release stays as Ubuntu's base-files ships it (unmodified package, R9 §2).
+printf 'NAME="ReduxOS"\nID=reduxos\nBUILD_ID=%s\nIMAGE_ID=%s\nBASE="Ubuntu 24.04 LTS (noble) packages"\nHOME_URL="https://github.com/wilcox101-maker/Allwinner-H700-Custom-Kernel-Research"\n' \
+	"$STAMP" "$NAME" > "$OUT/rootfs/etc/reduxos-release"
 if [ -n "${PANEL_FW:-}" ]; then          # private image only (see PANEL_FW above)
 	install -d "$OUT/rootfs/usr/lib/firmware/panels"
 	install -m 0644 "$PANEL_FW"/panels/*.panel "$OUT/rootfs/usr/lib/firmware/panels/"

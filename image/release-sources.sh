@@ -96,7 +96,8 @@ fi
 
 log "3. README and checksums"
 cat > "$DEST/README.txt" <<EOF
-Source for $NAME.img
+Source for the ReduxOS image $NAME.img
+(ReduxOS is built from Ubuntu 24.04 LTS packages; it is not Ubuntu and is not provided by Canonical.)
 
 This directory holds the complete corresponding source for the binaries in the image.
 

@@ -22,6 +22,8 @@ Nearly everything we ship is either Ubuntu's own unmodified packages or our own 
 | This repository | GPL-2.0-only (LICENSE, SPDX tags); DTs dual GPL-2.0/BSD-2-Clause | — | — | OK |
 
 ## 2. The "Ubuntu" name (new decision Q7)
+**Decided 2026-11-14 (Dale): option (a), the name is ReduxOS.** Applied: u-boot menu label `ReduxOS RG34XX-SP`, image files `reduxos-rg34xxsp-noble-<date>-…`, an `/etc/reduxos-release` identity file, and the source bundle's README ("built from Ubuntu 24.04 LTS packages; not Ubuntu, not provided by Canonical"). `/etc/os-release`, `/etc/issue` and the login banner stay as Ubuntu's unmodified `base-files` ships them for v0.x (changing them means diverting conffiles of an Ubuntu package); revisit before any wide release. Docs may say *built from Ubuntu 24.04 LTS packages* (factual use).
+
 Canonical's IP Rights Policy (15 July 2015) allows redistributing Ubuntu **unmodified**; modified versions may be associated with the Ubuntu trademarks only if Canonical approves, certifies or provides them, otherwise the trademarks must be removed and replaced (the policy also says "recompile", which the community disputes; it adds that it does not reduce rights under the components' own open-source licences). Our image is a modified Ubuntu (own kernel, boot setup, configuration). Today the image uses "Ubuntu" in the u-boot menu label (`U_BOOT_MENU_LABEL="Ubuntu 24.04 RG34XX-SP"`); the file name uses only the codename "noble".
 
 Options for Dale (**Q7**):
@@ -44,7 +46,7 @@ The checklist:
 1. `<image>.manifest.tsv` (done) + `<image>.sources.tar` or a written source offer covering every GPL package in it.
 2. Kernel + u-boot + TF-A + stub corresponding source (tags, patches, configs, build scripts) as a tarball next to the image.
 3. Firmware licence files present (`/usr/share/doc/linux-firmware-realtek/copyright`; checked by a test in the image build).
-4. No ROCKNIX panel blobs, no stock binaries, no Ubuntu trademarks in our own branding (per Q7).
+4. No ROCKNIX panel blobs, no stock binaries, no Ubuntu trademarks in our own branding (Q7: ReduxOS).
 5. Release notes: components, versions, licences, "not affiliated with Anbernic or Canonical".
 
 ## 4. Sources
