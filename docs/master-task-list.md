@@ -16,7 +16,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K1 | **Read-only readings on stock:**<br>- `MemTotal`<br>- DCDC1/2/3 µV<br>- `dmesg \| grep 'vf versions'`<br>- CPU speed fuse @ 0x03006200<br>- thermal trips<br>- panel lines in `dmesg` | Dale's CPU bin; DCDC2 (GPU 648 MHz); DRAM type cross-check | checklist §0; `stock-cpu-bin-decoder-and-dcdc2.md` §4 | blocked: device |
 | K2 | ROCKNIX 20261101 DDR4 on a spare card: 10 checks + logs | M1 baseline: what mainline does on this unit, panel variant | `kernel-research-device-checklist-rocknix.md` | blocked: device |
 | K3 | UART pads (case open, meter, 3.3 V adapter, 115200 8N1). First capture: stock boot log; note boot0's `vaild para:… select dram para<N>` line (N = 15 → LPDDR4, all DRAM straps open) | Serial console for every later boot test (M0); confirms the DRAM strap index (R3) | `rg35xxh-codeasm-lessons.md` | blocked: device |
-| K4 | FEL boot, no card: `sunxi-fel version`, then our u-boot (LPDDR4 + PE6 patch); expect `RG34XX-SP: panel ID PE6=0` | First run of our boot chain; confirms PE6 and LPDDR4 | `rg34xxsp-panel-detect-and-uboot-patch.md` | blocked: device (needs K3) |
+| K4 | FEL boot, no card: `sunxi-fel version`, then our u-boot from `scripts/build-uboot.sh` (binary for the DRAM type K3 showed), steps and expected log in `r2-fel-test-kit.md`; expect `RG34XX-SP: panel ID PE6=0` | First run of our boot chain; confirms PE6 and LPDDR4 | `rg34xxsp-panel-detect-and-uboot-patch.md` | blocked: device (needs K3) |
 | K5 | Sticks on mainline: `evtest` axis order/sign; also press both stick clicks (L3 PE8 / R3 PE9) | Final `abs-range` in board DT; confirms the stick-click buttons exist | `kernel-custom-patches.md` §3, §10 | blocked: device |
 | K6 | Deep-suspend ladder (custom-patches §7; needs UART) | Real suspend-to-RAM in our image | custom-patches §7 | blocked: device |
 | K7 | Stick polling cost at 16 ms (CPU %) | Polling interval | custom-patches §3 | blocked: device |
@@ -40,8 +40,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 ## B. Desk tasks (no device needed)
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
-| R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
+| R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | done (desk): `r1-boot-chain.md`, `scripts/build-uboot.sh` (u-boot v2026.10 + TF-A v2.14.0, LPDDR4 and LPDDR3 binaries, reproducible); device steps K3 → K4 |
+| R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | done (desk): `r2-fel-test-kit.md`; runs as K4 |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | recurring: November done (`r11-upstream-check-2026-11.md`); next ~2026-12-14 |
 
 ## C. Decisions for Dale (blocked: decision)
@@ -67,6 +67,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 09:40: R1 + R2 (desk): `scripts/build-uboot.sh` builds SPL + BL31 + u-boot per DRAM type (u-boot **v2026.10**, which has the H616 LPDDR3 TPR6 fix that v2026.01 lacks; TF-A v2.14.0; PE6 DT selection + R8 boot counter); eGON checksum, size, strings and reproducibility checked; `--sources` writes the corresponding source for R9. Card layout confirmed (MBR, 8 KiB, FAT `/boot` @ 16 MiB). FEL kit for K4 (KR, `r1-boot-chain.md`, `r2-fel-test-kit.md`).
 - 2026-11-14 08:45: **Q1/Q2/Q5 decided by Dale** (via the Redux Manager): Q1 stock 115 °C, Q2 ROCKNIX H700 CPU table (1512 MHz boost-only, stress test K22), Q5 1024 mA until K14. Applied to `-redux` (+ new `…-cpu-opp.dtsi`, patch 0007 for the OPP schema); desk checks pass (KR).
 - 2026-11-14 08:30: **D2 done:** u-boot PE6 patch defaults PE6 low → `…-redux-panel.dtb`, PE6 high → `…-redux.dtb` (prompt "newer panel", help text); builds on v2026.01. Image build: `PANEL_FW`/`-private` path retired (no `.panel` consumer after Q8 a); new `image/check-display.sh` (panel DTB on the card ⇒ `panel-newvision-nv3052c` must match `anbernic,rg34xx-sp-panel`, module or built-in); initramfs hook now only for the QEMU Ubuntu-kernel mode. KR R20 answered: no `bootefi` in the image tooling (DR).
 - 2026-11-14 08:15: R11 November check: pinned series 984067 v2 and 1202273 v12 still newest, not merged; DE33 refactor and display fixes already in base. **Adopted** Jernej's H616 CPU cooling map (1202209) in a new `patches/upstream/base-layer.txt`: without it nothing throttles the CPU before the 110 °C critical trip. Watching DE33 update 1092102 (would rework our DE nodes), H616 HDMI DT 1158750, GPU DVFS/cooling 1209352 (KR, `r11-upstream-check-2026-11.md`).

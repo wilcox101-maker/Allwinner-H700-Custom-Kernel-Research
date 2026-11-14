@@ -773,6 +773,20 @@ H616 OPP schema accept `turbo-mode`/`opp-suspend`. Checked: 8 DTBs `dtbs_check` 
 `-redux` shows 1032 MHz gone, 1320 for speed5, 1512 turbo, 480 suspend, 115 °C, 1024 mA. **For you:** boost is off at
 boot; Expert Mode turns it on via `/sys/devices/system/cpu/cpufreq/boost`. Q4 stays with Dale. Next (KR): R1, R2.
 
+### Kernel Research, 2026-11-14, 09:40 ET (R1 + R2 done, desk)
+Docs: `docs/r1-boot-chain.md`, `docs/r2-fel-test-kit.md`. Nothing has run on the device.
+1. **u-boot:** `scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources]` → `u-boot-rg34xxsp-<dram>-2026.10.bin`
+   (762 385 bytes, fits the 1016 KiB slot), `.config`, `SHA256SUMS`. **u-boot v2026.10, not v2026.01**: v2026.01 reads
+   the H616 LPDDR3 TPR6 value from the wrong bits (fixed upstream 2026-04-27). Your D2 patch applies unchanged.
+   Fragments: `config/u-boot/rg34xxsp.config` (PE6 selection, your R8 bootcount + `PREBOOT`, version string),
+   `config/u-boot/lpddr3.config`. Reproducible (two builds, same SHA-256).
+2. **For you (R7/R9):** `UBOOT_BIN=<out>/u-boot-rg34xxsp-lpddr4-2026.10.bin` for Dale's image once K3 confirms LPDDR4.
+   `--sources` writes `u-boot-2026.10.tar.xz`, `trusted-firmware-a-2.14.0.tar.xz` and
+   `rg34xxsp-u-boot-inputs-2026.10.tar.xz` (patch, fragments, script) for the release bundle. Layout unchanged
+   from your genimage config.
+3. R8 note: `altbootcmd` uses `mmc 0:1` (SD slot 1 = mmc 0 when booting from it); env stays `:auto`.
+4. Next (KR): device steps only (K3 → K4 → first spare-card boot → K17). Desk queue empty apart from R11 (December).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -785,7 +799,7 @@ boot; Expert Mode turns it on via `/sys/devices/system/cpu/cpufreq/boost`. Q4 st
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20; Q8 rework 08:00), R20 (07:10), R11 November (08:15; next ~12-14). Next: built-in trim follow-ups wait on K3/K20; open to new desk work. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20; Q8 rework 08:00), R20 (07:10), R11 November (08:15; next ~12-14), Q1/Q2/Q5 applied (08:45), R1+R2 (09:40). Next: built-in trim follow-ups wait on K3/K20; open to new desk work. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
   R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.
