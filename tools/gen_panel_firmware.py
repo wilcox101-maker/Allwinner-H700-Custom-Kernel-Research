@@ -23,6 +23,9 @@ redistribution terms are open, task R9). Everything else is set here, from hardw
     dropped (the driver sends both itself), except that v1 keeps one exit-sleep, as ROCKNIX does.
 Check: from the stock 2025 image (v1) and V1.0.6 image (v2) this reproduces ROCKNIX's two
 working files byte for byte.
+Since decision Q8 (2026-11-14) our kernel no longer uses .panel files: the original panel runs
+on the NV3052C driver with a table from tools/gen_nv3052c_table.py, which reuses this file's
+command preparation and known-good check. Kept as that reference.
 Python stdlib only. Writes only under OUT_DIR.
 """
 import argparse

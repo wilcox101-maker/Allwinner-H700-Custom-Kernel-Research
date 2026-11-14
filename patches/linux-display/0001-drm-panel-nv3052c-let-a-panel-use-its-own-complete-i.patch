@@ -1,0 +1,69 @@
+From 855b04bbcb8f0f206d8b944737eb1ff011ccbd33 Mon Sep 17 00:00:00 2001
+From: Redux Kernel Research <redux@invalid>
+Date: Sat, 14 Nov 2026 06:50:35 -0500
+Subject: [PATCH 1/3] drm/panel: nv3052c: let a panel use its own complete init
+ sequence
+
+Every panel the driver supports gets common_init_regs after its own
+registers. That table sets gamma, source timing and the page 0
+registers, which suits the panels it was written for but overwrites a
+panel vendor's sequence that already sets all of them differently.
+
+Add two per-panel fields: skip_common_regs, for a panel whose table is
+its vendor's complete sequence, and exit_sleep_delay_ms, the time such
+a panel needs after exit-sleep before the next command. Existing panels
+leave both at zero and behave as before.
+
+This patch was drafted with an AI coding assistant (Claude) and checked
+by building with W=1 (arm64, gcc 13.3.0). It has not been tested on
+hardware.
+---
+ drivers/gpu/drm/panel/panel-newvision-nv3052c.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/panel/panel-newvision-nv3052c.c b/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
+index 18130bc14..2a261d6ce 100644
+--- a/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
++++ b/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
+@@ -32,6 +32,10 @@ struct nv3052c_panel_info {
+ 	u32 bus_format, bus_flags;
+ 	const struct nv3052c_reg *panel_regs;
+ 	unsigned int panel_regs_len;
++	/* panel_regs is the panel vendor's complete sequence: skip common_init_regs */
++	bool skip_common_regs;
++	/* time the panel needs after exit-sleep before the next command, in ms */
++	unsigned int exit_sleep_delay_ms;
+ };
+ 
+ struct nv3052c {
+@@ -368,6 +372,8 @@ static int nv3052c_prepare(struct drm_panel *panel)
+ 	struct nv3052c *priv = to_nv3052c(panel);
+ 	const struct nv3052c_reg *panel_regs = priv->panel_info->panel_regs;
+ 	unsigned int panel_regs_len = priv->panel_info->panel_regs_len;
++	unsigned int common_regs_len = priv->panel_info->skip_common_regs ?
++				       0 : ARRAY_SIZE(common_init_regs);
+ 	struct mipi_dbi *dbi = &priv->dbi;
+ 	unsigned int i;
+ 	int err;
+@@ -396,7 +402,7 @@ static int nv3052c_prepare(struct drm_panel *panel)
+ 	}
+ 
+ 	/* Apply common initialization registers */
+-	for (i = 0; i < ARRAY_SIZE(common_init_regs); i++) {
++	for (i = 0; i < common_regs_len; i++) {
+ 		err = mipi_dbi_command(dbi, common_init_regs[i].cmd,
+ 				       common_init_regs[i].val);
+ 		if (err) {
+@@ -411,6 +417,9 @@ static int nv3052c_prepare(struct drm_panel *panel)
+ 		goto err_disable_regulator;
+ 	}
+ 
++	if (priv->panel_info->exit_sleep_delay_ms)
++		msleep(priv->panel_info->exit_sleep_delay_ms);
++
+ 	return 0;
+ 
+ err_disable_regulator:
+-- 
+2.43.0
+

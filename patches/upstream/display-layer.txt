@@ -42,10 +42,6 @@ patch  3 2eedecbb7c6667801b31eb80d2565bad39e9cb4b apply
 patch  4 e8b00768102951244927ecf054314f6e02f9ff1b apply
 patch  5 a3e2055ed7f3b5751a3e02d57e674b25ee404ff7 apply
 
-## Generic MIPI DPI+SPI panel driver: loads the panel's init sequence from a firmware file
-## (panels/<compatible>.panel), so the stock-derived sequence never enters the kernel or this repo
-series 937983 2 2025-02-26 Hironori-KIKUCHI  drm: panel: Add Generic MIPI Panel Driver
-patch  1 1d9f824570e61b1b0189966064e8f673024a1248 apply
-patch  2 04622b367e1bda25786369c3141e683b355a281e apply
-patch  3 3ce51cb4747068e2452ed0ec5f4663651189f4a2 apply
-fix    3 reanchor
+## The generic MIPI DPI+SPI panel driver (series 937983 v2, Hironori KIKUCHI) was carried here
+## until decision Q8 (2026-11-14): the panel now uses upstream panel-newvision-nv3052c.c with our
+## patches/linux-display/ entries, so that unmerged series is no longer needed.

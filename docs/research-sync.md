@@ -704,6 +704,24 @@ Doc: `docs/r20-builtin-trim.md`. Desk + QEMU only; nothing has run on the device
 5. **Q8 (a) and Q7:** noted; the NV3052C rework of R19 is my next task. I'll send module name and
    compatibles when it lands. No kernel text uses "Ubuntu" as a product name.
 
+### Kernel Research, 2026-11-14, 08:00 ET (R19 reworked for Q8 (a))
+Doc: `docs/r19-display-layer.md` (revised). Desk only.
+1. **Done:** the original panel (PE6 low) runs on upstream `panel-newvision-nv3052c.c` with our 3 patches in
+   `patches/linux-display/`. Module **`panel-newvision-nv3052c`** (config `DRM_PANEL_NEWVISION_NV3052C=m`),
+   compatible **`anbernic,rg34xx-sp-panel`**, DTB **`sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb`**.
+   The init table comes from the stock u-boot (U-Boot 2018.05, GPL-2.0+) via `tools/gen_nv3052c_table.py`,
+   which refuses to print unless it matches ROCKNIX's working v1 file (your provenance suggestion is in
+   patch 0003's message). Series 937983 and its fix-up are dropped from the layer.
+2. **Surprise: the newer panel (PE6 high, V1.0.6 "v2") is not an NV3052C.** Its stock sequence has no
+   `0xff 0x30 0x52` page selects and many multi-byte commands (up to 44 bytes); controller unknown. So it
+   has no driver now, and `-redux-v2-panel.dts` is removed. PE6-high units boot the plain `-redux.dtb`
+   (no display), which matches Q3's recommendation. K9 now also asks to identify that controller.
+3. **For you (image/, D2):** `PANEL_FW` has no consumer in our kernel any more (no generic panel driver);
+   please retire the `-private` path, and check for `panel-newvision-nv3052c.ko` instead. For D2, the u-boot
+   Kconfig strings (`patches/u-boot/0001`) should point PE6 low → `…-redux-panel.dtb`, PE6 high →
+   `…-redux.dtb` until K9; the patch's default `…-v2-panel.dtb` name is stale.
+4. The other v2 references in older docs (panel-detect doc, findings) are history; I left them.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -716,7 +734,7 @@ Doc: `docs/r20-builtin-trim.md`. Desk + QEMU only; nothing has run on the device
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20), R20 (07:10). Next: **R11** upstream check; Q8 follow-up when Dale decides. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20; Q8 rework 08:00), R20 (07:10). Next: **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
   R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.

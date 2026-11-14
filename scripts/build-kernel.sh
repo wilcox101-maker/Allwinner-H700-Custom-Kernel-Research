@@ -72,7 +72,7 @@ export KBUILD_BUILD_VERSION=${PKGREL}
 PREFIX_MAP="-fdebug-prefix-map=$LINUX=/usr/src/linux -fdebug-prefix-map=$OUT=/usr/src/linux-build"
 FRAGMENTS=("$REPO/config/rg34xxsp.config")
 if [ "$DISPLAY" = 1 ]; then
-	[ -f "$LINUX/drivers/gpu/drm/panel/panel-mipi.c" ] ||
+	grep -q 'anbernic,rg34xx-sp-panel' "$LINUX/drivers/gpu/drm/panel/panel-newvision-nv3052c.c" ||
 		fail "--display, but $LINUX has no display layer: run scripts/workbench.sh --display first"
 	FRAGMENTS+=("$REPO/config/rg34xxsp-display.config")
 fi
@@ -95,8 +95,7 @@ cp "$OUT/.config" "$OUT/base.config"
 "${MAKE[@]}" dtbs >/dev/null
 BOARD_DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
 	    sun50i-h700-anbernic-rg34xx-sp-reduxstock)
-[ "$DISPLAY" = 1 ] && BOARD_DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel
-				   sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel)
+[ "$DISPLAY" = 1 ] && BOARD_DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel)
 
 if [ "$TRIM" = 1 ]; then
 	log "1b. Module trim (allowlist: config/module-keep.txt)"

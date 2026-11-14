@@ -12,7 +12,7 @@
 #      function still matches patch 0001), and the OPP generator round trip
 #   6. with --bindings, also runs dt_binding_check for the touched schemas (slow)
 #   With --display, also applies the display layer (patches/upstream/display-layer.txt, by
-#   reference, then patches/linux-display/) and checks the two panel trees (task R19).
+#   reference, then patches/linux-display/) and checks the panel tree (task R19, Q8).
 #
 # Usage:  scripts/workbench.sh [--bindings] [--display] [--stock-dts PATH]
 #   WORK=<dir>  work directory (default: ./.work, ignored by git)
@@ -93,7 +93,7 @@ cp "$REPO"/dts/*.dts "$REPO"/dts/*.dtsi "$LINUX/$DTS/"
 	printf '#include "sun50i-h700-redux-stock-thermal.dtsi"\n'
 } >"$LINUX/$DTS/sun50i-h700-anbernic-rg34xx-sp-reduxstock.dts"
 VARIANTS=(redux reduxstock)
-[ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel redux-v2-panel)
+[ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel)
 for v in "${VARIANTS[@]}"; do
 	line="dtb-\$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg34xx-sp-$v.dtb"
 	grep -qxF "$line" "$LINUX/$DTS/Makefile" || echo "$line" >>"$LINUX/$DTS/Makefile"
@@ -104,8 +104,8 @@ log "4. dtbs_check (any output counts as a failure)"
 DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
       sun50i-h700-anbernic-rg34xx-sp-reduxstock)
 if [ "$DISPLAY" = 1 ]; then
-	# The panel trees, plus the upstream trees that inherit the new h616 display nodes.
-	DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel
+	# The panel tree, plus the upstream trees that inherit the new h616 display nodes.
+	DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel
 	       sun50i-h700-anbernic-rg35xx-2024 sun50i-h700-anbernic-rg35xx-plus
 	       sun50i-h700-anbernic-rg35xx-h sun50i-h700-anbernic-rg35xx-sp)
 fi
@@ -125,7 +125,7 @@ log "4b. W=1 build of every C file the patches touch (any warning counts as a fa
 "$LINUX/scripts/config" --file "$OUT/.config" -m SND_SUN4I_CODEC -m ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM \
 	-m DRM_SUN4I
 [ "$DISPLAY" = 1 ] && "$LINUX/scripts/config" --file "$OUT/.config" -m PWM_SUN8I -m SPI_GPIO \
-	-m DRM_PANEL_MIPI
+	-m DRM_PANEL_NEWVISION_NV3052C
 "${MAKE[@]}" olddefconfig >/dev/null
 mapfile -t CFILES < <(git -C "$LINUX" diff --name-only "$LINUX_SHA" HEAD -- '*.c')
 [ "${#CFILES[@]}" -gt 0 ] || fail "no touched C files found"
@@ -141,6 +141,10 @@ for c in "${CFILES[@]}"; do
 	echo "  ok  $c"
 done
 
+# Our local Redux trees are never part of a patch (step 3 adds them to the Makefile uncommitted).
+if grep -l 'rg34xx-sp-redux' "$REPO"/patches/linux/*.patch "$REPO"/patches/linux-display/*.patch; then
+	fail "a patch above names a local -redux tree (stray Makefile hunk?)"
+fi
 log "5a. checkpatch (--no-signoff; Signed-off-by is added by a human, never by a tool)"
 PATCHES=("$REPO"/patches/linux/*.patch)
 [ "$DISPLAY" = 1 ] && PATCHES+=("$REPO"/patches/linux-display/*.patch)
@@ -174,7 +178,7 @@ if [ "$BINDINGS" = 1 ]; then
 	log "6. dt_binding_check"
 	SCHEMAS=("sound/allwinner,sun4i-a10-codec.yaml" "opp/allwinner,sun50i-h6-operating-points.yaml"
 		 "arm/sunxi.yaml")
-	[ "$DISPLAY" = 1 ] && SCHEMAS+=("display/panel/panel-mipi.yaml"
+	[ "$DISPLAY" = 1 ] && SCHEMAS+=("display/panel/anbernic,rg34xx-sp-panel.yaml"
 		"bus/allwinner,sun50i-a64-de2.yaml" "display/allwinner,sun4i-a10-display-engine.yaml"
 		"display/allwinner,sun4i-a10-tcon.yaml" "display/allwinner,sun8i-r40-tcon-top.yaml"
 		"pwm/allwinner,sun4i-a10-pwm.yaml")
