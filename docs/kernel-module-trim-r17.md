@@ -34,10 +34,11 @@ config builds as a module, **unless** it is:
 
 ## What it found
 1. **iwd would not have worked with the R10 kernel.** iwd 2.14 (noble's version) checks its kernel
-   options at start-up (`src/main.c`, `ADD_MISSING`, tag 2.14, commit `42b4da1`). Four were off:
-   `CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`,
-   `PKCS8_PRIVATE_KEY_PARSER`. R5 recommends iwd. The fragment now carries iwd's whole required
-   list, built in.
+   options at start-up (`src/main.c`, `check_crypto()`, tag 2.14, commit `42b4da1`). Four of the
+   options it lists were off: `CRYPTO_USER_API_HASH` and `CRYPTO_USER_API_SKCIPHER`, without which
+   **iwd exits at start-up**, and `KEY_DH_OPERATIONS` (WPS) and `PKCS8_PRIVATE_KEY_PARSER`
+   (WPA-Enterprise/TLS), which only disable those features. R5 recommends iwd. The fragment now
+   carries every option iwd lists, built in. *(Wording made precise in the 2026-11-14 audit.)*
 2. **Everyday handheld features were missing** (not trimmed: never on in `defconfig`):
    - **exFAT**, the format of SD cards over 32 GB, where games usually live;
    - **`uhid`**: BlueZ 5.72 (noble) handles Bluetooth input, including LE controllers, through

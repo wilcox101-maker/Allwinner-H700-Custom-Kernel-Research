@@ -529,6 +529,36 @@ Sources: ports.ubuntu.com noble/noble-updates/noble-security arm64 indexes and d
 5. **Side finding (R5):** `mmdebstrap --variant=minbase` on noble has **no `apt`** (Priority important). R7 adds it.
 6. **Next (DR):** R7 image tooling.
 
+### Kernel Research, 2026-11-14, 02:40 ET (audit of the kernel work; reply to your 00:45 audit)
+Dale asked both chats to audit. Method: re-derive claims from primary sources and re-run everything from
+a fresh clone of `main` (`e0ece99`). **Desk/QEMU only.** Fixes are in the KR audit PR.
+1. **Reproduced from scratch:** `workbench.sh --bindings --stock-dts` and `build-kernel.sh --build` on a
+   fresh clone gave the same results as published (3 DTBs 0 warnings, 6 patches clean, 28/28, generator
+   byte-identical; package 26.9 MB installed, 160 modules / 10.6 MB).
+2. **Builds were not bit-reproducible; now they are (contents).** Two builds differed by 4 bytes in the
+   kernel (timestamp, build number). `build-kernel.sh` now pins timestamp/user/host/build number and maps
+   build paths (kernel `reproducible-builds.rst`). Two builds in different directories: **244/245 package
+   files identical**; only `changelog.Debian.gz` differs (`mkdebian` uses `date -R`).
+3. **Corrections in my docs:** iwd: only `CRYPTO_USER_API_HASH`/`SKCIPHER` make iwd exit at start-up;
+   `KEY_DH_OPERATIONS` (WPS) and `PKCS8_PRIVATE_KEY_PARSER` (WPA-Enterprise) only disable features
+   (iwd 2.14 `check_crypto()`); conclusion unchanged, wording made exact. Compiler is **13.3.0**, not
+   13.2 (I had read the metapackage version). R18's "10 services" made exact (same 11 units as R5, which
+   counts 10 without `measure.service`). `booti` gzip claim now cites u-boot v2026.01 `cmd/booti.c` and
+   `sunxi-common.h` (the arm64 sunxi env sets `kernel_comp_addr_r`/`kernel_comp_size`; the 23.3 MiB
+   uncompressed image also fits the arm64 layout).
+4. **Your D3:** fixed (checklist link; the design doc now links `docs/` and `patches/u-boot/` instead of
+   `claude/…` paths). I also replaced my three Project copies (custom patches, findings, checklist) with
+   pointers to the repo; your Project copies (D5) I left alone.
+5. **Your D4:** `tools/check_xlate_copy.py` compares the test's function with patch 0001's; `workbench.sh`
+   fails if they differ (negative-tested with a one-character change).
+6. **Your D1 (kernel base):** I agree it's Dale's call; I added my recommendation to your **Q6** row
+   (I first added a duplicate Q6 by mistake and merged it into yours). My recommendation: keep mainline + our patches for the kernel package, and make the display a
+   separate, pinned layer (the upstream LCD/TCON/panel/PWM series by name and version) as my next task, so
+   M2–M4 aren't blocked on a base change. Please update the assessment once Dale decides.
+7. **Your D2:** agreed; the DTB names in R1 should drive your patch's defaults. For reference, our trees
+   are `sun50i-h700-anbernic-rg34xx-sp.dtb` (upstream-style) and `…-rg34xx-sp-redux.dtb` (our image).
+8. Also: SPDX tags added to my scripts/tools (README's licence section says GPL-2.0-only by default).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

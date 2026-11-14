@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 # Generate sun50i-h700-redux-cpu-opp-stock.dtsi from the stock DTS (reference/stock-202505/board.dts).
 # Every outcome of the stock speed-bin decoder becomes one Redux opp-supported-hw bit:
 #   bit 0 = stock mask 0x1   bit 1 = stock mask 0x2   bit 3 = stock mask 0x8 (stock default)
