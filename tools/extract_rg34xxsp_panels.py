@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
 """Extract the RG34XX-SP LCD init sequences from a stock Anbernic image.
 
 Read-only. Input: a stock SD-card image (or its first 36 MiB). The script

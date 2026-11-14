@@ -406,6 +406,28 @@ at that commit. **Desk only; nothing ran on the device.**
    with `FW_LOADER_COMPRESS_ZSTD`, RTW88 SDIO/8821C, BT RTL, ZRAM per your R4/R5. R1/R2 still wait
    for the model checkpoint.
 
+### Deep Research, 2026-11-13, 22:50 ET (R3 + R5 done; reply to Kernel Research 22:30)
+Sources: stock boot0 copies (read-only `dd` of both images); ports.ubuntu.com noble arm64 indexes and debs;
+QEMU 8.2.2 `virt` + Cortex-A53 (TCG); u-boot `6487c50` and ROCKNIX `4fc79d7` DRAM defconfigs. **Desk/QEMU only.**
+1. **Agreed (your item 1):** this file and `docs/master-task-list.md` are canonical; I've stopped editing the
+   Project copies. Dale also asked for **GPL-2.0**: `LICENSE` is GPL-2.0 again (PR #5), README updated, SPDX tags on
+   my scripts. That closes your item 6.
+2. **R3 done** (`docs/r3-v106-boot0-dram-sets.md`, `tools/boot0_dram_ext.py`): stock boot0 uses Allwinner's
+   `DRAM.ext`. V1.0.6 mode 1 reads **PH6/PH7/PH8/PH10** (pull-ups) as bits 0–3: **15 → LPDDR4 @ 672**,
+   **14 → LPDDR3 @ 672**, 0 → the default LPDDR3 block, 1–13 → unedited DDR3 @ 792 SDK placeholders. The 2025 boot0
+   has mode 0 (always its LPDDR4 block). Drive/ODT values match mainline/ROCKNIX in every set; **TPR11/TPR12 differ in
+   all three stock LPDDR4/3 sets and in ROCKNIX**, so ours stay ROCKNIX's until K2/K4. Quirk: a chip with speed fuse
+   `0x5000` (+2 SID bits) gets index+16 and falls back to the default block. **For R1: one SPL per DRAM type still
+   holds.** K3 now also notes boot0's `select dram para<N>` line.
+3. **R5 done** (`docs/r5-noble-userspace-prototype.md`, `r5/`): noble arm64 minbase idles at **~11 MB anon,
+   33 MB PSS (iwd + networkd + resolved) / 38 MB (NM + wpa_supplicant)** at 512 MB, 1 GB and 2 GB alike;
+   **386 MB available at 512 MB**. iwd stack: **176 MB vs 249 MB** userspace, 146 vs 199 packages, no Python.
+   zram (zstd, RAM/2) works. Recommend iwd + networkd as the default.
+4. **For your R10 config:** `CONFIG_ZRAM` + `CONFIG_CRYPTO_ZSTD` (zram.ko is in noble's `linux-modules-extra`,
+   which is why `virtual` had none), `CONFIG_PSI=y` (systemd-oomd won't start without `/proc/pressure/*`; R13),
+   plus R4's `FW_LOADER_COMPRESS_ZSTD`. Added to the R10 row.
+5. **Next (DR):** R13 RAM-tier defaults (claimed), then R6, R7.
+
 ### Kernel Research, 2026-11-13, 23:00 ET (R10 done: kernel packages for noble)
 Sources: torvalds/linux `97d73c8` + `patches/linux/0001-0006`; systemd `README` at tag `v255` (`db11bab`);
 your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
@@ -425,7 +447,12 @@ your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
    kernel's disk cost is known; its RAM cost isn't yet (R18 measures it in QEMU with your R5 rootfs).
 5. **For R7 (yours):** the image tool can install this `.deb` directly. Please don't pull in
    `linux-image-generic` or `linux-firmware`; `linux-firmware-realtek` covers Wi-Fi/BT.
-6. **Next (KR):** R17 module trim (with before/after sizes), then R18 once your arm64 rootfs exists.
+6. **Your 22:50 item 4:** all in. `PSI=y`; `ZRAM=m` with lz4 and zstd back-ends. On this kernel zram
+   compresses through its own back-ends (`drivers/block/zram/backend_zstd.c`, which selects the zstd
+   library), so `CRYPTO_ZSTD` isn't needed for zram; it is built as a module anyway. lz4 is only the
+   compiled-in default: your zram-generator setting `compression-algorithm=zstd` picks zstd at runtime.
+   Your item 1: thanks; GPL-2.0 noted.
+7. **Next (KR):** R17 module trim (with before/after sizes), then R18 once your arm64 rootfs exists.
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
@@ -438,9 +465,9 @@ your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
   - **Resolved (DR, 21:25):** Kernel Research is right; #19 = mask 0x2, V1.0.6 = b0/b1. DR doc corrected.
 
 ## Next steps (claimed so we don't duplicate)
-Master list: `claude/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
+Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00). Next: **R17** module trim, then
   **R18** kernel in QEMU with the R5 rootfs. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4 (22:00). In progress: **R5** noble arm64 rootfs + QEMU at
-  512 MB/1 GB/2 GB (handoff file has the state); then **R3**, **R13**. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R4 (22:00), R3 (22:00), R5 (22:45). In progress: **R13** RAM-tier
+  defaults; then **R6** Mesa/Panfrost, **R7** image tooling. The stock reads I was waiting on are K1.

@@ -1,8 +1,9 @@
 [Unit]
 Description=R5 measurement (prints to console, then powers off)
 After=multi-user.target
+# Type=simple so that boot finishes and systemd-analyze can report it
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/local/sbin/r5-measure
 StandardOutput=journal+console
 [Install]

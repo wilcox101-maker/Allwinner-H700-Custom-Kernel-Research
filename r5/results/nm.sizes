@@ -1,0 +1,9 @@
+total_MB 537
+boot_MB 73
+modules_MB 166
+firmware_MB 57
+kernel_MB 288   # /boot + modules + per-kernel firmware (QEMU distro kernel, not ours)
+userspace_MB 249
+packages 199
+python_MB 37
+apt_lists_MB 1
