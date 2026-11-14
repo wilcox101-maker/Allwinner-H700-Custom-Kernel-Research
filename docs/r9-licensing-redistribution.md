@@ -8,7 +8,7 @@ Nearly everything we ship is either Ubuntu's own unmodified packages or our own 
 ## 1. Component by component
 | Component | Licence / terms (evidence) | What we ship | Obligation / action | Status |
 |---|---|---|---|---|
-| Ubuntu packages in the image (~189, R7 manifest) | Each package's own licence (`/usr/share/doc/*/copyright`, kept in the image by the R7 `path-include`), plus **Canonical's IP Rights Policy** for the aggregate | Unmodified binaries from noble/-updates/-security | GPL'd packages: offer their source. Keep `copyright` files (done). Trademarks: see §2 | **To do:** publish a source bundle per release (`apt-get source` for every package in the manifest, or a written offer valid 3 years) |
+| Ubuntu packages in the image (~189, R7 manifest) | Each package's own licence (`/usr/share/doc/*/copyright`, kept in the image by the R7 `path-include`), plus **Canonical's IP Rights Policy** for the aggregate | Unmodified binaries from noble/-updates/-security | GPL'd packages: offer their source. Keep `copyright` files (done). Trademarks: see §2 | **Done (2026-11-14):** `image/release-sources.sh` collects every source package for the image (§3) |
 | `linux-firmware-realtek` (rtw88, rtl_bt) | "Redistributable. See LICENCE.rtlwifi_firmware.txt" (upstream WHENCE, R4) | Unmodified Ubuntu package (files under `/lib/firmware`) | Keep the licence file; no source exists | OK. **Never** embed these into the kernel (`EXTRA_FIRMWARE`, which ROCKNIX does); KR's config doesn't |
 | Our kernel package | GPL-2.0 (Linux) + our patches (GPL-2.0) | `linux-image-<ver>-rg34xxsp` | Publish complete corresponding source: pinned upstream commit + `patches/linux/` + `config/` + `scripts/build-kernel.sh` (all in this repo); add a source tarball or `deb-src` to the release/repo | Partly: repo has it all; release step to add |
 | u-boot (+ our PE6 and R8 bits) | GPL-2.0+ | SPL+u-boot at 8 KiB (future images) | Source: u-boot tag + patches + defconfig/fragment, published with each image | Future (R1) |
@@ -31,7 +31,15 @@ Options for Dale (**Q7**):
 
 Until Q7 is decided, keep images private (no public downloads).
 
-## 3. Release checklist (to add to the image build, R7)
+## 3. Release checklist (in the image build since 2026-11-14)
+Items 1 and 3 and the blob/stock-file part of 4 are now automated; 2 is automated for the kernel and takes a u-boot tarball once R1 builds one; 5 is written by hand per release.
+
+- `image/build-image.sh` writes `<image>.sources.tsv` (source package + version, from the image's dpkg database) and runs `image/check-licences.sh` on the rootfs; a failure stops the build. The check: every installed package keeps its `copyright` file; every file under `/usr/lib/firmware` belongs to a package (no hand-dropped blobs); no `*.panel` files; no stock boot0/`boot_package`/`.fex` files in `/boot` or the firmware tree. Tested both ways on the R8 image: passes (192 packages, 156 firmware files); a copy with a missing copyright file, a stray blob, a `.panel` file and a `boot0_sdcard.bin` fails on all four.
+- `image/release-sources.sh <image>.sources.tsv` writes `<image>.sources/`: `ubuntu/` (`.dsc` + tarballs for every source package, exact versions; from the archive, or from Launchpad's librarian when the archive has superseded the version, checked against the `.dsc` SHA-256 sums), `ours/` (this repo at HEAD as a tarball, pristine Linux at `LINUX_SHA`, the u-boot tarball when the image carries u-boot; it refuses a dirty repo), `SOURCES.tsv`, `README.txt` (rebuild steps, "not affiliated" line) and `SHA256SUMS`. It exits non-zero if any package is missing, so a release can't go out without its source.
+- Measured on the R8 image (our kernel, 192 binary packages from **123** Ubuntu source packages): all 123 fetched from ports.ubuntu.com in 7.5 min; bundle **809 MB** (Ubuntu 648 MB, of which LLVM is 217 MB and GCC 93 MB; Linux tarball 161 MB; repo 0.2 MB). Launchpad fallback checked with two superseded versions (`base-files 13ubuntu10.1`, `llvm-toolchain-20 1:20.1.2-0ubuntu1~24.04.2`: the URL path keeps the epoch, the file names drop it); an unknown package is reported MISSING and fails the run. `dpkg-source -x` unpacks the fetched packages.
+- Publishing the bundle next to the image (same release page) meets GPL-2.0 §3(a) without a written offer. If a release ever ships without it, a written offer valid three years is the fallback.
+
+The checklist:
 1. `<image>.manifest.tsv` (done) + `<image>.sources.tar` or a written source offer covering every GPL package in it.
 2. Kernel + u-boot + TF-A + stub corresponding source (tags, patches, configs, build scripts) as a tarball next to the image.
 3. Firmware licence files present (`/usr/share/doc/linux-firmware-realtek/copyright`; checked by a test in the image build).

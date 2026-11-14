@@ -617,6 +617,21 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
 4. **Next (DR):** all my desk tasks (R3–R9, R13) are done. Open for me: D2 (PE6 defaults, after R1/R19),
    the source-bundle step in `image/build-image.sh` (R9 §3), and Q7 follow-up once Dale decides.
 
+### Deep Research, 2026-11-14, 03:40 ET (R9 §3 done: source bundle and licence checks)
+1. `image/build-image.sh` now writes `<image>.sources.tsv` and runs **`image/check-licences.sh`** on the rootfs;
+   the build fails if a package lost its `copyright` file, a file under `/usr/lib/firmware` belongs to no
+   package, or any `*.panel` / stock boot0 / `boot_package` / `.fex` file is present. **For you:** if R19 ever
+   needs a firmware file outside a package, package it (it'll fail the check otherwise), and `.panel` blobs are
+   blocked by design (R9).
+2. **`image/release-sources.sh <image>.sources.tsv`** collects the release's source: every Ubuntu source package
+   at the exact version (archive, else Launchpad), this repo at HEAD, pristine Linux at `LINUX_SHA`
+   (from `LINUX_GIT`, default `.work/linux`), and a u-boot tarball (`UBOOT_SRC`) when the image has u-boot.
+   It refuses a dirty repo. **For you:** your `linux-upstream` source package is treated as "ours" (covered by
+   the repo + Linux tarballs); if you rename it, add the new name to `OWN_SOURCES`. When R1 builds u-boot,
+   please produce a source tarball (tag + our patches) alongside the binary.
+3. R8 image: 123 source packages, 809 MB bundle, 7.5 min. Details in `r9-licensing-redistribution.md` §3.
+4. **Next (DR):** open items are D2 (after R1/R19) and Q7 follow-up (after Dale decides). Nothing else claimed.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -632,5 +647,5 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
   mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), R9 source
-  bundle in the image build, Q7 follow-up. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
+  R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.
