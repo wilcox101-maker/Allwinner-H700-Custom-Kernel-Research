@@ -6,12 +6,13 @@
 #   mmdebstrap (rootfs from image/packages.txt)  ->  chroot stage (kernel .deb, overlays, extlinux
 #   via u-boot-menu)  ->  genimage (MBR: u-boot @ 8 KiB, FAT32 /boot @ 16 MiB, ext4 root)
 #
-# usage: sudo [KERNEL_DEB=linux-image-…rg34xxsp….deb | KERNEL=ubuntu] [UBOOT_BIN=u-boot-sunxi-with-spl.bin]
+# usage: sudo [KERNEL_DEB=linux-image-…rg34xxsp….deb | KERNEL=ubuntu] [UBOOT_BIN=u-boot-rg34xxsp-<dram>-<ver>.bin]
 #             [SOURCE_DATE_EPOCH=…] [OUT=out] image/build-image.sh
 #   KERNEL_DEB  our kernel package (KR R10/R17). Default if neither is given: error.
 #   KERNEL=ubuntu  Ubuntu's linux-image-6.8.0-149-generic + modules-extra + initramfs, for QEMU tests only.
-#   UBOOT_BIN   SPL+u-boot for the board's DRAM type (R1/R3). Without it the image has NO bootloader
-#               and can only be tested in QEMU.
+#   UBOOT_BIN   SPL+u-boot for the board's DRAM type, from scripts/build-uboot.sh (R1/R3). The image is
+#               then named …-uboot-<dram>.img and checked by image/check-boot-layout.py. Without it the
+#               image has NO bootloader and can only be tested in QEMU.
 # Writes only under $OUT. It never touches a block device: writing the image to a card is a separate,
 # deliberate step (see docs/r7-image-tooling.md). Publishing it needs the source bundle from
 # image/release-sources.sh (R9). Needs: mmdebstrap genimage dosfstools mtools e2fsprogs
@@ -27,7 +28,23 @@ if [ -n "${KERNEL_DEB:-}" ]; then KMODE=deb; KERNEL_DEB=$(readlink -f "$KERNEL_D
 elif [ "${KERNEL:-}" = ubuntu ]; then KMODE=ubuntu
 else echo "set KERNEL_DEB=<our kernel .deb> or KERNEL=ubuntu (QEMU only)" >&2; exit 2; fi
 STAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d)
-NAME=reduxos-rg34xxsp-noble-$STAMP-$KMODE${UBOOT_BIN:+-uboot}
+# The u-boot binary is DRAM-specific (R1 §4: LPDDR3 settings put 1.2 V on 1.1 V LPDDR4), so the image
+# name must say which one it carries. Take it from scripts/build-uboot.sh's file name and, when present,
+# check it against the .config written next to the binary.
+UBOOT_DRAM=""
+if [ -n "${UBOOT_BIN:-}" ]; then
+	UBOOT_BIN=$(readlink -f "$UBOOT_BIN")
+	case "$(basename "$UBOOT_BIN")" in
+	u-boot-rg34xxsp-lpddr4-*.bin) UBOOT_DRAM=lpddr4 ;;
+	u-boot-rg34xxsp-lpddr3-*.bin) UBOOT_DRAM=lpddr3 ;;
+	*) echo "UBOOT_BIN must be a u-boot-rg34xxsp-<lpddr4|lpddr3>-<ver>.bin from scripts/build-uboot.sh" >&2; exit 2 ;;
+	esac
+	if [ -f "${UBOOT_BIN%.bin}.config" ] &&
+	   ! grep -q "^CONFIG_SUNXI_DRAM_H616_${UBOOT_DRAM^^}=y" "${UBOOT_BIN%.bin}.config"; then
+		echo "$(basename "$UBOOT_BIN"): its .config is not ${UBOOT_DRAM^^}" >&2; exit 2
+	fi
+fi
+NAME=reduxos-rg34xxsp-noble-$STAMP-$KMODE${UBOOT_DRAM:+-uboot-$UBOOT_DRAM}
 ROOT="root=PARTUUID=$(printf '%08x' $((DISK_SIG)))-02"
 log() { printf '== %s\n' "$*"; }
 
@@ -77,8 +94,8 @@ echo uninitialized > "$OUT/rootfs/etc/machine-id"
 rm -rf "$OUT/rootfs/boot"; mkdir -p "$OUT/rootfs/boot"; cp -a "$OUT/tmp/boot/." "$OUT/rootfs/boot/"
 cp "$OUT/rootfs/root/manifest.tsv" "$OUT/$NAME.manifest.tsv"
 # Our identity file. /etc/os-release stays as Ubuntu's base-files ships it (unmodified package, R9 §2).
-printf 'NAME="ReduxOS"\nID=reduxos\nBUILD_ID=%s\nIMAGE_ID=%s\nBASE="Ubuntu 24.04 LTS (noble) packages"\nHOME_URL="https://github.com/wilcox101-maker/Allwinner-H700-Custom-Kernel-Research"\n' \
-	"$STAMP" "$NAME" > "$OUT/rootfs/etc/reduxos-release"
+printf 'NAME="ReduxOS"\nID=reduxos\nBUILD_ID=%s\nIMAGE_ID=%s\nBASE="Ubuntu 24.04 LTS (noble) packages"\nHOME_URL="https://github.com/wilcox101-maker/Allwinner-H700-Custom-Kernel-Research"\nUBOOT=%s\n' \
+	"$STAMP" "$NAME" "$(basename "${UBOOT_BIN:-none}" .bin)" > "$OUT/rootfs/etc/reduxos-release"
 # R9: source package list for image/release-sources.sh, then the licence checks (fail = no image)
 dpkg-query --admindir="$OUT/rootfs/var/lib/dpkg" -W -f='${source:Package}\t${source:Version}\n' | LC_ALL=C sort -u > "$OUT/$NAME.sources.tsv"
 "$HERE/check-licences.sh" "$OUT/rootfs"
@@ -100,6 +117,11 @@ genimage --config "$OUT/genimage.cfg" --rootpath "$OUT/rootfs" --tmppath "$OUT/g
          --inputpath "$OUT/genimage" --outputpath "$OUT/genimage" >"$OUT/genimage.log" 2>&1 \
   || { tail -20 "$OUT/genimage.log"; exit 1; }
 mv "$OUT/genimage/$NAME.img" "$OUT/"
+if [ -n "$UBOOT_DRAM" ]; then
+	log "4. boot layout check (SPL at 8 KiB, FAT at 16 MiB, DTBs, fw_env)"
+	python3 -I "$HERE/check-boot-layout.py" "$OUT/$NAME.img" "$UBOOT_BIN" | tee "$OUT/$NAME.boot-layout.txt" ||
+		{ echo "boot layout check failed; image left at $OUT/$NAME.img for inspection" >&2; exit 1; }
+fi
 (cd "$OUT" && sha256sum "$NAME.img" > "$NAME.img.sha256")
 log "done: $OUT/$NAME.img ($(du -h --apparent-size "$OUT/$NAME.img" | cut -f1)); $ROOT"
 log "before publishing: image/release-sources.sh $OUT/$NAME.sources.tsv (R9: the image's source bundle)"

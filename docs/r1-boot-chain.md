@@ -25,6 +25,8 @@ run on an RG34XX-SP**, and no card has been written. First use: by FEL, in RAM o
 
 This is the layout R7's `image/genimage.cfg.in` already writes; R1 confirms it and fills the u-boot
 slot. `image/build-image.sh UBOOT_BIN=…/u-boot-rg34xxsp-lpddr4-2026.10.bin …` puts the binary at 8 KiB.
+DR's R24 (`docs/r24-image-with-uboot.md`) built both images that way, names them `…-uboot-<dram>.img`, and
+checks the layout with `image/check-boot-layout.py` on every such build.
 
 ## 3. Why these versions
 - **u-boot v2026.10** (`5508406`), not v2026.01: v2026.01's H616 DRAM driver reads the LPDDR3 TPR6

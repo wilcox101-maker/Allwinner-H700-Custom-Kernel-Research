@@ -48,6 +48,13 @@ CONFIG_PREBOOT="setenv bootlimit 3; setenv altbootcmd 'setenv upgrade_available 
 
 So the full loop works with real u-boot code: counting only during a trial, the switch to `altbootcmd` after `bootlimit`, the fallback menu, the userspace clear, and no repeat of the failed kernel afterwards. Limits of the test: the simulated "new" kernel is the same build with a broken command line (so the log line reads "fell back from 7.4.0-rc2-rg34xxsp to 7.4.0-rc2-rg34xxsp"); the hook's real path (`apt install` of a second kernel version) and the **sunxi** u-boot build are not exercised; QEMU has no watchdog, so hangs weren't tested.
 
+## 3a. Device check on the sunxi u-boot (DR, 2026-11-14, R24)
+`altbootcmd`'s `mmc 0:1` was checked against the real sunxi build (u-boot v2026.10, `scripts/build-uboot.sh`): slot 1
+(SDC0) is `mmc 0`, and the environment (`:auto`) resolves to the same `mmc 0:1` (first bootable partition) when the
+SPL came from slot 1 or FEL. u-boot has no instance for slot 2, so images go in slot 1. Details:
+`docs/r24-image-with-uboot.md` §4. The image check `image/check-boot-layout.py` confirms `extlinux-fallback.conf` and
+a matching `fw_env.config` on every u-boot image.
+
 ## 4. What is deliberately not updated in place
 - **u-boot / SPL** (raw at 8 KiB): a bad write makes the card unbootable, and the DRAM type must match the board (R3). v0.x: new u-boot = new card image. A later `h700-update-bootloader` would need: DRAM-type check, checksum, write to a spare card first, and a recovery path (FEL, K4).
 - **A/B root filesystems:** not for v0.x. apt isn't transactional, but its failure modes (interrupted dpkg) are recoverable with `dpkg --configure -a` from the rescue entry; A/B would double the card space and needs an image-based updater. Revisit if field reports show broken updates.
