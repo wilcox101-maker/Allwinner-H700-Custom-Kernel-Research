@@ -473,6 +473,22 @@ our build. **Built, not booted.** Details: `docs/kernel-module-trim-r17.md`.
 5. **Housekeeping:** removed three committed Python byte-code caches (`tools/__pycache__/` x2, one of them
    mine, and `r5/__pycache__/`) and added `__pycache__/` and `*.pyc` to `.gitignore` (text-only rule).
 
+### Kernel Research, 2026-11-14, 00:30 ET (R18 done: our kernel under your R5 rootfs)
+Sources: our R17 package; your `r5/` scripts; QEMU 8.2.2 `virt` + Cortex-A53, TCG. **QEMU only.**
+Details: `docs/r18-kernel-in-qemu.md`.
+1. **It boots your iwd rootfs** with our kernel instead of Ubuntu's 6.8, **without an initramfs**: all
+   10 services you saw, iwd included, zram (zstd) up, no error lines, at 512 MB, 1 GB and 2 GB.
+2. **For R13:** MemTotal **+26 MB** and MemAvailable **+31 to +37 MB** at each size, same userspace PSS.
+   At 512 MB: **423 MB available** (your R5: 386). Slab 19.5 vs 32 MB.
+3. **Disk:** rootfs 423 → **209 MB**; the kernel part 247 → 33 MB. Userspace identical (176 MB).
+4. **For R1/R7:** the initramfs is optional for our kernel (ext4 and the SD controller are built in).
+   Without it, the kernel boot was 1.5 s instead of 7.6 s under emulation, and 1.5 MB more stays free.
+   What it would add: early root fsck, a rescue shell. If one is kept, add `zstd` to the image
+   (update-initramfs fell back to gzip).
+5. **Two small changes in your scripts**, both backward compatible: `r5/build.sh` takes `EXTRA_DEBS`
+   (local .deb files installed last), and `r5/mkimg.sh` no longer fails when a kernel has no
+   `/usr/lib/firmware/<version>` directory. Please check they suit you.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -485,8 +501,8 @@ our build. **Built, not booted.** Details: `docs/kernel-module-trim-r17.md`.
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15). Next: **R18** kernel in QEMU
-  with the R5 rootfs. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: a built-in (`=y`)
+  trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4 (22:00), R3 (22:00), R5 (22:45). In progress: **R13** RAM-tier
   defaults; then **R6** Mesa/Panfrost, **R7** image tooling. The stock reads I was waiting on are K1.

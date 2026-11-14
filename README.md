@@ -24,11 +24,13 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
 | [`scripts/build-kernel.sh`](scripts/build-kernel.sh) | Builds and checks the config, then the kernel `.deb` packages (R10) |
 | [`r5/`](r5/) | R5: noble userspace prototype (mmdebstrap + QEMU sizing scripts and results) |
+| [`r18/`](r18/) | R18: QEMU boot script for our kernel (virtio over MMIO) and its results |
 
 ## Findings index
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/r18-kernel-in-qemu.md`](docs/r18-kernel-in-qemu.md) | R18: our kernel under the R5 noble rootfs in QEMU: memory and disk vs Ubuntu's kernel, initramfs optional |
 | [`docs/kernel-module-trim-r17.md`](docs/kernel-module-trim-r17.md) | R17: module allowlist, what it removed and kept, before/after sizes, the iwd and controller gaps it found |
 | [`docs/kernel-build-r10.md`](docs/kernel-build-r10.md) | R10: kernel config, cross-build and `.deb` packages for noble; why mainline and not ROCKNIX 7.2; sizes |
 | [`docs/kernel-findings-2026-11-13.md`](docs/kernel-findings-2026-11-13.md) | Open questions 1–6: upstream SP tree, display/PWM status, ROCKNIX panel choice and suspend, OPPs/thermal vs stock, sticks |

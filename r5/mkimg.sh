@@ -11,7 +11,8 @@ install -m755 "$HERE/r5-measure" "$D/usr/local/sbin/r5-measure"; install -m644 "
   echo "boot_MB $(du -sm "$D/boot" | cut -f1)"
   echo "modules_MB $(du -sm "$D"/usr/lib/modules | cut -f1)"
   echo "firmware_MB $(du -sm "$D"/usr/lib/firmware 2>/dev/null | cut -f1)"
-  K=$(du -scm "$D/boot" "$D"/usr/lib/modules "$D"/usr/lib/firmware/[0-9]* 2>/dev/null | tail -1 | cut -f1)
+  # A kernel without its own firmware directory (ours, R18) leaves the glob unmatched: not an error.
+  K=$({ du -scm "$D/boot" "$D"/usr/lib/modules "$D"/usr/lib/firmware/[0-9]* 2>/dev/null || true; } | tail -1 | cut -f1)
   echo "kernel_MB $K   # /boot + modules + per-kernel firmware (QEMU distro kernel, not ours)"
   echo "userspace_MB $(( $(du -sxm "$D" | cut -f1) - K ))"
   echo "packages $(wc -l < "$D/root/r5-packages.txt")"

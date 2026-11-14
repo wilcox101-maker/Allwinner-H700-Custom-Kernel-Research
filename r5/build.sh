@@ -4,6 +4,8 @@
 # usage: [ARCH=arm64] [MIRROR=...] [NET=nm|iwd] [KVER=6.8.0-149-generic] ./build.sh OUT.tar
 #  NET=nm  : NetworkManager + wpasupplicant (Ubuntu default stack; pulls netplan + Python)
 #  NET=iwd : iwd + systemd-networkd + systemd-resolved (no Python)
+#  EXTRA_DEBS : optional, space-separated local .deb files installed at the end (R18 uses it
+#            to install our kernel package; with KVER= no distro kernel is added).
 #  KVER    : distro kernel for QEMU only (linux-image-$KVER + linux-modules-extra-$KVER).
 #            The linux-image-generic metapackage is NOT used: it depends on the
 #            linux-firmware metapackage (~470 MB). Set KVER= (empty) for a kernel-less rootfs.
@@ -21,6 +23,10 @@ case $NET in
   *) echo "NET must be nm or iwd" >&2; exit 2 ;;
 esac
 PKGS="$BASE,$NETPKGS"; [ -n "$KVER" ] && PKGS="$PKGS,linux-image-$KVER,linux-modules-extra-$KVER"
+DEBHOOKS=()
+for d in ${EXTRA_DEBS:-}; do
+  DEBHOOKS+=(--customize-hook="copy-in '$d' /tmp" --customize-hook="chroot \"\$1\" dpkg -i '/tmp/$(basename "$d")' && rm -f \"\$1/tmp/$(basename "$d")\"")
+done
 mmdebstrap --variant=minbase --arch="$ARCH" --components=main,universe \
   --setup-hook='mkdir -p "$1/etc/initramfs-tools/conf.d" && echo MODULES=list > "$1/etc/initramfs-tools/conf.d/r5-qemu.conf"' \
   --include="$PKGS" \
@@ -33,5 +39,6 @@ mmdebstrap --variant=minbase --arch="$ARCH" --components=main,universe \
   --customize-hook='printf "[zram0]\nzram-size = min(ram / 2, 4096)\ncompression-algorithm = zstd\n" > "$1/etc/systemd/zram-generator.conf"' \
   --customize-hook="$NETHOOK" \
   --customize-hook="install -m755 '$HERE/r5-measure' \"\$1/usr/local/sbin/r5-measure\"; install -m644 '$HERE/measure.service' \"\$1/etc/systemd/system/\"; chroot \"\$1\" systemctl enable measure.service; echo '/dev/vda / ext4 defaults 0 1' > \"\$1/etc/fstab\"" \
+  "${DEBHOOKS[@]}" \
   --customize-hook='chroot "$1" dpkg-query -W -f="\${Package} \${Installed-Size}\n" > "$1/root/r5-packages.txt"' \
   noble "$OUT" "deb $MIRROR noble main universe" "deb $MIRROR noble-updates main universe" "deb $MIRROR noble-security main universe"
