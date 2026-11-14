@@ -1,0 +1,8 @@
+# Base layer (task R11): upstream patches carried by reference on top of torvalds/linux 97d73c8 and
+# patches/linux/0001-0006, for every build (with or without --display). Same format and tool as
+# display-layer.txt (tools/apply_upstream.py). Drop an entry once mainline has it.
+
+## CPU cooling map for the H616 thermal zone (Jernej Skrabec, sunxi co-maintainer). Without it the
+## CPU zone's passive trips (60/70 C) throttle nothing, and only the 110 C critical trip acts.
+series 1202209 1 2026-11-04 Jernej-Skrabec  arm64: dts: allwinner: h616: Add CPU cooling map
+patch  1 1b71410119601d9b0fedf909da3b82d03e64f285 apply

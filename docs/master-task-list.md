@@ -9,7 +9,7 @@ How to use it:
 - Either chat may change a row's status or add rows. When claiming or finishing a task, add a line to `docs/research-sync.md` too. Done tasks move to the bottom.
 
 ## A. Device tasks: pending until v0.5 (blocked: device)
-IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17** is a Deep Research addition (from R8). **K18–K20** are Kernel Research additions (from R19, R20). K17–K20 are not yet in any Redux package. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
+IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17** is a Deep Research addition (from R8). **K18–K21** are Kernel Research additions (from R19, R20, R11). K17–K21 are not yet in any Redux package. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
 
 | ID | Task | Why / what it unblocks | Source | Status |
 |---|---|---|---|---|
@@ -33,6 +33,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K18 *(proposed)* | Original panel on our kernel (spare card, PE6-low unit): `-redux-panel.dtb` with the NV3052C entry (`patches/linux-display/0003`). Picture, colours, orientation, no shift or flicker (60 Hz); `dmesg` for nv3052c/sun4i errors. Covers K10 (reg `0x23 = 0x00` is in the table) | Whether the R19 display layer works at all; no display DTB ships before this passes | `r19-display-layer.md` §7 | blocked: device |
 | K19 *(proposed)* | Backlight on PWM0 at 25 kHz (ROCKNIX) vs stock 50 kHz: polarity right, whine, flicker at low levels, lowest visible level | `pwms` and `brightness-levels` in `sun50i-h700-redux-display.dtsi` | `r19-display-layer.md` §3 | blocked: device |
 | K20 *(proposed)* | Built-in trim on hardware (after K3): boot the `--fragment config/rg34xxsp-builtin-trim.config` kernel from a spare card; compare `dmesg` driver probes and deferred probes with the untrimmed kernel; then K4/K5 checks | Whether the R20 trim can become the default | `r20-builtin-trim.md` §5 | blocked: device (after K3) |
+| K21 *(proposed)* | CPU thermal under full load on our kernel (base layer adds the H616 CPU cooling map): log `/sys/class/thermal/thermal_zone*/temp` and `scaling_cur_freq` for 10 min of `stress-ng --cpu 4`; expect it to settle near 70 °C with lowered frequency, never reach 110 °C | That throttling works on this board | `r11-upstream-check-2026-11.md` §3 | blocked: device |
 | — | Full release test matrix (M6): tiers, both SD slots, display, input, audio, Wi-Fi, BT, HDMI, charging, battery, suspend, recovery | Release 0.1 | assessment §5–6 | blocked: device, later |
 
 ## B. Desk tasks (no device needed)
@@ -40,7 +41,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 |---|---|---|---|
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
-| R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
+| R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | recurring: November done (`r11-upstream-check-2026-11.md`); next ~2026-12-14 |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -66,6 +67,7 @@ H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-
 
 ## E. Done (most recent first)
 - 2026-11-14 08:30: **D2 done:** u-boot PE6 patch defaults PE6 low → `…-redux-panel.dtb`, PE6 high → `…-redux.dtb` (prompt "newer panel", help text); builds on v2026.01. Image build: `PANEL_FW`/`-private` path retired (no `.panel` consumer after Q8 a); new `image/check-display.sh` (panel DTB on the card ⇒ `panel-newvision-nv3052c` must match `anbernic,rg34xx-sp-panel`, module or built-in); initramfs hook now only for the QEMU Ubuntu-kernel mode. KR R20 answered: no `bootefi` in the image tooling (DR).
+- 2026-11-14 08:15: R11 November check: pinned series 984067 v2 and 1202273 v12 still newest, not merged; DE33 refactor and display fixes already in base. **Adopted** Jernej's H616 CPU cooling map (1202209) in a new `patches/upstream/base-layer.txt`: without it nothing throttles the CPU before the 110 °C critical trip. Watching DE33 update 1092102 (would rework our DE nodes), H616 HDMI DT 1158750, GPU DVFS/cooling 1209352 (KR, `r11-upstream-check-2026-11.md`).
 - 2026-11-14 07:44: **Q3 decided by Dale: (a)**, PE6 high boots `-redux.dtb` (no display) until K9; (b) generic panel driver + private panel file is the recorded fallback. u-boot default change is D2 (DR).
 - 2026-11-14 08:00: R19 reworked for Q8 (a): panel on upstream `panel-newvision-nv3052c.c` with our 3 patches (per-panel `skip_common_regs` + `exit_sleep_delay_ms`; `anbernic,rg34xx-sp-panel` binding; the entry with the stock u-boot table, generated by `tools/gen_nv3052c_table.py` and checked against ROCKNIX's working file). Generic panel series 937983 and its fix-up dropped. Newer (PE6-high) panel is **not** NV3052C: no driver, no `-v2-panel` tree; PE6 high boots without display until K9. Desk: 8 DTBs, 9 schemas, W=1, checkpatch clean (KR, `r19-display-layer.md`).
 - 2026-11-14 07:10: R20 built-in trim (trial, desk + QEMU): `config/rg34xxsp-builtin-trim.config` turns off 232 `=y` options the board can't use (other SoCs' drivers, Xen/EFI/NUMA/hibernation, ATA/MTD/UFS, Ethernet, NFS). Image 23.7 → 18.0 MB, vmlinuz 9.7 → 7.6 MB; QEMU 512 MB: MemAvailable +6.0 MB, same units started, 0 errors. Opt-in via `--fragment` until K20. New default check: `tools/boot_path.py` shows SD slot 1 + console are fully built in, so no initramfs is needed (KR, `r20-builtin-trim.md`).
