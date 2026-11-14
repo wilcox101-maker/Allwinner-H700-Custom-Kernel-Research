@@ -50,7 +50,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q3 | Mapping for PE6-high in our u-boot | `-v2-panel` DTB (Anbernic V1.0.6 behaviour) vs a no-panel DTB until K9 | blocked: decision (recommend: no-panel until K9) |
 | Q4 | Project instructions still say "Ubuntu 22.04" and "LPDDR4" for every tier | Update to 24.04 target and LPDDR4 (original) / LPDDR3 (revised). Only Dale can edit the instructions | blocked: decision |
 | Q5 | Battery charge current on mainline | Upstream 1024 mA (draft) vs stock 1500 mA after K14. Charge voltage is already capped at stock's 4.10 V (upstream tree: 4.20 V) | blocked: decision (recommend: 1024 mA until K14) |
-| Q6 | Kernel base for our image | R10 builds mainline + our 6 patches (no display until DE33/LCD/panel/PWM series are carried) vs the assessment's ROCKNIX 7.2 + H700 set (display works; patches only referenced, not copied). Audit D1 | blocked: decision |
+| Q6 | Kernel base for our image | R10 builds mainline + our 6 patches (no display until DE33/LCD/panel/PWM series are carried) vs the assessment's ROCKNIX 7.2 + H700 set (display works; patches only referenced, not copied). Audit D1. **KR recommends** mainline + our patches for the kernel package, with the display as a separate, pinned layer (the upstream series by name and version) as KR's next task; the build is now reproducible and small, and our patches apply | blocked: decision |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
@@ -64,6 +64,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 02:40: KR audit of the kernel work: fresh-clone reproduction passed; kernel builds made bit-reproducible (244/245 package files identical across two build dirs); fixes for wording (iwd), compiler version, broken link and Project paths (DR audit D3), test-copy drift check (D4), SPDX tags. Kernel base decision (DR audit D1, **Q6**): KR recommendation added (KR, sync 02:40).
 - 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
 - 2026-11-14 00:30: R13 RAM-tier defaults: one self-scaling config (zram `min(ram,1024)` zstd, swappiness 100, page-cluster 0, earlyoom, journald 32M); QEMU OOM stress: kernel/earlyoom/oomd all recover, userspace killers 25–70 s sooner (DR, `r13-ram-tier-defaults.md`, `config/rootfs/`, `r13/`).
 - 2026-11-14 00:30: R18 our kernel under R5's iwd rootfs in QEMU at 512 MB/1 GB/2 GB: boots without an initramfs, all services up, zram works; **+26 MB MemTotal, +31–37 MB MemAvailable** vs Ubuntu 6.8; rootfs 423 → 209 MB. QEMU only (KR, `r18-kernel-in-qemu.md`).

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 # Rebuild the kernel-research workbench and run every desk check.
 #
 # What it does (nothing here touches a device, a card or a disk image):
@@ -6,7 +7,8 @@
 #   2. applies patches/linux/*.patch on a local branch
 #   3. copies dts/* in, generates the "reduxstock" variant, adds local Makefile lines
 #   4. builds and schema-checks the three RG34XX-SP DTBs (CHECK_DTBS=y): any warning fails
-#   5. runs checkpatch on every patch, the xlate host test, and the OPP generator round trip
+#   5. runs checkpatch on every patch, the xlate host test (after checking that its copy of the
+#      function still matches patch 0001), and the OPP generator round trip
 #   6. with --bindings, also runs dt_binding_check for the touched schemas (slow)
 #
 # Usage:  scripts/workbench.sh [--bindings] [--stock-dts PATH]
@@ -111,6 +113,8 @@ for p in "$REPO"/patches/linux/*.patch; do
 done
 
 log "5b. xlate host test"
+python3 -I "$REPO/tools/check_xlate_copy.py" "$REPO"/patches/linux/0001-*.patch \
+	"$REPO/tests/xlate_test.c" || fail "tests/xlate_test.c no longer matches patch 0001"
 cc -Wall -Werror -o "$WORK/xlate_test" "$REPO/tests/xlate_test.c"
 "$WORK/xlate_test" | tail -1
 

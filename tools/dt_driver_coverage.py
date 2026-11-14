@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
 """Map every enabled node of a compiled device tree to the kernel driver and Kconfig symbol
 that bind it, and optionally check a kernel .config against that list.
 

@@ -2,7 +2,7 @@
 
 For Dale. **Spare card only. The stock card comes out and stays out.** Nothing is written to the stock
 card or to the device's own storage. Purpose: learn what a mainline kernel already does on this exact
-unit before Phase 2. Background: [findings-2026-11-13.md](findings-2026-11-13.md). Prepared
+unit before Phase 2. Background: [kernel-findings-2026-11-13.md](kernel-findings-2026-11-13.md). Prepared
 2026-11-13. Nothing below has been run yet.
 
 ## 0. Before: identify the board (on the current stock/Redux system, terminal or SSH)

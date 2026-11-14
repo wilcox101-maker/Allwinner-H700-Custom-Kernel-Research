@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
 """Write a config fragment that turns off every module (=m) not on the allowlist.
 
 Usage: gen_trim_config.py BASE_CONFIG KEEP_FILE [--keep-from FILE ...] > trim.config

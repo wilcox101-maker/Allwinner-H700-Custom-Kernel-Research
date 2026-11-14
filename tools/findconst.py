@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 # Usage: python findconst.py <raw arm64 kernel Image>. Python stdlib only. Read-only.
 # Find clusters of AArch64 MOVZ/CMP-immediate loads of given 16-bit constants in a raw Image.
 import sys, struct
