@@ -1,0 +1,137 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# R23: build the ReduxOS image with our kernel and boot it in QEMU (virt + Cortex-A53, TCG, 512 MB).
+# Fails unless image/qemu/smoke-test.sh's checks all pass. QEMU is not the RG34XX-SP: this proves the
+# userspace, kernel package, first boot and image layout work together, not the board's hardware.
+# The image is never written to a card; only logs and reports are kept as artifacts.
+name: image-smoke
+
+on:
+  pull_request:
+    paths:
+      - image/**
+      - config/**
+      - patches/**
+      - dts/**
+      - tools/**
+      - scripts/workbench.sh
+      - scripts/build-kernel.sh
+      - .github/workflows/image-smoke.yml
+  push:
+    branches: [main]
+    paths:
+      - image/**
+      - config/**
+      - patches/**
+      - dts/**
+      - tools/**
+      - scripts/workbench.sh
+      - scripts/build-kernel.sh
+      - .github/workflows/image-smoke.yml
+  schedule:
+    - cron: "23 6 * * 1"   # weekly (Mon 06:23 UTC): picks up noble-updates changes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    env:
+      WORK: ${{ github.workspace }}/.work
+      OUT: ${{ github.workspace }}/out
+      # tools/apply_upstream.py commits with `git am`; a fresh runner has no git identity
+      GIT_COMMITTER_NAME: image-smoke CI
+      GIT_COMMITTER_EMAIL: ci@invalid
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+
+      - name: Free disk space (kernel tree + build + image need ~15 GB)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/log-1-disk.txt") 2>&1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h / | tail -1
+
+      - name: Install tools
+        run: |
+          exec > >(tee "$RUNNER_TEMP/log-2-tools.txt") 2>&1
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            build-essential gcc-aarch64-linux-gnu device-tree-compiler bc flex bison libssl-dev dpkg-dev fakeroot \
+            rsync kmod cpio debhelper libdw-dev libelf-dev python3-pip yamllint swig \
+            mmdebstrap arch-test genimage dosfstools mtools e2fsprogs fdisk qemu-user-static qemu-system-arm
+          pip install --user --break-system-packages -q dtschema ply gitpython
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          # mmdebstrap runs arm64 binaries through binfmt; register it if the package didn't
+          if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then
+            sudo mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc 2>/dev/null || true
+            sudo sh -c 'cat /usr/lib/binfmt.d/qemu-aarch64.conf > /proc/sys/fs/binfmt_misc/register'
+          fi
+          head -2 /proc/sys/fs/binfmt_misc/qemu-aarch64
+
+      # The kernel takes ~30-60 min; rebuild it only when its inputs change.
+      - name: Restore kernel package
+        id: kcache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9   # v6.1.0
+        with:
+          path: .work/kernel-deb
+          key: kernel-${{ hashFiles('patches/**', 'dts/**', 'config/*.config', 'config/module-keep.txt', 'tools/**', 'scripts/workbench.sh', 'scripts/build-kernel.sh') }}
+
+      - name: Build kernel package (workbench checks + bindeb-pkg, display layer)
+        if: steps.kcache.outputs.cache-hit != 'true'
+        run: |
+          exec > >(tee "$RUNNER_TEMP/log-3-kernel.txt") 2>&1
+          scripts/workbench.sh --display
+          scripts/build-kernel.sh --display --build
+          mkdir -p .work/kernel-deb
+          # the image package only, not linux-image-…-dbg (debug symbols, ~1 GB unpacked)
+          find .work -maxdepth 1 -name 'linux-image-*.deb' ! -name '*-dbg_*' -exec cp {} .work/kernel-deb/ \;
+
+      - name: Build image (licence and display checks included)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/log-4-image.txt") 2>&1
+          deb=$(ls .work/kernel-deb/linux-image-*.deb)
+          [ "$(printf '%s\n' "$deb" | wc -l)" = 1 ] || { echo "expected one kernel package: $deb"; exit 1; }
+          echo "kernel: $deb"
+          sudo KERNEL_DEB="$deb" OUT="$OUT" SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" image/build-image.sh
+
+      - name: QEMU boot smoke test (512 MB)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/log-5-smoke.txt") 2>&1
+          img=$(ls "$OUT"/reduxos-*.img)
+          sudo GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" image/qemu/smoke-test.sh "$img" 512
+
+      # Step logs are hard to reach without a browser; put the failing step's tail into annotations,
+      # which show on the PR and through the check-runs API.
+      - name: Report the failing step as annotations
+        if: failure()
+        run: |
+          f=$(find "$RUNNER_TEMP" -maxdepth 1 -name 'log-*.txt' -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+          [ -n "$f" ] || exit 0
+          msg=$(tail -n 60 "$f" | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=$(basename "$f" .txt), last 60 lines::$msg"
+          for g in "$WORK"/*.log; do
+            [ -f "$g" ] || continue
+            msg=$(tail -n 30 "$g" | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=$(basename "$g"), last 30 lines::$msg"
+          done
+
+      - name: Keep logs and reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
+        with:
+          name: image-smoke-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            out/*.qemu-*.log
+            out/*.smoke-*.txt
+            out/*.manifest.tsv
+            out/*.sha256
+            .work/*.log
+            ${{ runner.temp }}/log-*.txt

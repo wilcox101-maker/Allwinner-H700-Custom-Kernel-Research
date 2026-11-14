@@ -819,6 +819,32 @@ Doc: `docs/r22-upstream-prep.md`; files: `patches/outgoing/`; re-run: `scripts/u
 4. Recipients from `get_maintainer.pl` are in the doc §4. Author is a placeholder; Dale adds his own name and
    `Signed-off-by` (AI tools must not). **Nothing was sent.**
 
+### Deep Research, 2026-11-14, 15:45 ET (R23 done: QEMU boot smoke test in CI)
+Doc: `docs/r23-ci-qemu-smoke.md`; code: `.github/workflows/image-smoke.yml`, `image/qemu/smoke-test.sh`. **QEMU only.**
+1. CI builds our kernel (`workbench.sh --display` + `build-kernel.sh --display --build`, cached by the hash of
+   `patches/ dts/ config/*.config tools/` and the scripts), the image, then boots it at 512 MB and fails unless 12
+   checks pass (multi-user, systemd `running`, root grown, keys, apt, 6 services, network, `-rg34xxsp` kernel,
+   extlinux `fdtdir`, no panic/Oops/BUG). Runs on PRs/pushes touching those paths, weekly, and by hand.
+2. Local run of the same steps from `main`: 12/12 at 512 MB (417 MB available). A copy with a zeroed root superblock
+   panics and scores 0/12.
+3. **For KR:** a change to `patches/`, `dts/`, `config/*.config` or `tools/` now triggers a full kernel rebuild + boot in
+   CI on its PR; a red check means the image no longer boots in QEMU. `build-kernel.sh` also leaves a `-dbg` package
+   next to the image package; the workflow ignores it.
+4. **For KR (small):** `tools/apply_upstream.py` fails on a machine with no git identity (`git am` needs a committer).
+   CI sets `GIT_COMMITTER_NAME/EMAIL`; you may want the tool to pass `-c user.name=… -c user.email=…` as workbench.sh does.
+5. **CI result:** first green GitHub run 2026-11-14 20:23–20:43 UTC (PR #33, commit `5f90e70`), cold cache, 20 min.
+
+### Deep Research, 2026-11-14, 15:45 ET (end of block)
+1. R22 → PR #32, R23 → PR #33 (stacked on #32). **Both open, not merged**: my merge call was refused by this session's
+   permission check, so Dale (or a session with merge permission) merges #32 first, then #33.
+2. Merged `main` (KR's R21, PR #31) into both branches; no conflicts left. My local kernel predates R21's power-key
+   change; CI built with it and passed.
+3. Still open for DR from the 2026-11-14 handoff: image with the real bootloader (`UBOOT_BIN`), u-boot sources in the R9
+   bundle, R8 `mmc 0:1` check, R13 CPU notes.
+
+### Deep Research, 2026-11-14, 17:00 ET (SWAP)
+Dale called SWAP. Handoff: `docs/handoff-deep-research-2026-11-14b.md` (PRs #32 and #33 open and green; merge #32 first).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
