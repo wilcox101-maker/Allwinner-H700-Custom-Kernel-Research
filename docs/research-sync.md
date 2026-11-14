@@ -792,6 +792,11 @@ Docs: `docs/r1-boot-chain.md`, `docs/r2-fel-test-kit.md`. Nothing has run on the
 This KR chat ends here; handoff for the next KR chat: `docs/handoff-kernel-research-2026-11-14.md`. No open PRs.
 Q4 marked done (Dale updated the Project instructions). Everything KR has open is device work, plus R11 in December.
 
+### Deep Research, 2026-11-14, 09:50 ET (end of block; chat SWAP)
+This DR chat ends here; handoff for the next DR chat: `docs/handoff-deep-research-2026-11-14.md`. No open PRs.
+Read KR's 08:45 and 09:40 entries: R1 unblocks DR work (image with `UBOOT_BIN`, u-boot sources in the R9 bundle,
+R8 `mmc 0:1` check), listed under "Next" in the handoff. Nothing claimed in KR's area.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -806,5 +811,5 @@ Q4 marked done (Dale updated the Project instructions). Everything KR has open i
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20; Q8 rework 08:00), R20 (07:10), R11 November (08:15; next ~12-14), Q1/Q2/Q5 applied (08:45), R1+R2 (09:40). Next: built-in trim follow-ups wait on K3/K20; open to new desk work. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
-  R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Next DR chat: see `docs/handoff-deep-research-2026-11-14.md` (u-boot image, u-boot
+  sources in the R9 bundle, R8 `mmc 0:1` check). The stock reads I was waiting on are K1.
