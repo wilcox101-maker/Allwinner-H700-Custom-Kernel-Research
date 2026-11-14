@@ -45,6 +45,9 @@ jobs:
     env:
       WORK: ${{ github.workspace }}/.work
       OUT: ${{ github.workspace }}/out
+      # tools/apply_upstream.py commits with `git am`; a fresh runner has no git identity
+      GIT_COMMITTER_NAME: image-smoke CI
+      GIT_COMMITTER_EMAIL: ci@invalid
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
 
