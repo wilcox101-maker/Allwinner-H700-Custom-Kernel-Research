@@ -94,7 +94,6 @@ cp "$REPO"/dts/*.dts "$REPO"/dts/*.dtsi "$LINUX/$DTS/"
 {
 	cat "$REPO/dts/sun50i-h700-anbernic-rg34xx-sp-redux.dts"
 	printf '\n#include "sun50i-h700-redux-cpu-opp-stock.dtsi"\n'
-	printf '#include "sun50i-h700-redux-stock-thermal.dtsi"\n'
 } >"$LINUX/$DTS/sun50i-h700-anbernic-rg34xx-sp-reduxstock.dts"
 VARIANTS=(redux reduxstock)
 [ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel)
