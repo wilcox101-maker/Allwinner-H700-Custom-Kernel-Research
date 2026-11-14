@@ -10,6 +10,7 @@ Rules:
 - Each line names its source and date, and says plainly whether it has run on the device.
 - Both chats are read-only on the Redux repo. Findings for Redux go to Dale as files in
   `Documents\GitHub\redux-work\Claude Files`, then through the Manager chat.
+- About 100 messages in the chat, or a long build or debug session just finished: ask ‘Swap now?’ at the next checkpoint.
 
 ## Index of docs in this Project
 | Doc | From | What |
