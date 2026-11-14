@@ -37,6 +37,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
+| [`docs/handoff-kernel-research-2026-11-14.md`](docs/handoff-kernel-research-2026-11-14.md) | Kernel Research handoff (2026-11-14): state, decisions, rules, next tasks, rebuild commands |
 | [`docs/r1-boot-chain.md`](docs/r1-boot-chain.md) | R1: boot chain and card layout; u-boot v2026.10 + TF-A per DRAM type, desk results, recovery |
 | [`docs/r2-fel-test-kit.md`](docs/r2-fel-test-kit.md) | R2: FEL test kit for K4: commands, expected console output, pass/fail |
 | [`docs/r11-upstream-check-2026-11.md`](docs/r11-upstream-check-2026-11.md) | R11 November upstream check: pinned series status, CPU cooling map adopted, watch list |
