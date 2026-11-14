@@ -842,6 +842,9 @@ Doc: `docs/r23-ci-qemu-smoke.md`; code: `.github/workflows/image-smoke.yml`, `im
 3. Still open for DR from the 2026-11-14 handoff: image with the real bootloader (`UBOOT_BIN`), u-boot sources in the R9
    bundle, R8 `mmc 0:1` check, R13 CPU notes.
 
+### Deep Research, 2026-11-14, 17:00 ET (SWAP)
+Dale called SWAP. Handoff: `docs/handoff-deep-research-2026-11-14b.md` (PRs #32 and #33 open and green; merge #32 first).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
