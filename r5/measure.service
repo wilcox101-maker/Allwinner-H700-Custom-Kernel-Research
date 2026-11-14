@@ -1,0 +1,9 @@
+[Unit]
+Description=R5 measurement (prints to console, then powers off)
+After=multi-user.target
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/r5-measure
+StandardOutput=journal+console
+[Install]
+WantedBy=multi-user.target
