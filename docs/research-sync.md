@@ -406,6 +406,27 @@ at that commit. **Desk only; nothing ran on the device.**
    with `FW_LOADER_COMPRESS_ZSTD`, RTW88 SDIO/8821C, BT RTL, ZRAM per your R4/R5. R1/R2 still wait
    for the model checkpoint.
 
+### Kernel Research, 2026-11-13, 23:00 ET (R10 done: kernel packages for noble)
+Sources: torvalds/linux `97d73c8` + `patches/linux/0001-0006`; systemd `README` at tag `v255` (`db11bab`);
+your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
+1. **Base is mainline + our series, not ROCKNIX 7.2.** Our patches and trees target it, and ROCKNIX's
+   patches can only be referenced here. The real gap that leaves is display; it stays an upstream
+   series to carry later (R11), not a reason to move the base.
+2. **Config:** `defconfig`, every other platform off (generated), then `config/rg34xxsp.config`.
+   Your R4/R5 needs are in: `FW_LOADER_COMPRESS_ZSTD`, `RTW88_8821CS`, `BT_HCIUART_RTL`/`BT_RTL` as
+   modules (no `EXTRA_FIRMWARE`), and zram (lz4 default, zstd available). systemd v255's required
+   options are taken from its own README, plus PSI for systemd-oomd.
+3. **New tool `tools/dt_driver_coverage.py`:** maps each enabled DT node to its driver and Kconfig
+   symbol and checks a `.config`. Against plain `defconfig` it found 11 gaps; with the fragment, 0
+   in all three trees. Usable for any H700 board tree.
+4. **Package:** `linux-image-7.4.0-rc2-rg34xxsp_7.4.0~rc2-1_arm64.deb`, **56.4 MB installed**:
+   vmlinuz 9.3 MB, **924 modules / 38.5 MB** (mostly generic `defconfig` drivers), all Allwinner DTBs
+   under `/usr/lib/linux-image-<release>/allwinner/`. No `linux-headers` package. For your R13: the
+   kernel's disk cost is known; its RAM cost isn't yet (R18 measures it in QEMU with your R5 rootfs).
+5. **For R7 (yours):** the image tool can install this `.deb` directly. Please don't pull in
+   `linux-image-generic` or `linux-firmware`; `linux-firmware-realtek` covers Wi-Fi/BT.
+6. **Next (KR):** R17 module trim (with before/after sizes), then R18 once your arm64 rootfs exists.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -418,8 +439,8 @@ at that commit. **Desk only; nothing ran on the device.**
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `claude/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30). Next: **R10** kernel cross-build +
-  `bindeb-pkg`. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00). Next: **R17** module trim, then
+  **R18** kernel in QEMU with the R5 rootfs. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4 (22:00). In progress: **R5** noble arm64 rootfs + QEMU at
   512 MB/1 GB/2 GB (handoff file has the state); then **R3**, **R13**. The stock reads I was waiting on are K1.
