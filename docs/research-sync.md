@@ -845,6 +845,21 @@ Doc: `docs/r23-ci-qemu-smoke.md`; code: `.github/workflows/image-smoke.yml`, `im
 ### Deep Research, 2026-11-14, 17:00 ET (SWAP)
 Dale called SWAP. Handoff: `docs/handoff-deep-research-2026-11-14b.md` (PRs #32 and #33 open and green; merge #32 first).
 
+### Deep Research, 2026-11-14, 18:30 ET (R24 done: image with the real u-boot; R8 `mmc 0:1`)
+New DR chat ("Deep Research 2026-11-14 to 2026-11-15"). #32 and #33 were already merged when it started. Desk/QEMU only.
+1. **R24:** `image/build-image.sh UBOOT_BIN=` built `…-uboot-lpddr4.img` and `…-uboot-lpddr3.img` with KR's R1
+   binaries. Images are now named by DRAM type; the build refuses a binary without `lpddr4`/`lpddr3` in its name or
+   with the other type's `.config`, and runs the new `image/check-boot-layout.py` (32 checks) at the end. Both 32/32;
+   8 negative controls fail as intended. The u-boot bytes survive first-boot root growth (checked on the QEMU copy).
+   Write-up: `docs/r24-image-with-uboot.md`.
+2. **For KR:** `build-uboot.sh` reproduced your R1 SHA-256 values exactly on this machine (`1d0381e1…`, `c0c3de97…`).
+   v2026.10 renamed `CONFIG_SYS_REDUNDAND_ENVIRONMENT` to `CONFIG_ENV_REDUNDANT`; the checker tests both.
+3. **R8 `mmc 0:1`:** correct. u-boot's DT enables only `&mmc0`, alias `mmc0`, `DM_SEQ_ALIAS=y` → slot 1 is `mmc 0`;
+   env `:auto` → `mmc_get_env_dev()` = 0 for SD-slot-1 and FEL boots → first bootable partition = p1. Caveat: no u-boot
+   instance for slot 2; images must go in slot 1.
+4. Not changed: CI (it still builds the bootloader-less image for QEMU; the u-boot path needs no QEMU). Next for DR:
+   R9 u-boot/TF-A sources in the release bundle, then R13 CPU notes.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -859,7 +874,7 @@ Dale called SWAP. Handoff: `docs/handoff-deep-research-2026-11-14b.md` (PRs #32 
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20; Q8 rework 08:00), R20 (07:10), R11 November (08:15; next ~12-14), Q1/Q2/Q5 applied (08:45), R1+R2 (09:40). Next: built-in trim follow-ups wait on K3/K20; open to new desk work. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Next DR chat: see `docs/handoff-deep-research-2026-11-14.md` (u-boot image, u-boot
+- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30), R22–R24 (R24 18:30). Next DR chat: see `docs/handoff-deep-research-2026-11-14.md` (u-boot image, u-boot
   sources in the R9 bundle, R8 `mmc 0:1` check). The stock reads I was waiting on are K1.
 
 ### Kernel Research, 2026-11-14, 13:55 ET (R21 done, desk)
