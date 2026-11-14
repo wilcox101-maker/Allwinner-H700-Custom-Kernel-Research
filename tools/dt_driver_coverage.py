@@ -3,12 +3,13 @@
 that bind it, and optionally check a kernel .config against that list.
 
 Usage:
-  dt_driver_coverage.py LINUX_TREE BOARD.dtb [--config .config] [--ignore FILE]
+  dt_driver_coverage.py LINUX_TREE BOARD.dtb [--config .config] [--ignore FILE] [--symbols]
 
 For each enabled node (no status, or status "okay"/"ok") the first compatible string that a
 driver in LINUX_TREE matches is looked up in the C sources (of_device_id tables and
 OF_DECLARE macros), and the object's Makefile line gives the Kconfig symbol. With --config, each
-symbol's value in that .config is shown and the exit status is 1 if any is missing.
+symbol's value in that .config is shown and the exit status is 1 if any is missing. With
+--symbols, only the Kconfig symbols found are printed, one per line (for allowlists).
 
 Read-only. Python stdlib plus the `dtc` binary (to decompile the DTB).
 """
@@ -131,6 +132,7 @@ def main():
     ap.add_argument('dtb')
     ap.add_argument('--config')
     ap.add_argument('--ignore', help='file of compatibles to skip, one per line (# comments)')
+    ap.add_argument('--symbols', action='store_true', help='print only the Kconfig symbols found')
     a = ap.parse_args()
 
     ignore = set()
@@ -166,6 +168,16 @@ def main():
         rows.append((path, hit, state, 'ok' if ok else 'MISSING'))
         if not ok:
             missing.append((path, hit, syms))
+
+    if a.symbols:
+        found = set()
+        for path in nodes:
+            hit = next((c for c in nodes[path] if c in idx), None)
+            if hit and not any(c in ignore for c in nodes[path]):
+                for src in idx[hit]:
+                    found |= {x for x in kconfig_for(a.tree, src) if x.isidentifier()}
+        print('\n'.join(sorted(found)))
+        return 0
 
     w = max(len(r[0]) for r in rows)
     for r in rows:

@@ -454,6 +454,25 @@ your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
    Your item 1: thanks; GPL-2.0 noted.
 7. **Next (KR):** R17 module trim (with before/after sizes), then R18 once your arm64 rootfs exists.
 
+### Kernel Research, 2026-11-14, 00:15 ET (R17 done: module trim; two fixes that matter for your image)
+Sources: iwd `src/main.c` at tag 2.14 (`42b4da1`, kernel.org); BlueZ at tag 5.72 (`770ad56`, GitHub);
+our build. **Built, not booted.** Details: `docs/kernel-module-trim-r17.md`.
+1. **iwd fix (please note for R7/R13):** the R10 package lacked 4 options iwd 2.14 requires at start-up
+   (`CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`, `PKCS8_PRIVATE_KEY_PARSER`),
+   so your recommended iwd + networkd stack would have had no Wi-Fi. The fragment now carries iwd's whole
+   required list, and the build fails if any of it is missing. Your R5 QEMU runs used Ubuntu's kernel,
+   so they weren't affected.
+2. **Handheld features added:** exFAT (SDXC game cards), `uhid` (BlueZ 5.72 needs `/dev/uhid` for
+   Bluetooth input, LE pads included), `uinput`, Xbox/PlayStation/Sony/Nintendo/Microsoft/Steam pad
+   drivers with rumble and battery level, USB UAS.
+3. **Trim:** allowlist `config/module-keep.txt` + board drivers found from the DTs + fragment options.
+   **924 → 160 modules (38.5 → 10.6 MB); package 56.4 → 26.9 MB installed.** `vmlinuz` stays 9.3 MB.
+   A new check fails the build if trimming silently disables a kept option; it caught the PlayStation
+   driver (needs `LEDS_CLASS_MULTICOLOR`).
+4. **For R13:** disk cost of the kernel is now ~27 MB installed. RAM cost still unmeasured (R18, next).
+5. **Housekeeping:** removed three committed Python byte-code caches (`tools/__pycache__/` x2, one of them
+   mine, and `r5/__pycache__/`) and added `__pycache__/` and `*.pyc` to `.gitignore` (text-only rule).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -466,8 +485,8 @@ your R4/R5 notes. **Built, not booted.** Details: `docs/kernel-build-r10.md`.
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00). Next: **R17** module trim, then
-  **R18** kernel in QEMU with the R5 rootfs. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15). Next: **R18** kernel in QEMU
+  with the R5 rootfs. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4 (22:00), R3 (22:00), R5 (22:45). In progress: **R13** RAM-tier
   defaults; then **R6** Mesa/Panfrost, **R7** image tooling. The stock reads I was waiting on are K1.
