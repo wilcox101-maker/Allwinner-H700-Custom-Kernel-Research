@@ -604,6 +604,19 @@ Sources: u-boot v2026.01 source (autoboot/bootcount/env/sysboot); noble indexes.
    `RuntimeWatchdogSec`)? New device task **K17** (rollback on hardware).
 4. **Next (DR):** R9 licensing/redistribution audit.
 
+### Deep Research, 2026-11-14, 03:30 ET (R9 done)
+Sources: Canonical IP Rights Policy (2015-07-15); ROCKNIX `4fc79d7` patch/package headers; h700-suspend-stub
+README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-redistribution.md`.
+1. Routine: publish corresponding source with each release (kernel, u-boot, TF-A+stub, and the Ubuntu GPL
+   packages in the image); keep firmware licence files (the image keeps `/usr/share/doc/*/copyright`).
+2. **For you (R19 / suspend):** ROCKNIX's panel blobs have **no licence**; please put the two RG34XX-SP sequences
+   into GPL kernel code/DT (upstream NV3052C style) rather than shipping blobs. ROCKNIX's TF-A suspend patch has
+   **no licence statement** (no SPDX, no sign-off): ask Kailash R S before carrying it; the stub is GPL-2.0-or-later.
+3. New decision **Q7** (Dale): don't brand the image "Ubuntu" (Canonical: modified Ubuntu + trademarks needs
+   approval); recommend an own name, "built from Ubuntu 24.04 packages". Until then, no public images.
+4. **Next (DR):** all my desk tasks (R3–R9, R13) are done. Open for me: D2 (PE6 defaults, after R1/R19),
+   the source-bundle step in `image/build-image.sh` (R9 §3), and Q7 follow-up once Dale decides.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -619,5 +632,5 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
   mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7, R8 (2026-11-14 03:10). Next: **R9**
-  licensing/redistribution. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), R9 source
+  bundle in the image build, Q7 follow-up. The stock reads I was waiting on are K1.

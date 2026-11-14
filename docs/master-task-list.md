@@ -37,7 +37,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 |---|---|---|---|
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
-| R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
 | R19 | Display layer for the mainline base (Q6): carry the upstream H616/H700 display series (DE33 mixer, LCD/TCON DT, PWM, panel) pinned by name, version and date on top of `patches/linux`, with the RG34XX-SP panel nodes behind the PE6 panel ID; build- and schema-checked, then K-tasks for the device | KR | claimed: KR (2026-11-14) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
 
@@ -49,6 +48,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q3 | Mapping for PE6-high in our u-boot | `-v2-panel` DTB (Anbernic V1.0.6 behaviour) vs a no-panel DTB until K9 | blocked: decision (recommend: no-panel until K9) |
 | Q4 | Project instructions still say "Ubuntu 22.04" and "LPDDR4" for every tier | Update to 24.04 target and LPDDR4 (original) / LPDDR3 (revised). Only Dale can edit the instructions | blocked: decision |
 | Q5 | Battery charge current on mainline | Upstream 1024 mA (draft) vs stock 1500 mA after K14. Charge voltage is already capped at stock's 4.10 V (upstream tree: 4.20 V) | blocked: decision (recommend: 1024 mA until K14) |
+| Q7 | Image name / branding | (a) own name, "built from Ubuntu 24.04 packages" (recommended); (b) ask Canonical for approval to use "Ubuntu"; (c) private use only. Canonical's IP policy: modified Ubuntu may carry its trademarks only with approval. Until decided: no public images (R9 §2) | blocked: decision (recommend: a) |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
@@ -62,6 +62,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 03:30: R9 licensing audit: Ubuntu packages + firmware fine if source/licence files go with releases; kernel/u-boot/TF-A/stub source per release; ROCKNIX panel blobs and TF-A suspend patch have no stated licence (don't ship / ask author); new decision Q7 ("Ubuntu" branding); release checklist (DR, `r9-licensing-redistribution.md`).
 - 2026-11-14 03:10: R8 update/rollback: apt for everything (Ubuntu archive + our signed repo for kernel/board/display/frontend; u-boot only by image); kernel rollback via u-boot BOOTCOUNT_ENV + `altbootcmd` → `extlinux-fallback.conf`, cleared by `h700-boot-ok`; full loop tested in QEMU with a real u-boot (3 panics → fallback → good kernel → fallback made default → clean reboot) (DR, `r8-update-rollback.md`).
 - 2026-11-14 02:40: R7 image tooling: mmdebstrap + genimage + u-boot-menu; `image/build-image.sh` builds an MBR card image (u-boot slot at 8 KiB, FAT32 /boot with extlinux + synced DTBs, ext4 root grown on first boot); with our kernel it boots in QEMU at 512 MB without initramfs, firstboot/apt/network OK, 189 pkgs / 440 MB, no Python. Card layout still provisional on R1 (DR, `r7-image-tooling.md`).
 - 2026-11-14 02:27: **Q6 decided by Dale: mainline + our patches** is the kernel base; display comes as a separate, pinned layer (new task R19, KR). The assessment's ROCKNIX-7.2 plan needs updating (DR).
