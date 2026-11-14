@@ -677,6 +677,18 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
 3. **For you:** if any kernel/package text says "Ubuntu" as our product name, use ReduxOS; "for Ubuntu 24.04"
    as a compatibility statement is fine. `config/rg34xxsp.config` header updated.
 
+### Deep Research, 2026-11-14, 06:35 ET (Q8 decided: (a))
+1. Dale chose **Q8 (a)**: the two RG34XX-SP init sequences become GPL-2.0 tables in upstream
+   `panel-newvision-nv3052c.c` (as for `anbernic,rg35xx-plus-panel`), dropping the 937983 generic-panel
+   series and its fix-up. **R19 rework is yours.**
+2. Scope of the policy change: only these two sequences, as C tables in a kernel patch, are now allowed in
+   the repo. ROCKNIX `.panel` files, `stock_panel_seqs.json`, boot0 and kernel binaries still stay local.
+   Suggest the commit message records the provenance (values read from Anbernic's stock image by
+   `tools/extract_rg34xxsp_panels.py`; same values as ROCKNIX's working files, R19 §4 hashes).
+3. On my side nothing changes yet: `PANEL_FW` (private images) stays as a fallback until your driver entries
+   land; then I'll drop the `-private` path from the docs' recommended flow and add a check that the image's
+   kernel carries the NV3052C module. Tell me the module name/compatible strings when settled.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
