@@ -40,8 +40,9 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R7 | Image build tooling decision (mmdebstrap + genimage vs debos vs others), with a working prototype script | DR | pending (after R5) |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
-| R10 | Kernel build + packaging: ROCKNIX 7.2 + H700 patch set + our DTs and patches → cross-build, `bindeb-pkg` for noble; size of image and modules. Config must include `ZRAM` + `CRYPTO_ZSTD` (R5), `FW_LOADER_COMPRESS_ZSTD` (R4), `PSI` (R13, for systemd-oomd) | KR | claimed: KR (next) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
+| R17 | Kernel module trim: drop `defconfig` modules no RG34XX-SP node or noble feature needs; before/after sizes (R10 baseline: 924 modules, 38.5 MB) | KR | claimed: KR |
+| R18 | Kernel in QEMU (`virt`, Cortex-A53) with the R5 rootfs: boots, RAM after boot, initramfs size, for R13 | KR | claimed: KR (after R17; R5's rootfs scripts are in `r5/`) |
 | R13 | RAM-tier defaults: zram sizing, services per tier, OOM policy; fold R5's measurements, then K12 into a per-tier spec | DR | claimed: DR (2026-11-13 22:45) |
 
 ## C. Decisions for Dale (blocked: decision)
@@ -65,9 +66,10 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-13 23:00: R10 kernel config + cross-build + `bindeb-pkg` for noble on mainline `97d73c8` + our series (not ROCKNIX 7.2; reasons in the doc). Config checks: fragment holds, every DT node has a driver. Package `linux-image-7.4.0-rc2-rg34xxsp_7.4.0~rc2-1`: 56.4 MB installed, vmlinuz 9.3 MB, 924 modules / 38.5 MB. Built, not booted (KR, `kernel-build-r10.md`).
 - 2026-11-13 22:45: R5 noble arm64 userspace prototype in QEMU: base idles at ~11 MB anon / 33–38 MB PSS at 512 MB–2 GB; iwd+networkd stack = −73 MB disk, −53 packages, no Python, ~5 MB less RAM than NM; zram works (DR, `r5-noble-userspace-prototype.md`, `r5/`).
-- 2026-11-13 22:00: R3 stock boot0 `DRAM.ext` decoded: V1.0.6 reads PH6/PH7/PH8/PH10 (pull-ups); idx 15 = LPDDR4, 14 = LPDDR3, 0 = default LPDDR3, 1–13 = SDK DDR3 placeholders; 2025 boot0 has selection off (DR, `r3-v106-boot0-dram-sets.md`).
 - 2026-11-13 22:30: R16 upstream-style `sun50i-h700-anbernic-rg34xx-sp.dts` as patch 0006 (sticks, stick clicks PE8/PE9, battery, speaker delay); `dtbs_check` 0 warnings, checkpatch clean; held for submission until K5. Stick clicks also added to the Redux tree. `scripts/workbench.sh` reruns every desk check (KR, `kernel-custom-patches.md` §10).
+- 2026-11-13 22:00: R3 stock boot0 `DRAM.ext` decoded: V1.0.6 reads PH6/PH7/PH8/PH10 (pull-ups); idx 15 = LPDDR4, 14 = LPDDR3, 0 = default LPDDR3, 1–13 = SDK DDR3 placeholders; 2025 boot0 has selection off (DR, `r3-v106-boot0-dram-sets.md`).
 - 2026-11-13 22:00: R4 noble firmware audit: `linux-firmware-realtek` carries the exact rtw88/rtl_bt bytes; kernel needs `FW_LOADER_COMPRESS_ZSTD`; BT config gap → K16 (DR, `r4-noble-firmware-audit.md`).
 - 2026-11-13 21:50: R15 board DT for audio, battery/charger, Wi-Fi/BT: stock vs upstream table; charge cap 4.10 V; speaker-amp delay patches 0002/0003 (KR, custom-patches §8).
 - 2026-11-13 21:50: R14 compile-check: five patches (cpufreq xlate, codec delay + binding, OPP and board bindings), checkpatch 0/0; board DT `dtbs_check` 0 warnings in both variants (KR, custom-patches §9).

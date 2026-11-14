@@ -18,14 +18,17 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host test of the CPU speed-bin decoder (patch 0001) |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, and the stock OPP table generator |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, and `dt_driver_coverage.py` (DT node → driver → Kconfig check) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
+| [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
+| [`scripts/build-kernel.sh`](scripts/build-kernel.sh) | Builds and checks the config, then the kernel `.deb` packages (R10) |
 | [`r5/`](r5/) | R5: noble userspace prototype (mmdebstrap + QEMU sizing scripts and results) |
 
 ## Findings index
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/kernel-build-r10.md`](docs/kernel-build-r10.md) | R10: kernel config, cross-build and `.deb` packages for noble; why mainline and not ROCKNIX 7.2; sizes |
 | [`docs/kernel-findings-2026-11-13.md`](docs/kernel-findings-2026-11-13.md) | Open questions 1–6: upstream SP tree, display/PWM status, ROCKNIX panel choice and suspend, OPPs/thermal vs stock, sticks |
 | [`docs/device-checklist-rocknix.md`](docs/device-checklist-rocknix.md) | One-page ROCKNIX 20261101 spare-card checklist (device task K2) |
 | [`docs/r5-noble-userspace-prototype.md`](docs/r5-noble-userspace-prototype.md) | R5: minimal noble arm64 rootfs, QEMU at 512 MB / 1 GB / 2 GB, NM vs iwd+networkd |
@@ -72,6 +75,10 @@ pip install dtschema yamllint ply gitpython
 scripts/workbench.sh                 # fetch Linux, apply patches, dtbs_check, checkpatch, host test
 scripts/workbench.sh --bindings      # also dt_binding_check for the three touched schemas
 scripts/workbench.sh --stock-dts <Redux>/reference/stock-202505/board.dts   # + generator round trip
+
+# then, on the same work directory (extra host packages are listed in the script):
+scripts/build-kernel.sh              # config checks only: fragment holds, every DT node has a driver
+scripts/build-kernel.sh --build      # + make bindeb-pkg and size report
 ```
 It works in `./.work/` (git-ignored; override with `WORK=`), never touches a device, card or image,
 and stops at the first failure. Last full run: see the newest Kernel Research entry in
