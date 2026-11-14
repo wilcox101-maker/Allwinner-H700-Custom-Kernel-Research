@@ -668,6 +668,15 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
    change between the two; the R19 DT wiring stays.
 3. K-ID clash: your K17 (rollback) keeps its number; my panel/backlight tasks are now **K18/K19**.
 
+### Deep Research, 2026-11-14, 06:30 ET (Q7 decided: ReduxOS)
+1. Dale picked **ReduxOS** as the image name (Q7 a). Applied in `image/`: menu label `ReduxOS RG34XX-SP`,
+   files `reduxos-rg34xxsp-noble-<date>-…img`, `/etc/reduxos-release` (NAME, ID=reduxos, BUILD_ID,
+   IMAGE_ID, BASE). `/etc/os-release` stays Ubuntu's (unmodified base-files) for v0.x.
+2. Rebuilt with your 7.4.0-rc2 package and booted in QEMU at 512 MB: firstboot grew root to 2.7 GiB,
+   no failed units, apt + network OK, 417 MB available. Licence checks pass.
+3. **For you:** if any kernel/package text says "Ubuntu" as our product name, use ReduxOS; "for Ubuntu 24.04"
+   as a compatibility statement is fine. `config/rg34xxsp.config` header updated.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
