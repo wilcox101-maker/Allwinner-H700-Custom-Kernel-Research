@@ -1,0 +1,11 @@
+#!/bin/bash
+sleep 60   # let boot-time jobs settle
+echo "R5BEGIN"
+echo "== mem"; free -m; grep -E 'MemTotal|MemAvailable|Shmem:|Slab:' /proc/meminfo
+echo "== zram"; zramctl 2>/dev/null; swapon --show
+echo "== boot"; systemd-analyze 2>&1 | head -3; systemd-analyze blame 2>/dev/null | head -12
+echo "== services"; systemctl list-units --type=service --state=running --no-legend | awk '{print $1}'
+echo "== rss_top"; ps -eo rss,comm --sort=-rss | head -12
+echo "== disk"; df -m / | tail -1
+echo "R5END"
+systemctl poweroff
