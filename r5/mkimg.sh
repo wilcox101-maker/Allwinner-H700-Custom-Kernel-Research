@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
 # usage: mkimg.sh ROOTFS.tar NAME  -> NAME.img (ext4, 2 GiB), NAME.vmlinuz, NAME.initrd, NAME.sizes
 # Extracts as root to preserve ownership. Writes only NAME.* in the current directory.
 set -euo pipefail

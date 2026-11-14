@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
 sleep 60   # let boot-time jobs settle
 echo "R5BEGIN"
 echo "== mem"; free -m; grep -E 'MemTotal|MemAvailable|Shmem:|Slab:' /proc/meminfo
