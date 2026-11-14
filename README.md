@@ -41,6 +41,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/r6-mesa-panfrost-noble.md`](docs/r6-mesa-panfrost-noble.md) | R6: Mesa 25.2.8 in noble for the Mali-G31: GLES 3.1, PanVK gated off, LLVM cost, package list |
 | [`docs/r7-image-tooling.md`](docs/r7-image-tooling.md) | R7: image tooling (mmdebstrap + genimage + u-boot-menu); prototype `image/build-image.sh`, QEMU-booted with our kernel |
 | [`docs/r8-update-rollback.md`](docs/r8-update-rollback.md) | R8: apt channels, u-boot boot-counter kernel rollback (tested in QEMU with real u-boot), recovery ladder |
+| [`docs/r9-licensing-redistribution.md`](docs/r9-licensing-redistribution.md) | R9: licences per component, source obligations, "Ubuntu" trademark (Q7), release checklist |
 | [`docs/r13-ram-tier-defaults.md`](docs/r13-ram-tier-defaults.md) | R13: RAM-tier defaults (zram, swappiness, earlyoom, journald) + QEMU OOM stress test |
 | [`docs/r3-v106-boot0-dram-sets.md`](docs/r3-v106-boot0-dram-sets.md) | R3: stock boot0 DRAM.ext table, PH6/7/8/10 straps → LPDDR3/LPDDR4 sets |
 | [`docs/r4-noble-firmware-audit.md`](docs/r4-noble-firmware-audit.md) | R4: Wi-Fi/BT firmware in noble, kernel config needs, BT config gap |
