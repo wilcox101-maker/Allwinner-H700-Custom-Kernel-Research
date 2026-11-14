@@ -4,6 +4,12 @@ Kernel Research chat, 2026-11-13. **Desk work only: the packages below were buil
 Installing them on a device waits for a serial console (K3) and a first FEL boot (K4), on a spare
 card only.
 
+> **Correction (R17, 2026-11-14):** the R10 package below lacked four options that **iwd** requires
+> (`CRYPTO_USER_API_HASH`, `CRYPTO_USER_API_SKCIPHER`, `KEY_DH_OPERATIONS`, `PKCS8_PRIVATE_KEY_PARSER`),
+> so Wi-Fi under iwd, the daemon R5 recommends, would not have started. Found while trimming modules
+> (iwd 2.14 checks these at start-up, `src/main.c`). The fragment now carries iwd's full required list,
+> and the R17 build replaces this package. See `kernel-module-trim-r17.md`.
+
 ## Goal and scope
 - A reproducible kernel for the RG34XX-SP as `.deb` packages that install on Ubuntu 24.04 (noble).
 - In scope: config, cross-build, packaging, sizes, and checks that the config covers the board.

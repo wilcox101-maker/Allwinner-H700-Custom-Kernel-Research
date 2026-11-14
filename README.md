@@ -18,9 +18,10 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host test of the CPU speed-bin decoder (patch 0001) |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, and `dt_driver_coverage.py` (DT node → driver → Kconfig check) |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) and `gen_trim_config.py` (module allowlist → config fragment) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
+| [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
 | [`scripts/build-kernel.sh`](scripts/build-kernel.sh) | Builds and checks the config, then the kernel `.deb` packages (R10) |
 | [`r5/`](r5/) | R5: noble userspace prototype (mmdebstrap + QEMU sizing scripts and results) |
 
@@ -28,6 +29,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/kernel-module-trim-r17.md`](docs/kernel-module-trim-r17.md) | R17: module allowlist, what it removed and kept, before/after sizes, the iwd and controller gaps it found |
 | [`docs/kernel-build-r10.md`](docs/kernel-build-r10.md) | R10: kernel config, cross-build and `.deb` packages for noble; why mainline and not ROCKNIX 7.2; sizes |
 | [`docs/kernel-findings-2026-11-13.md`](docs/kernel-findings-2026-11-13.md) | Open questions 1–6: upstream SP tree, display/PWM status, ROCKNIX panel choice and suspend, OPPs/thermal vs stock, sticks |
 | [`docs/device-checklist-rocknix.md`](docs/device-checklist-rocknix.md) | One-page ROCKNIX 20261101 spare-card checklist (device task K2) |
@@ -79,6 +81,7 @@ scripts/workbench.sh --stock-dts <Redux>/reference/stock-202505/board.dts   # + 
 # then, on the same work directory (extra host packages are listed in the script):
 scripts/build-kernel.sh              # config checks only: fragment holds, every DT node has a driver
 scripts/build-kernel.sh --build      # + make bindeb-pkg and size report
+scripts/build-kernel.sh --no-trim    # same, without the module allowlist (for comparison)
 ```
 It works in `./.work/` (git-ignored; override with `WORK=`), never touches a device, card or image,
 and stops at the first failure. Last full run: see the newest Kernel Research entry in

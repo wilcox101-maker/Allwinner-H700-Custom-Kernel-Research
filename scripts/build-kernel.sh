@@ -3,13 +3,14 @@
 #
 # Run scripts/workbench.sh first: it prepares $WORK/linux (pinned Linux + patches/linux + dts/).
 # This script then:
-#   1. builds a config: arm64 defconfig + every other ARCH_* platform off + config/rg34xxsp.config
+#   1. builds a config: arm64 defconfig + every other ARCH_* platform off + config/rg34xxsp.config,
+#      then turns off every module that is not on the allowlist (config/module-keep.txt, task R17)
 #   2. checks it: every line of the fragment holds in the final .config, and every enabled node
 #      of the three RG34XX-SP DTBs has its driver enabled (tools/dt_driver_coverage.py)
 #   3. with --build: make bindeb-pkg, then reports Image, modules and .deb sizes
 # Nothing here touches a device, a card or a disk image. The packages are NOT booted.
 #
-# Usage:  scripts/build-kernel.sh [--build] [--jobs N]
+# Usage:  scripts/build-kernel.sh [--build] [--no-trim] [--jobs N]
 #   WORK=<dir>  same work directory as workbench.sh (default ./.work)
 #   PKGREL=<n>  Debian revision of the packages (default 1)
 # Needs (Ubuntu): the workbench tools plus dpkg-dev fakeroot rsync kmod cpio debhelper
@@ -23,6 +24,7 @@ LINUX=$WORK/linux
 OUT=$WORK/kbuild-deb
 DTS=arch/arm64/boot/dts/allwinner
 BUILD=0
+TRIM=1
 JOBS=$(nproc)
 LOCALVERSION=-rg34xxsp
 PKGREL=${PKGREL:-1}   # Debian revision; bump for a rebuild of the same kernel version
@@ -30,6 +32,7 @@ PKGREL=${PKGREL:-1}   # Debian revision; bump for a rebuild of the same kernel v
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--build) BUILD=1 ;;
+	--no-trim) TRIM=0 ;;
 	--jobs) JOBS=$2; shift ;;
 	-h|--help) sed -n '2,15p' "$0"; exit 0 ;;
 	*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -57,6 +60,67 @@ echo "  $(wc -l <"$OUT/platforms-off.config") other platforms turned off"
 	scripts/kconfig/merge_config.sh -m -O "$OUT" "$OUT/.config" \
 	"$OUT/platforms-off.config" "$REPO/config/rg34xxsp.config" >/dev/null)
 "${MAKE[@]}" olddefconfig >/dev/null
+cp "$OUT/.config" "$OUT/base.config"
+"${MAKE[@]}" dtbs >/dev/null
+BOARD_DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
+	    sun50i-h700-anbernic-rg34xx-sp-reduxstock)
+
+if [ "$TRIM" = 1 ]; then
+	log "1b. Module trim (allowlist: config/module-keep.txt)"
+	: >"$OUT/board-symbols.txt"
+	for d in "${BOARD_DTBS[@]}"; do
+		python3 -I "$REPO/tools/dt_driver_coverage.py" "$LINUX" "$OUT/$DTS/$d.dtb" --symbols \
+			--ignore "$REPO/tools/dt_driver_coverage.ignore" >>"$OUT/board-symbols.txt"
+	done
+	python3 -I "$REPO/tools/gen_trim_config.py" "$OUT/base.config" "$REPO/config/module-keep.txt" \
+		--keep-from "$REPO/config/rg34xxsp.config" --keep-from "$OUT/board-symbols.txt" \
+		>"$OUT/trim.config" 2>"$OUT/trim.summary"
+	(cd "$LINUX" && KCONFIG_CONFIG="$OUT/.config" ARCH=arm64 \
+		scripts/kconfig/merge_config.sh -m -O "$OUT" "$OUT/base.config" "$OUT/trim.config" \
+		>/dev/null)
+	"${MAKE[@]}" olddefconfig >/dev/null
+	echo "  $(cat "$OUT/trim.summary")"
+	# Compare base, trim list and result: what select brought back, and any kept module lost.
+	python3 -I - "$OUT/base.config" "$OUT/trim.config" "$OUT/.config" "$LINUX" <<'PY' || fail "kept modules were lost by the trim (a dependency was turned off; see above)"
+import re, sys
+def vals(p):
+    d = {}
+    for l in open(p):
+        m = re.match(r'CONFIG_(\w+)=(.*)', l)
+        if m: d[m.group(1)] = m.group(2)
+    return d
+base, final = vals(sys.argv[1]), vals(sys.argv[3])
+off = set(re.findall(r'# CONFIG_(\w+) is not set', open(sys.argv[2]).read()))
+back = sorted(s for s in off if final.get(s) in ('y', 'm'))
+gone = [s for s, v in base.items() if v == 'm' and s not in off and final.get(s) not in ('y', 'm')]
+# Helpers with no prompt exist only while something selects them: losing those is expected.
+# A lost option WITH a prompt means one of its dependencies was turned off: that is a failure.
+import os
+prompted = set()
+for root, _, files in os.walk(sys.argv[4]):
+    if '/.git' in root:
+        continue
+    for f in files:
+        if not f.startswith('Kconfig'):
+            continue
+        cur = None
+        for l in open(os.path.join(root, f), errors='ignore'):
+            m = re.match(r'\s*(?:menu)?config\s+(\w+)', l)
+            if m:
+                cur = m.group(1)
+            elif cur and re.match(r'\s*(bool|tristate|prompt)\s+"', l):
+                prompted.add(cur)
+lost = sorted(s for s in gone if s in prompted)
+helpers = sorted(s for s in gone if s not in prompted)
+print('  selected back by kept options:', ' '.join(back) or 'none')
+print('  helpers no longer selected by anything:', ' '.join(helpers) or 'none')
+if lost:
+    print('  LOST:', ' '.join(lost))
+    sys.exit(1)
+PY
+	printf '  modules: %s before, %s after\n' "$(grep -c '=m$' "$OUT/base.config")" \
+		"$(grep -c '=m$' "$OUT/.config")"
+fi
 
 log "2a. Every fragment line holds"
 bad=0
@@ -77,9 +141,7 @@ done <"$REPO/config/rg34xxsp.config"
 echo "  all $(grep -c -E '^(CONFIG_|# CONFIG_)' "$REPO/config/rg34xxsp.config") fragment lines hold"
 
 log "2b. Every enabled DT node has its driver"
-"${MAKE[@]}" dtbs >/dev/null
-for d in sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux \
-	 sun50i-h700-anbernic-rg34xx-sp-reduxstock; do
+for d in "${BOARD_DTBS[@]}"; do
 	res=$(python3 -I "$REPO/tools/dt_driver_coverage.py" "$LINUX" "$OUT/$DTS/$d.dtb" \
 		--config "$OUT/.config" --ignore "$REPO/tools/dt_driver_coverage.ignore") ||
 		{ printf '%s\n' "$res" | grep -E 'MISSING|NO DRIVER'; fail "$d: driver coverage"; }
