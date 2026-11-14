@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# First boot on a freshly written card (R7): new SSH host keys, root partition grown to the card.
+# Growth uses sfdisk + partx + resize2fs (util-linux, fdisk, e2fsprogs), all online: no reboot, no python.
+set -eu
+log() { echo "h700-firstboot: $*"; }
+ssh-keygen -A && log "SSH host keys generated"
+ROOTDEV=$(findmnt -no SOURCE /)
+DISK=/dev/$(lsblk -no PKNAME "$ROOTDEV")
+PART=$(cat "/sys/class/block/$(basename "$ROOTDEV")/partition")
+BEFORE=$(lsblk -bno SIZE "$ROOTDEV")
+# Only the last partition can grow; ",+" keeps its start and takes all free space after it.
+if echo ',+' | sfdisk --no-reread --no-tell-kernel -q -N "$PART" "$DISK"; then
+	partx -u -n "$PART" "$DISK"
+	resize2fs "$ROOTDEV" >/dev/null && log "root grown: $BEFORE -> $(lsblk -bno SIZE "$ROOTDEV") bytes"
+else
+	log "sfdisk could not grow partition $PART on $DISK; root left at $BEFORE bytes"
+fi

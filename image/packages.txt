@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# R7: packages for the RG34XX-SP noble image (one per line; '#' comments). No Recommends.
+# Base (R5 iwd variant)
+systemd-sysv
+udev
+dbus
+kmod
+iproute2
+iputils-ping
+wireless-regdb
+openssh-server
+sudo
+ca-certificates
+systemd-timesyncd
+less
+nano
+# R5 audit / R6: packages the iwd variant lacked
+apt
+libpam-systemd
+tzdata
+netbase
+# Network (R5)
+iwd
+systemd-resolved
+# Firmware (R4): never the linux-firmware metapackage
+linux-firmware-realtek
+# Memory (R13)
+systemd-zram-generator
+earlyoom
+# Boot integration (R7): extlinux.conf + DTB sync on every kernel install/remove; first-boot growth (sfdisk;
+# not cloud-guest-utils, whose growpart package depends on python3)
+u-boot-menu
+rsync
+
+fdisk
+zstd
+# Game storage cards (exFAT, kernel support from R17)
+exfatprogs
+# GPU, GL only (R6): never mesa-vulkan-drivers
+libegl1
+libgles2
+libgbm1
+libgl1-mesa-dri

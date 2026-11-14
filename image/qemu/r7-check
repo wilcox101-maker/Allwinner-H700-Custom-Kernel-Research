@@ -1,0 +1,18 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# R7 QEMU check, injected into a COPY of the image's root partition by qemu-test.sh. Prints, then powers off.
+sleep 30
+echo "R7BEGIN"
+echo "== system: $(systemctl is-system-running)"; systemctl --failed --no-legend --plain
+echo "== firstboot"; journalctl -b -u h700-firstboot --no-pager -o cat | tail -6
+echo "== disk"; lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS /dev/vda; df -h / /boot | tail -2
+echo "== ssh host keys: $(ls /etc/ssh/ssh_host_*_key 2>/dev/null | wc -l)"
+echo "== machine-id: $(cat /etc/machine-id)"
+echo "== apt: $(apt --version 2>&1 | head -1)"
+echo "== services"; systemctl is-active systemd-networkd iwd earlyoom systemd-resolved systemd-zram-setup@zram0 ssh.socket | paste -sd' '
+echo "== network"; networkctl --no-pager list; resolvectl query ports.ubuntu.com 2>&1 | head -2
+echo "== kernel: $(uname -r)"; cat /proc/cmdline
+echo "== extlinux"; grep -E '^\s*(linux|fdtdir|fdt|append)' /boot/extlinux/extlinux.conf | head -4
+echo "== mem"; free -m | head -2
+echo "R7END"
+systemctl poweroff

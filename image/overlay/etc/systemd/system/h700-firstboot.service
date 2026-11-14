@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: GPL-2.0-only
+[Unit]
+Description=RG34XX-SP first boot (SSH host keys, grow root partition)
+ConditionFirstBoot=yes
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Before=ssh.socket ssh.service sysinit.target
+Wants=first-boot-complete.target
+Before=first-boot-complete.target
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/h700-firstboot
+RemainAfterExit=yes
+[Install]
+WantedBy=sysinit.target
