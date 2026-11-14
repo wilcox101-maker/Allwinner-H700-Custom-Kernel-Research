@@ -11,7 +11,9 @@
 #   3. with --build: make bindeb-pkg, then reports Image, modules and .deb sizes
 # Nothing here touches a device, a card or a disk image. The packages are NOT booted.
 #
-# Usage:  scripts/build-kernel.sh [--build] [--no-trim] [--jobs N]
+# Usage:  scripts/build-kernel.sh [--build] [--no-trim] [--display] [--jobs N]
+#   --display  the tree has the display layer (workbench.sh --display): merge
+#              config/rg34xxsp-display.config and check the panel trees too
 #   WORK=<dir>  same work directory as workbench.sh (default ./.work)
 #   PKGREL=<n>  Debian revision of the packages (default 1)
 # Needs (Ubuntu): the workbench tools plus dpkg-dev fakeroot rsync kmod cpio debhelper
@@ -26,6 +28,7 @@ OUT=$WORK/kbuild-deb
 DTS=arch/arm64/boot/dts/allwinner
 BUILD=0
 TRIM=1
+DISPLAY=0
 JOBS=$(nproc)
 LOCALVERSION=-rg34xxsp
 PKGREL=${PKGREL:-1}   # Debian revision; bump for a rebuild of the same kernel version
@@ -34,6 +37,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	--build) BUILD=1 ;;
 	--no-trim) TRIM=0 ;;
+	--display) DISPLAY=1 ;;
 	--jobs) JOBS=$2; shift ;;
 	-h|--help) sed -n '2,15p' "$0"; exit 0 ;;
 	*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -60,6 +64,12 @@ export KBUILD_BUILD_TIMESTAMP
 export KBUILD_BUILD_USER=rg34xxsp KBUILD_BUILD_HOST=allwinner-h700-research
 export KBUILD_BUILD_VERSION=${PKGREL}
 PREFIX_MAP="-fdebug-prefix-map=$LINUX=/usr/src/linux -fdebug-prefix-map=$OUT=/usr/src/linux-build"
+FRAGMENTS=("$REPO/config/rg34xxsp.config")
+if [ "$DISPLAY" = 1 ]; then
+	[ -f "$LINUX/drivers/gpu/drm/panel/panel-mipi.c" ] ||
+		fail "--display, but $LINUX has no display layer: run scripts/workbench.sh --display first"
+	FRAGMENTS+=("$REPO/config/rg34xxsp-display.config")
+fi
 MAKE=(make -s -C "$LINUX" O="$OUT" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
       LOCALVERSION="$LOCALVERSION" KCFLAGS="$PREFIX_MAP" KAFLAGS="$PREFIX_MAP" -j"$JOBS")
 
@@ -72,12 +82,14 @@ grep -E '^config ARCH_' "$LINUX/arch/arm64/Kconfig.platforms" | awk '{print $2}'
 echo "  $(wc -l <"$OUT/platforms-off.config") other platforms turned off"
 (cd "$LINUX" && KCONFIG_CONFIG="$OUT/.config" ARCH=arm64 \
 	scripts/kconfig/merge_config.sh -m -O "$OUT" "$OUT/.config" \
-	"$OUT/platforms-off.config" "$REPO/config/rg34xxsp.config" >/dev/null)
+	"$OUT/platforms-off.config" "${FRAGMENTS[@]}" >/dev/null)
 "${MAKE[@]}" olddefconfig >/dev/null
 cp "$OUT/.config" "$OUT/base.config"
 "${MAKE[@]}" dtbs >/dev/null
 BOARD_DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
 	    sun50i-h700-anbernic-rg34xx-sp-reduxstock)
+[ "$DISPLAY" = 1 ] && BOARD_DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel
+				   sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel)
 
 if [ "$TRIM" = 1 ]; then
 	log "1b. Module trim (allowlist: config/module-keep.txt)"
@@ -86,8 +98,10 @@ if [ "$TRIM" = 1 ]; then
 		python3 -I "$REPO/tools/dt_driver_coverage.py" "$LINUX" "$OUT/$DTS/$d.dtb" --symbols \
 			--ignore "$REPO/tools/dt_driver_coverage.ignore" >>"$OUT/board-symbols.txt"
 	done
+	KEEPFROM=()
+	for f in "${FRAGMENTS[@]}"; do KEEPFROM+=(--keep-from "$f"); done
 	python3 -I "$REPO/tools/gen_trim_config.py" "$OUT/base.config" "$REPO/config/module-keep.txt" \
-		--keep-from "$REPO/config/rg34xxsp.config" --keep-from "$OUT/board-symbols.txt" \
+		"${KEEPFROM[@]}" --keep-from "$OUT/board-symbols.txt" \
 		>"$OUT/trim.config" 2>"$OUT/trim.summary"
 	(cd "$LINUX" && KCONFIG_CONFIG="$OUT/.config" ARCH=arm64 \
 		scripts/kconfig/merge_config.sh -m -O "$OUT" "$OUT/base.config" "$OUT/trim.config" \
@@ -150,9 +164,9 @@ while IFS= read -r line; do
 		printf '  wanted %-40s got %s\n' "$want" "${have:-(absent)}"
 		bad=1
 	fi
-done <"$REPO/config/rg34xxsp.config"
+done < <(cat "${FRAGMENTS[@]}")
 [ "$bad" = 0 ] || fail "config fragment did not apply cleanly"
-echo "  all $(grep -c -E '^(CONFIG_|# CONFIG_)' "$REPO/config/rg34xxsp.config") fragment lines hold"
+echo "  all $(cat "${FRAGMENTS[@]}" | grep -c -E '^(CONFIG_|# CONFIG_)') fragment lines hold"
 
 log "2b. Every enabled DT node has its driver"
 for d in "${BOARD_DTBS[@]}"; do

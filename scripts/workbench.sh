@@ -10,8 +10,10 @@
 #   5. runs checkpatch on every patch, the xlate host test (after checking that its copy of the
 #      function still matches patch 0001), and the OPP generator round trip
 #   6. with --bindings, also runs dt_binding_check for the touched schemas (slow)
+#   With --display, also applies the display layer (patches/upstream/display-layer.txt, by
+#   reference, then patches/linux-display/) and checks the two panel trees (task R19).
 #
-# Usage:  scripts/workbench.sh [--bindings] [--stock-dts PATH]
+# Usage:  scripts/workbench.sh [--bindings] [--display] [--stock-dts PATH]
 #   WORK=<dir>  work directory (default: ./.work, ignored by git)
 #   --stock-dts PATH  Redux reference/stock-202505/board.dts; enables the generator check
 #
@@ -28,11 +30,13 @@ LINUX_SINCE=2026-11-08                                # v7.4-rc2 date, for the s
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 WORK=${WORK:-$REPO/.work}
 BINDINGS=0
+DISPLAY=0
 STOCK_DTS=
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--bindings) BINDINGS=1 ;;
+	--display) DISPLAY=1 ;;
 	--stock-dts) STOCK_DTS=$2; shift ;;
 	-h|--help) sed -n '2,20p' "$0"; exit 0 ;;
 	*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -70,6 +74,14 @@ git -C "$LINUX" checkout -q -f -B workbench "$LINUX_SHA"
 git -C "$LINUX" clean -q -fd -- "$DTS"
 git -C "$LINUX" -c user.name=workbench -c user.email=workbench@invalid \
 	am -q "$REPO"/patches/linux/*.patch
+if [ "$DISPLAY" = 1 ]; then
+	log "2b. Display layer (upstream series by reference) and our display patches"
+	git -C "$LINUX" clean -q -fd -- drivers/gpu/drm/panel
+	python3 -I "$REPO/tools/apply_upstream.py" "$REPO/patches/upstream/display-layer.txt" \
+		"$LINUX" --cache "$WORK/upstream-cache"
+	git -C "$LINUX" -c user.name=workbench -c user.email=workbench@invalid \
+		am -q "$REPO"/patches/linux-display/*.patch
+fi
 git -C "$LINUX" log --oneline "$LINUX_SHA"..HEAD
 
 log "3. Device trees (local only, not committed)"
@@ -79,7 +91,9 @@ cp "$REPO"/dts/*.dts "$REPO"/dts/*.dtsi "$LINUX/$DTS/"
 	printf '\n#include "sun50i-h700-redux-cpu-opp-stock.dtsi"\n'
 	printf '#include "sun50i-h700-redux-stock-thermal.dtsi"\n'
 } >"$LINUX/$DTS/sun50i-h700-anbernic-rg34xx-sp-reduxstock.dts"
-for v in redux reduxstock; do
+VARIANTS=(redux reduxstock)
+[ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel redux-v2-panel)
+for v in "${VARIANTS[@]}"; do
 	line="dtb-\$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg34xx-sp-$v.dtb"
 	grep -qxF "$line" "$LINUX/$DTS/Makefile" || echo "$line" >>"$LINUX/$DTS/Makefile"
 done
@@ -88,6 +102,12 @@ log "4. dtbs_check (any output counts as a failure)"
 "${MAKE[@]}" defconfig >/dev/null
 DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
       sun50i-h700-anbernic-rg34xx-sp-reduxstock)
+if [ "$DISPLAY" = 1 ]; then
+	# The panel trees, plus the upstream trees that inherit the new h616 display nodes.
+	DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel
+	       sun50i-h700-anbernic-rg35xx-2024 sun50i-h700-anbernic-rg35xx-plus
+	       sun50i-h700-anbernic-rg35xx-h sun50i-h700-anbernic-rg35xx-sp)
+fi
 targets=()
 for d in "${DTBS[@]}"; do targets+=("allwinner/$d.dtb"); done
 msgs=$("${MAKE[@]}" CHECK_DTBS=y "${targets[@]}" 2>&1) || fail "DTB build failed: $msgs"
@@ -100,7 +120,9 @@ for d in "${DTBS[@]}"; do
 done
 
 log "5a. checkpatch (--no-signoff; Signed-off-by is added by a human, never by a tool)"
-for p in "$REPO"/patches/linux/*.patch; do
+PATCHES=("$REPO"/patches/linux/*.patch)
+[ "$DISPLAY" = 1 ] && PATCHES+=("$REPO"/patches/linux-display/*.patch)
+for p in "${PATCHES[@]}"; do
 	res=$("$LINUX/scripts/checkpatch.pl" -q --no-signoff --terse "$p" 2>&1 || true)
 	# A new board .dts always draws the MAINTAINERS reminder; the directory is already covered.
 	res=$(printf '%s\n' "$res" | grep -v 'does MAINTAINERS need updating' |
@@ -128,8 +150,13 @@ fi
 
 if [ "$BINDINGS" = 1 ]; then
 	log "6. dt_binding_check"
-	for s in sound/allwinner,sun4i-a10-codec.yaml \
-		 opp/allwinner,sun50i-h6-operating-points.yaml arm/sunxi.yaml; do
+	SCHEMAS=("sound/allwinner,sun4i-a10-codec.yaml" "opp/allwinner,sun50i-h6-operating-points.yaml"
+		 "arm/sunxi.yaml")
+	[ "$DISPLAY" = 1 ] && SCHEMAS+=("display/panel/panel-mipi.yaml"
+		"bus/allwinner,sun50i-a64-de2.yaml" "display/allwinner,sun4i-a10-display-engine.yaml"
+		"display/allwinner,sun4i-a10-tcon.yaml" "display/allwinner,sun8i-r40-tcon-top.yaml"
+		"pwm/allwinner,sun4i-a10-pwm.yaml")
+	for s in "${SCHEMAS[@]}"; do
 		# Serial make: the schema tools warn about the parallel jobserver otherwise.
 		msgs=$(make -s -C "$LINUX" O="$OUT" ARCH=arm64 \
 			dt_binding_check DT_SCHEMA_FILES="$s" 2>&1) || fail "dt_binding_check $s: $msgs"

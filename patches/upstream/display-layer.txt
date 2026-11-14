@@ -1,0 +1,51 @@
+# Display layer (task R19): upstream patch series carried on top of torvalds/linux 97d73c8 and
+# patches/linux/0001-0006, by reference only. tools/apply_upstream.py downloads each series from
+# kernel patchwork, checks every patch's `git patch-id --stable` (a hash of the code change only,
+# so review tags patchwork adds later don't break it), applies the listed patches with the fixes
+# below, and commits each with its original author, date and message. Nothing from these patches
+# is stored in this repository.
+#
+# Format:
+#   series <patchwork id> <version> <date> <author>  <title>
+#   patch  <n> <patch-id>  apply|skip  [reason]
+#   fix    <n> replace <old>|<new>          literal text edit of the downloaded patch
+#   fix    <n> drop-hunk <text>             remove the hunk that contains <text>
+#   fix    <n> reanchor                     a pure-addition hunk whose context drifted: insert its
+#                                           lines before its first trailing-context line, which
+#                                           must occur exactly once in the target file
+# Fix text is literal (no escapes). For replace, exactly one space follows the word "replace";
+# everything after it, leading spaces included, is <old>|<new>.
+
+## H616 display engine, LCD TCON and DT nodes (Ryan Walklin; v2 is the newest version found)
+series 984067 2 2025-07-20 Ryan-Walklin  arm64: dts: allwinner: h616: add LCD timing controller and display engine support
+patch  1 3f2b25c29de53a27e1f1873ea75b81851638a209 apply
+patch  2 89424f3cbb9fc37ebbe0634449029353249500bf apply
+fix    2 replace    "^[a-zA-Z][a-zA-Z0-9,+\\-._]{0,63}@[0-9a-fA-F]+$":|   "@[0-9a-f]+$":
+patch  3 2666832b531765fd15ba83fb9765cdb198bcd354 apply
+patch  4 d28ae3827c5ad2fd56fca7bf03f2ff2c4cd7ecea apply
+patch  5 74dacbc833fca467a82f8639c04165c2f985576e apply
+patch  6 c03bfaf9580ce7e114c2ceb2cf3aa9487e684aaf skip  already upstream (H616 SRAM C binding)
+patch  7 e882a346a8f6b2c887ba24e8f00dbe5e6bfc5113 apply
+patch  8 dc409ec5ba2067303599b0c0c35dc4fd97c5dbd6 apply
+patch  9 a9026dc943266f079538a3ccf33a2a77d6616865 apply
+fix    9 drop-hunk de33_sram: sram-section@0
+fix    9 replace allwinner,sram = <&de33_sram 1>;|allwinner,sram = <&sram_c 1>;
+patch 10 e6b54acc05c27a303b1f5f93c67426e7d1c97e87 apply
+patch 11 040124142946e5b5220cf7c25c2044f18bc51b7a apply
+patch 12 bed08a7e76cf3b71da52a718b5317414d227fe35 skip  RG35XX panel in the shared 2024 tree that our board tree includes; our panel nodes are in dts/
+
+## H616 PWM controller, for the LCD backlight on PWM0 / PD28 (v12, posted by James Hilliard)
+series 1202273 12 2026-11-04 James-Hilliard  Introduce Allwinner H616 PWM controller
+patch  1 f3726755f1b49fc6663c886decafb07d3b273e2a apply
+patch  2 dac66f8d4368b899849166408a59e7fa75eeb109 apply
+patch  3 2eedecbb7c6667801b31eb80d2565bad39e9cb4b apply
+patch  4 e8b00768102951244927ecf054314f6e02f9ff1b apply
+patch  5 a3e2055ed7f3b5751a3e02d57e674b25ee404ff7 apply
+
+## Generic MIPI DPI+SPI panel driver: loads the panel's init sequence from a firmware file
+## (panels/<compatible>.panel), so the stock-derived sequence never enters the kernel or this repo
+series 937983 2 2025-02-26 Hironori-KIKUCHI  drm: panel: Add Generic MIPI Panel Driver
+patch  1 1d9f824570e61b1b0189966064e8f673024a1248 apply
+patch  2 04622b367e1bda25786369c3141e683b355a281e apply
+patch  3 3ce51cb4747068e2452ed0ec5f4663651189f4a2 apply
+fix    3 reanchor

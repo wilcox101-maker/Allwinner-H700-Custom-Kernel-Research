@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * RG34XX-SP display (task R19). DRAFT, NOT BOOTED.
+ *
+ * Needs the display layer (patches/upstream/display-layer.txt: H616 display engine and LCD TCON,
+ * H616 PWM, generic MIPI DPI+SPI panel driver) and patches/linux-display/ for the panel bindings.
+ *
+ * Pipeline: mixer0 -> TCON TOP -> LCD TCON0 -> 24-bit RGB panel (NV3052C controller).
+ * Wiring, from the stock tree (lcd0 lcd_gpio_0..4, pwm0 pins) and identical to the upstream
+ * RG35XX family: panel set-up over bit-banged 3-wire SPI on PI8 (CS), PI9 (SCK), PI10 (MOSI);
+ * panel reset PI14 (active low); panel power PI15; backlight PWM0 on PD28.
+ *
+ * The panel's init sequence and timing come from a firmware file, panels/<compatible>.panel,
+ * generated from the user's own stock image by tools/gen_panel_firmware.py. No panel data is
+ * in this tree. Never include this file unless the panel has been identified (u-boot reads the
+ * PE6 strap and picks the DTB); boards with an unknown panel boot the plain -redux tree.
+ */
+
+/ {
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		/*
+		 * 25 kHz, normal polarity: the values ROCKNIX runs on this board on mainline
+		 * (tag 20261101, cefc143). Stock uses 50 kHz (lcd_pwm_freq). Check: device task.
+		 */
+		pwms = <&pwm 0 40000 0>;
+		brightness-levels = <0 255>;
+		num-interpolated-steps = <255>;
+		default-brightness-level = <50>;	/* stock lcd_backlight */
+	};
+
+	reg_lcd: regulator-lcd {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd-lcd";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pio 8 15 GPIO_ACTIVE_HIGH>;	/* PI15 */
+		enable-active-high;
+	};
+
+	spi_lcd: spi {
+		compatible = "spi-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		sck-gpios = <&pio 8 9 GPIO_ACTIVE_HIGH>;	/* PI9 */
+		mosi-gpios = <&pio 8 10 GPIO_ACTIVE_HIGH>;	/* PI10 */
+		cs-gpios = <&pio 8 8 GPIO_ACTIVE_HIGH>;		/* PI8 */
+		num-chipselects = <1>;
+
+		redux_panel: panel@0 {
+			/* The variant .dts sets the panel's own compatible. */
+			compatible = "anbernic,rg34xx-sp-panel", "panel-mipi-dpi-spi";
+			reg = <0>;
+			spi-max-frequency = <3125000>;
+			spi-3wire;
+			reset-gpios = <&pio 8 14 GPIO_ACTIVE_LOW>;	/* PI14 */
+			power-supply = <&reg_lcd>;
+			backlight = <&backlight>;
+			pinctrl-0 = <&lcd0_rgb888_pins>;
+			pinctrl-names = "default";
+
+			port {
+				panel_in_rgb: endpoint {
+					remote-endpoint = <&tcon_lcd0_out_lcd>;
+				};
+			};
+		};
+	};
+};
+
+&de {
+	status = "okay";
+};
+
+&pwm {
+	pinctrl-0 = <&pwm0_pin>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&tcon_lcd0 {
+	status = "okay";
+};
+
+&tcon_lcd0_out_lcd {
+	remote-endpoint = <&panel_in_rgb>;
+};
+
+&tcon_top {
+	status = "okay";
+};
