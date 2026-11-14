@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /*
  * Anbernic RG34XX-SP, Redux tree with the ORIGINAL panel (PE6 strap low; stock "boe").
- * Firmware: panels/anbernic,rg34xx-sp-panel.panel (tools/gen_panel_firmware.py --panel v1).
+ * Panel driver: panel-newvision-nv3052c (patches/linux-display/).
  * DRAFT, NOT BOOTED.
  */
 
 #include "sun50i-h700-anbernic-rg34xx-sp-redux.dts"
 #include "sun50i-h700-redux-display.dtsi"
-
-&redux_panel {
-	compatible = "anbernic,rg34xx-sp-panel", "panel-mipi-dpi-spi";
-};

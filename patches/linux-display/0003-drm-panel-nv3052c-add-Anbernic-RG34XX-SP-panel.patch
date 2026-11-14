@@ -1,0 +1,247 @@
+From 67c3136d38288ff7fb54060bec5ff863419f4a35 Mon Sep 17 00:00:00 2001
+From: Redux Kernel Research <redux@invalid>
+Date: Sat, 14 Nov 2026 06:51:36 -0500
+Subject: [PATCH 3/3] drm/panel: nv3052c: add Anbernic RG34XX-SP panel
+
+Add the original panel of the Anbernic RG34XX-SP handheld (board strap
+PE6 low): 3.4", 720x480, NV3052C controller, 24-bit parallel RGB.
+
+The register table is the panel's complete sequence as the stock
+Anbernic u-boot (U-Boot 2018.05) sends it, so the common registers are
+skipped. One value differs: page 1 register 0x23 is 0x00 instead of
+stock's 0xa2, to go with the active-low HSYNC/VSYNC timing used here;
+stock pairs 0xa2 with active-high syncs and a longer frame. The same
+sequence and timing (26 MHz, 60 Hz) drive this panel on mainline in
+ROCKNIX (tag 20261101) through a generic table-driven panel driver.
+The table was generated with tools/gen_nv3052c_table.py in
+Allwinner-H700-Custom-Kernel-Research from the stock image, which
+checks the result against that working file.
+
+The stock sequence waits after exit-sleep before display-on; 120 ms is
+used here, as in the working setup above.
+
+This patch was drafted with an AI coding assistant (Claude) and checked
+by building with W=1 (arm64, gcc 13.3.0). It has not been tested on
+hardware.
+---
+ .../gpu/drm/panel/panel-newvision-nv3052c.c   | 179 ++++++++++++++++++
+ 1 file changed, 179 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-newvision-nv3052c.c b/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
+index 2a261d6ce..53ca769a0 100644
+--- a/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
++++ b/drivers/gpu/drm/panel/panel-newvision-nv3052c.c
+@@ -362,6 +362,155 @@ static const struct nv3052c_reg wl_355608_a8_panel_regs[] = {
+ 	{ 0xf6, 0xc0 },
+ };
+ 
++/*
++ * Anbernic RG34XX-SP, original panel (PE6 low): the complete sequence from
++ * the stock Anbernic u-boot, with register 0x23 (page 1) set to 0x00 for
++ * the active-low sync timing used here (stock uses 0xa2 with active-high
++ * syncs and a longer frame).
++ */
++static const struct nv3052c_reg anbernic_rg34xx_sp_panel_regs[] = {
++	// EXTC Command set enable, select page 1
++	{ 0xff, 0x30 }, { 0xff, 0x52 }, { 0xff, 0x01 },
++	{ 0xe3, 0x01 },
++	{ 0x0a, 0xfd },
++	{ 0x23, 0x00 },
++	{ 0x25, 0x14 },
++	{ 0x29, 0x01 },
++	{ 0x2a, 0xdf },
++	{ 0x38, 0xbc },
++	{ 0x39, 0xc7 },
++	{ 0x3a, 0x0f },
++	{ 0x91, 0x77 },
++	{ 0x92, 0x77 },
++	{ 0x99, 0x15 },
++	{ 0x9b, 0x10 },
++	{ 0xa0, 0x55 },
++	{ 0xa1, 0x50 },
++	{ 0xa3, 0x58 },
++	{ 0xa4, 0x9c },
++	{ 0xa7, 0x02 },
++	{ 0xa8, 0x01 },
++	{ 0xa9, 0x21 },
++	{ 0xaa, 0xfc },
++	{ 0xab, 0x28 },
++	{ 0xac, 0x06 },
++	{ 0xad, 0x06 },
++	{ 0xae, 0x06 },
++	{ 0xaf, 0x03 },
++	{ 0xb0, 0x08 },
++	{ 0xb1, 0x26 },
++	{ 0xb2, 0x28 },
++	{ 0xb3, 0x28 },
++	{ 0xb4, 0x03 },
++	{ 0xb5, 0x08 },
++	{ 0xb6, 0x26 },
++	{ 0xb7, 0x08 },
++	{ 0xb8, 0x26 },
++	// EXTC Command set enable, select page 2
++	{ 0xff, 0x30 }, { 0xff, 0x52 }, { 0xff, 0x02 },
++	{ 0xb0, 0x05 },
++	{ 0xb1, 0x15 },
++	{ 0xb2, 0x16 },
++	{ 0xb3, 0x3b },
++	{ 0xb4, 0x38 },
++	{ 0xb5, 0x37 },
++	{ 0xb6, 0x28 },
++	{ 0xb7, 0x4a },
++	{ 0xb8, 0x0f },
++	{ 0xb9, 0x08 },
++	{ 0xba, 0x13 },
++	{ 0xbb, 0x12 },
++	{ 0xbc, 0x13 },
++	{ 0xbd, 0x15 },
++	{ 0xbe, 0x1c },
++	{ 0xbf, 0x12 },
++	{ 0xc0, 0x18 },
++	{ 0xc1, 0x0a },
++	{ 0xd0, 0x05 },
++	{ 0xd1, 0x0b },
++	{ 0xd2, 0x0c },
++	{ 0xd3, 0x31 },
++	{ 0xd4, 0x2e },
++	{ 0xd5, 0x37 },
++	{ 0xd6, 0x1e },
++	{ 0xd7, 0x40 },
++	{ 0xd8, 0x0b },
++	{ 0xd9, 0x02 },
++	{ 0xda, 0x0f },
++	{ 0xdb, 0x0e },
++	{ 0xdc, 0x0f },
++	{ 0xdd, 0x11 },
++	{ 0xde, 0x18 },
++	{ 0xdf, 0x0e },
++	{ 0xe0, 0x14 },
++	{ 0xe1, 0x06 },
++	// EXTC Command set enable, select page 3
++	{ 0xff, 0x30 }, { 0xff, 0x52 }, { 0xff, 0x03 },
++	{ 0x07, 0x00 },
++	{ 0x08, 0x0d },
++	{ 0x09, 0x0e },
++	{ 0x30, 0x00 },
++	{ 0x31, 0x00 },
++	{ 0x32, 0x00 },
++	{ 0x33, 0x00 },
++	{ 0x34, 0xa1 },
++	{ 0x35, 0x07 },
++	{ 0x36, 0x07 },
++	{ 0x37, 0x33 },
++	{ 0x40, 0x0f },
++	{ 0x41, 0x10 },
++	{ 0x42, 0x11 },
++	{ 0x43, 0x12 },
++	{ 0x44, 0x11 },
++	{ 0x45, 0xf3 },
++	{ 0x46, 0xf4 },
++	{ 0x47, 0x11 },
++	{ 0x48, 0xf5 },
++	{ 0x49, 0xf6 },
++	{ 0x50, 0x13 },
++	{ 0x51, 0x14 },
++	{ 0x52, 0x15 },
++	{ 0x53, 0x16 },
++	{ 0x54, 0x11 },
++	{ 0x55, 0xf7 },
++	{ 0x56, 0xf8 },
++	{ 0x57, 0x11 },
++	{ 0x58, 0xf9 },
++	{ 0x59, 0xfa },
++	{ 0xb0, 0x1e },
++	{ 0xb2, 0x1e },
++	{ 0xb4, 0x1f },
++	{ 0xb6, 0x1e },
++	{ 0xb8, 0x0e },
++	{ 0xb9, 0x10 },
++	{ 0xba, 0x0a },
++	{ 0xbb, 0x0c },
++	{ 0xbd, 0x02 },
++	{ 0xbf, 0x1e },
++	{ 0xc1, 0x1e },
++	{ 0xc2, 0x1e },
++	{ 0xc4, 0x1f },
++	{ 0xc5, 0x1f },
++	{ 0xc6, 0x1e },
++	{ 0xc8, 0x1e },
++	{ 0xca, 0x1f },
++	{ 0xcc, 0x1e },
++	{ 0xce, 0x0d },
++	{ 0xcf, 0x0f },
++	{ 0xd0, 0x09 },
++	{ 0xd1, 0x0b },
++	{ 0xd3, 0x01 },
++	{ 0xd5, 0x1e },
++	{ 0xd7, 0x1e },
++	{ 0xd8, 0x1e },
++	{ 0xda, 0x1f },
++	{ 0xdb, 0x1f },
++	// EXTC Command set enable, select page 0
++	{ 0xff, 0x30 }, { 0xff, 0x52 }, { 0xff, 0x00 },
++	{ 0x36, 0x09 },
++	{ 0x3a, 0x55 },
++};
++
+ static inline struct nv3052c *to_nv3052c(struct drm_panel *panel)
+ {
+ 	return container_of(panel, struct nv3052c, panel);
+@@ -628,6 +777,21 @@ static const struct drm_display_mode wl_355608_a8_mode[] = {
+ 	},
+ };
+ 
++static const struct drm_display_mode anbernic_rg34xx_sp_modes[] = {
++	{ /* 60 Hz */
++		.clock = 26000,
++		.hdisplay = 720,
++		.hsync_start = 720 + 47,
++		.hsync_end = 720 + 47 + 4,
++		.htotal = 720 + 47 + 4 + 42,
++		.vdisplay = 480,
++		.vsync_start = 480 + 33,
++		.vsync_end = 480 + 33 + 4,
++		.vtotal = 480 + 33 + 4 + 16,
++		.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
++	},
++};
++
+ static const struct nv3052c_panel_info ltk035c5444t_panel_info = {
+ 	.display_modes = ltk035c5444t_modes,
+ 	.num_modes = ARRAY_SIZE(ltk035c5444t_modes),
+@@ -661,10 +825,24 @@ static const struct nv3052c_panel_info wl_355608_a8_panel_info = {
+ 	.panel_regs_len = ARRAY_SIZE(wl_355608_a8_panel_regs),
+ };
+ 
++static const struct nv3052c_panel_info anbernic_rg34xx_sp_panel_info = {
++	.display_modes = anbernic_rg34xx_sp_modes,
++	.num_modes = ARRAY_SIZE(anbernic_rg34xx_sp_modes),
++	.width_mm = 71,
++	.height_mm = 48,
++	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
++	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE,
++	.panel_regs = anbernic_rg34xx_sp_panel_regs,
++	.panel_regs_len = ARRAY_SIZE(anbernic_rg34xx_sp_panel_regs),
++	.skip_common_regs = true,
++	.exit_sleep_delay_ms = 120,
++};
++
+ static const struct spi_device_id nv3052c_ids[] = {
+ 	{ "ltk035c5444t", },
+ 	{ "fs035vg158", },
+ 	{ "rg35xx-plus-panel", },
++	{ "rg34xx-sp-panel", },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(spi, nv3052c_ids);
+@@ -673,6 +851,7 @@ static const struct of_device_id nv3052c_of_match[] = {
+ 	{ .compatible = "leadtek,ltk035c5444t", .data = &ltk035c5444t_panel_info },
+ 	{ .compatible = "fascontek,fs035vg158", .data = &fs035vg158_panel_info },
+ 	{ .compatible = "anbernic,rg35xx-plus-panel", .data = &wl_355608_a8_panel_info },
++	{ .compatible = "anbernic,rg34xx-sp-panel", .data = &anbernic_rg34xx_sp_panel_info },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, nv3052c_of_match);
+-- 
+2.43.0
+

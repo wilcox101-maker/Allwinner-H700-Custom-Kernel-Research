@@ -15,12 +15,12 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/research-sync.md`](docs/research-sync.md) | Running log between the Deep Research and Kernel Research chats |
 | `docs/*.md` | Findings, one document per topic (index below) |
 | [`patches/linux/`](patches/linux/) | Our Linux patches: a 6-patch `git am` series against torvalds/linux `97d73c8` (compile- and schema-checked, not booted) |
-| [`patches/upstream/display-layer.txt`](patches/upstream/display-layer.txt) | Display layer (R19): upstream H616 display, PWM and generic-panel series, pinned by patchwork ID and `git patch-id`; applied by `tools/apply_upstream.py`, never copied here |
-| [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer: panel binding, panel-driver fix-up for today's mainline |
+| [`patches/upstream/display-layer.txt`](patches/upstream/display-layer.txt) | Display layer (R19): upstream H616 display and PWM series, pinned by patchwork ID and `git patch-id`; applied by `tools/apply_upstream.py`, never copied here |
+| [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer: RG34XX-SP entry in the upstream NV3052C panel driver (init table from stock u-boot, decision Q8) and its binding |
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host test of the CPU speed-bin decoder (patch 0001) |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment), `gen_nv3052c_table.py` (panel init table from a stock image) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
@@ -34,7 +34,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
-| [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, panel firmware generator, desk results, open device checks |
+| [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
 | [`docs/r20-builtin-trim.md`](docs/r20-builtin-trim.md) | R20: trial fragment that turns off built-in code the board can't use (−5.8 MB Image, +6 MB free RAM in QEMU); boot path check |
 | [`docs/r18-kernel-in-qemu.md`](docs/r18-kernel-in-qemu.md) | R18: our kernel under the R5 noble rootfs in QEMU: memory and disk vs Ubuntu's kernel, initramfs optional |
 | [`docs/kernel-module-trim-r17.md`](docs/kernel-module-trim-r17.md) | R17: module allowlist, what it removed and kept, before/after sizes, the iwd and controller gaps it found |
@@ -79,12 +79,12 @@ All Deep Research documents from the Claude Project are here. The Kernel Researc
 | `sun50i-h700-redux-gpu-opp.dtsi` | GPU 420–600 MHz at 0.94 V (648 MHz waits on a stock DCDC2 reading) |
 | `sun50i-h700-redux-stock-thermal.dtsi` | Option: stock's 115 °C CPU critical trip (decision Q1) |
 | `sun50i-h700-redux-display.dtsi` | Display (R19, needs the display layer): DE → TCON → RGB panel over 3-wire SPI, PWM backlight |
-| `sun50i-h700-anbernic-rg34xx-sp-redux-panel.dts`, `-redux-v2-panel.dts` | `-redux` + display for panel v1 / v2; u-boot picks one from the PE6 strap |
+| `sun50i-h700-anbernic-rg34xx-sp-redux-panel.dts` | `-redux` + display for the original panel (PE6 low; u-boot picks it). The newer panel (PE6 high) has no driver yet |
 
 Display needs the separate display layer (`--display` below; mainline alone has no H616 LCD TCON
 or PWM support). No tree ever guesses a panel: the plain `-redux` tree has no display nodes.
-The panel's init sequence is a firmware file generated from your own stock image
-(`tools/gen_panel_firmware.py`), never stored here.
+The original panel's init sequence is in our NV3052C driver patch (decision Q8), generated from
+a stock image by `tools/gen_nv3052c_table.py`; stock images themselves are never stored here.
 Comments inside some `dts/` files still say `phase2-mainline/`, their path in the Redux package.
 
 ### Running the kernel checks
