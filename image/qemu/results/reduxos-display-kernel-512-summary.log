@@ -1,0 +1,18 @@
+licence checks: PASS
+display: 7.4.0-rc2-rg34xxsp: sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb + module panel-newvision-nv3052c.ko (modules.alias)
+display check: PASS
+[   81.017214] r7-check[265]: == system: running
+[   81.197130] r7-check[265]: == firstboot
+[   81.439960] r7-check[276]: h700-firstboot: SSH host keys generated
+[   81.444511] r7-check[276]: h700-firstboot: root grown: 623902720 -> 2936012800 bytes
+[   81.451862] r7-check[265]: == disk
+[   81.671408] r7-check[277]: └─vda2  2.7G ext4   rootfs /
+[   82.087023] r7-check[265]: == ssh host keys: 3
+[   82.155157] r7-check[265]: == machine-id: a9c0c994f667438e9d14c93c9aba68d5
+[   82.436851] r7-check[265]: == apt: apt 2.8.4 (arm64)
+[   82.439891] r7-check[265]: == services
+[   82.642084] r7-check[265]: == network
+[   83.374879] r7-check[265]: == kernel: 7.4.0-rc2-rg34xxsp
+[   83.470131] r7-check[265]: == extlinux
+[   83.677429] r7-check[265]: == mem
+[   83.860007] r7-check[297]: Mem:             479          62         282           0         147         417
