@@ -22,6 +22,7 @@ case $NET in
 esac
 PKGS="$BASE,$NETPKGS"; [ -n "$KVER" ] && PKGS="$PKGS,linux-image-$KVER,linux-modules-extra-$KVER"
 mmdebstrap --variant=minbase --arch="$ARCH" --components=main,universe \
+  --setup-hook='mkdir -p "$1/etc/initramfs-tools/conf.d" && echo MODULES=list > "$1/etc/initramfs-tools/conf.d/r5-qemu.conf"' \
   --include="$PKGS" \
   --dpkgopt='path-exclude=/usr/share/doc/*' --dpkgopt='path-include=/usr/share/doc/*/copyright' \
   --dpkgopt='path-exclude=/usr/share/man/*' --dpkgopt='path-exclude=/usr/share/locale/*' \

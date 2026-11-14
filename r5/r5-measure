@@ -1,12 +1,18 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-2.0-only
+# R5 measurement hook: waits for boot to settle, prints figures to the console, powers off.
 sleep 60   # let boot-time jobs settle
 echo "R5BEGIN"
-echo "== mem"; free -m; grep -E 'MemTotal|MemAvailable|Shmem:|Slab:' /proc/meminfo
+echo "== mem"; free -m
+grep -E '^(MemTotal|MemFree|MemAvailable|Buffers|Cached|Shmem|AnonPages|Slab|SReclaimable|SUnreclaim|KernelStack|PageTables|Percpu):' /proc/meminfo
 echo "== zram"; zramctl 2>/dev/null; swapon --show
 echo "== boot"; systemd-analyze 2>&1 | head -3; systemd-analyze blame 2>/dev/null | head -12
 echo "== services"; systemctl list-units --type=service --state=running --no-legend | awk '{print $1}'
 echo "== rss_top"; ps -eo rss,comm --sort=-rss | head -12
+echo "== rss_sum_kB $(ps -eo rss= | awk '{s+=$1} END{print s}')"
+echo "== pss_sum_kB $(cat /proc/[0-9]*/smaps_rollup 2>/dev/null | awk '/^Pss:/{s+=$2} END{print s}')"
+echo "== pss_top"; for p in /proc/[0-9]*; do awk -v c="$(cat $p/comm 2>/dev/null)" '/^Pss:/{print $2, c}' $p/smaps_rollup 2>/dev/null; done | sort -rn | head -10
+echo "== procs $(ps -e --no-headers | wc -l)"
 echo "== disk"; df -m / | tail -1
 echo "R5END"
 systemctl poweroff
