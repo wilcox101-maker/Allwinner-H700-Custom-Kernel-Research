@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
 # R5: minimal Ubuntu 24.04 (noble) rootfs for H700 sizing, built with mmdebstrap.
 # usage: [ARCH=arm64] [MIRROR=...] [NET=nm|iwd] [KVER=6.8.0-149-generic] ./build.sh OUT.tar
 #  NET=nm  : NetworkManager + wpasupplicant (Ubuntu default stack; pulls netplan + Python)

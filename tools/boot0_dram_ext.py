@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
 """Decode the Allwinner H616/H700 boot0 'DRAM.ext' strap-selected DRAM parameter table.
 Read-only. usage: boot0_dram_ext.py BOOT0.bin [...]  (boot0 = 64 KiB at 8 KiB of a stock card image)
 Layout (recovered from the V1.0.6 boot0 code at 0x233c0, desk only):

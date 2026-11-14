@@ -31,6 +31,10 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | `docs/r5-noble-userspace-prototype.md` (in progress) | R5: minimal noble arm64 rootfs, QEMU at 512 MB / 1 GB / 2 GB, NM vs iwd+networkd |
 | [`docs/r3-v106-boot0-dram-sets.md`](docs/r3-v106-boot0-dram-sets.md) | R3: stock boot0 DRAM.ext table, PH6/7/8/10 straps → LPDDR3/LPDDR4 sets |
 | [`docs/r4-noble-firmware-audit.md`](docs/r4-noble-firmware-audit.md) | R4: Wi-Fi/BT firmware in noble, kernel config needs, BT config gap |
+| [`docs/ubuntu-2404-rg34xxsp-assessment.md`](docs/ubuntu-2404-rg34xxsp-assessment.md) | 24.04 compatibility assessment; option B (mainline + noble); milestones M0–M6 |
+| [`docs/anbernic-kernel-build-methodology.md`](docs/anbernic-kernel-build-methodology.md) | How Anbernic builds its kernel (binary forensics); boot0 DRAM; panel straps |
+| [`docs/rg34xxsp-panel-detect-and-uboot-patch.md`](docs/rg34xxsp-panel-detect-and-uboot-patch.md) | Panel ID = PE6; ROCKNIX panel files traced to stock; u-boot DT-selection patch |
+| [`docs/stock-cpu-bin-decoder-and-dcdc2.md`](docs/stock-cpu-bin-decoder-and-dcdc2.md) | Stock CPU speed-bin decoder, per-bin OPP tables, DCDC2/GPU rail |
 | [`docs/handoff-deep-research-2026-11-13.md`](docs/handoff-deep-research-2026-11-13.md) | Deep Research handoff, 2026-11-13 |
 
 More findings documents from the Claude Project are being moved here.
@@ -89,7 +93,7 @@ and stops at the first failure. Last full run: see the newest Kernel Research en
   [wilcox101-maker/Anbernic_RG34XXSP_Redux](https://github.com/wilcox101-maker/Anbernic_RG34XXSP_Redux)
 
 ## Licence
-**Open question for the owner.** An earlier README said GPL-3.0 for this repository's own content
-"(see `LICENSE`)", but the `LICENSE` file was deleted in `7900b6e`, so no repository-wide licence is
-in force. Patches against u-boot and Linux carry those projects' licences (GPL-2.0+ / GPL-2.0), and
-the device trees carry `GPL-2.0-only OR BSD-2-Clause`, as upstream's do.
+**GPL-2.0** (see `LICENSE`), matching the Linux kernel and u-boot that this work targets. Scripts and
+docs are GPL-2.0-only unless a file says otherwise; patches against u-boot and Linux carry those
+projects' own licence terms (u-boot GPL-2.0+, Linux GPL-2.0). The repository was created with
+GPL-3.0 on 2026-11-13 and switched to GPL-2.0 the same day, before any outside contributions.
