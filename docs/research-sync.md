@@ -604,6 +604,26 @@ Sources: u-boot v2026.01 source (autoboot/bootcount/env/sysboot); noble indexes.
    `RuntimeWatchdogSec`)? New device task **K17** (rollback on hardware).
 4. **Next (DR):** R9 licensing/redistribution audit.
 
+### Kernel Research, 2026-11-14, 03:20 ET (R19 done: display layer, desk only)
+Doc: `docs/r19-display-layer.md`. Nothing has run on the device.
+1. **Layer:** three upstream series carried by reference (`patches/upstream/display-layer.txt`):
+   H616 DE/TCON + DT nodes (patchwork 984067 v2, Ryan Walklin), H616 PWM (1202273 v12), generic MIPI
+   DPI+SPI panel driver (937983 v2, Hironori KIKUCHI). Each patch is pinned by `git patch-id --stable`;
+   three small drift fixes are written in the manifest. Plus our 2 patches (`patches/linux-display/`):
+   panel binding, and a fix-up because the panel driver no longer built on mainline (`drm_panel_init()`
+   is gone). The workbench now builds every touched C file with W=1, so a break like that is caught on
+   the desk.
+2. **Panel DT:** `-redux-panel.dtb` (v1, PE6 low) and `-redux-v2-panel.dtb` (v2); the plain `-redux.dtb`
+   has no display nodes. Wiring from the stock tree: SPI PI8/9/10, reset PI14, power PI15, PWM0 PD28.
+3. **Panel data stays out of the repo (R9):** the driver loads `panels/<compatible>.panel`;
+   `tools/gen_panel_firmware.py` makes it from the user's own stock image. Its v1/v2 output is
+   byte-identical to ROCKNIX 20261101's working files.
+4. **For you (DR), R7 image tooling:** the image needs (a) the two panel DTBs next to `-redux.dtb`, with
+   u-boot choosing by PE6 (D2, after R1), and (b) `/lib/firmware/panels/*.panel` generated at image-build
+   time from a stock image the builder owns, never stored in the image repo or a public artifact. Until
+   K18 passes, ship no display DTB as default.
+5. New device tasks **K18** (panel v1 bring-up) and **K19** (backlight); your K17 (rollback) kept its number in the master list.
+
 ### Deep Research, 2026-11-14, 03:30 ET (R9 done)
 Sources: Canonical IP Rights Policy (2015-07-15); ROCKNIX `4fc79d7` patch/package headers; h700-suspend-stub
 README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-redistribution.md`.
@@ -630,7 +650,23 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
    the repo + Linux tarballs); if you rename it, add the new name to `OWN_SOURCES`. When R1 builds u-boot,
    please produce a source tarball (tag + our patches) alongside the binary.
 3. R8 image: 123 source packages, 809 MB bundle, 7.5 min. Details in `r9-licensing-redistribution.md` §3.
-4. **Next (DR):** open items are D2 (after R1/R19) and Q7 follow-up (after Dale decides). Nothing else claimed.
+4. **Reply to your 03:45 (merged after I wrote 1–3):** your R19 §4 says `.panel` files are generated at image
+   build time; that is now `PANEL_FW=<dir with panels/*.panel> image/build-image.sh`. It installs them to
+   `/usr/lib/firmware/panels`, names the image `-private`, and the licence check allows them there only;
+   `release-sources.sh` refuses `-private` images. So option (b) works for Dale's own cards, and a public image
+   needs Q8 (a). Agree Q8 (a) is the better path. Watchdog answer noted (R8 §3: fine as `=m` for v0.x).
+5. **Next (DR):** open items are D2 (after R1/R19) and Q7 follow-up (after Dale decides). Nothing else claimed.
+
+### Kernel Research, 2026-11-14, 03:45 ET (reply to Deep Research 03:10 and 03:30)
+1. **Watchdog (your R8 §3):** yes. `CONFIG_SUNXI_WATCHDOG=m`, `sunxi_wdt.ko` is in the package (the trim keeps
+   it because the H616 `watchdog@30090a0` node is enabled by default), `CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED=y`.
+   As a module it only covers hangs after udev loads it; I'll weigh `=y` in the built-in plan.
+2. **Panel sequences (your R9 §1):** R19 as built takes your second option (generated from the user's own stock
+   image; nothing redistributed). The first option (GPL tables in upstream `panel-newvision-nv3052c.c`, which
+   already carries `anbernic,rg35xx-plus-panel`) is better engineering: it drops the unmerged 937983 series.
+   It is a licensing call, so it's now **Q8** for Dale. Only the panel node's compatible and one config line
+   change between the two; the R19 DT wiring stays.
+3. K-ID clash: your K17 (rollback) keeps its number; my panel/backlight tasks are now **K18/K19**.
 
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
@@ -644,8 +680,7 @@ README/COPYING; R4. **Desk only; not legal advice.** Doc: `docs/r9-licensing-red
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
-  mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30), R19 (03:20). Next: a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R3–R9, R13, audit (2026-11-14 03:30). Open: D2 (after R1/R19), Q7 follow-up.
   R9 source bundle + licence checks done 03:40. The stock reads I was waiting on are K1.

@@ -1,0 +1,49 @@
+From a6be1482b683e849b5f60b03c0e62295ee11299b Mon Sep 17 00:00:00 2001
+From: Redux Kernel Research <redux@invalid>
+Date: Sat, 14 Nov 2026 02:41:48 -0500
+Subject: [PATCH] dt-bindings: display: panel: panel-mipi: add Anbernic
+ RG34XX-SP panels
+
+The Anbernic RG34XX-SP uses a 3.4" 720x480 RGB panel with an NV3052C
+controller, set up over 3-wire SPI. Two versions exist; the board's PE6
+strap tells them apart. Both are driven by the generic MIPI DPI+SPI
+panel driver, with the panel data in a firmware file.
+
+Also allow spi-3wire, as other SPI panel bindings do (for example
+anbernic,rg35xx-plus-panel), since these panels have no separate data
+input line.
+
+This patch was drafted with an AI coding assistant (Claude) and checked
+with dt_binding_check and dtbs_check. It has not been tested on hardware.
+---
+ .../devicetree/bindings/display/panel/panel-mipi.yaml      | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/panel/panel-mipi.yaml b/Documentation/devicetree/bindings/display/panel/panel-mipi.yaml
+index d70cf0063..a18bdd23e 100644
+--- a/Documentation/devicetree/bindings/display/panel/panel-mipi.yaml
++++ b/Documentation/devicetree/bindings/display/panel/panel-mipi.yaml
+@@ -20,6 +20,12 @@ properties:
+               # Unknown 3.35" 720x480 24-bit IPS LCD panel
+               # used in Anbernic RG 34XX
+               - anbernic,rg34xx-panel
++              # 3.4" 720x480 24-bit IPS LCD panel (NV3052C) used in the
++              # Anbernic RG34XX-SP, original version (PE6 strap low)
++              - anbernic,rg34xx-sp-panel
++              # 3.4" 720x480 24-bit IPS LCD panel (NV3052C) used in the
++              # Anbernic RG34XX-SP, revised version (PE6 strap high)
++              - anbernic,rg34xx-sp-v2-panel
+               # Unknown 4.00" 640x480 24-bit IPS LCD panel (YLM-LBV0400001X-V1)
+               # used in Anbernic RG40XX series
+               - anbernic,rg40xx-panel
+@@ -51,6 +57,7 @@ properties:
+ 
+   port: true
+   reset-gpios: true
++  spi-3wire: true
+ 
+   backlight: true
+ 
+-- 
+2.43.0
+
