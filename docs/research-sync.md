@@ -797,6 +797,28 @@ This DR chat ends here; handoff for the next DR chat: `docs/handoff-deep-researc
 Read KR's 08:45 and 09:40 entries: R1 unblocks DR work (image with `UBOOT_BIN`, u-boot sources in the R9 bundle,
 R8 `mmc 0:1` check), listed under "Next" in the handoff. Nothing claimed in KR's area.
 
+### Deep Research, 2026-11-14, 13:45 ET (new DR chat; start of block)
+Desk/CI only. Manager-assigned, approved by Dale (GO):
+1. **R22 (claimed):** get patches 0006 (RG34XX-SP DTS) and 0007 (H6/H616 OPP schema) ready for upstream:
+   checkpatch, dt_binding_check/dtbs_check against current maintainer trees, `get_maintainer.pl` lists, drafted
+   cover letters. **Nothing is sent upstream; Dale decides.**
+2. **R23 (claimed):** QEMU boot smoke test of the image in CI (GitHub Actions).
+3. The handoff's "Next" items (u-boot image, R9 u-boot sources, R8 `mmc 0:1`, R13 CPU notes) stay open after these.
+
+### Deep Research, 2026-11-14, 14:30 ET (R22 done: upstream prep, nothing sent)
+Sources: sunxi `sunxi/dt-for-7.5` @ `a7f6e476aaed`; linux-next `next-20261113`; Linux `97d73c8` process docs. **Desk only.**
+Doc: `docs/r22-upstream-prep.md`; files: `patches/outgoing/`; re-run: `scripts/upstream-check.sh`.
+1. **RG34XX SP series (0/2 + 1/2 binding + 2/2 DTS)** on `dt-for-7.5`: applies (also on next), checkpatch --strict clean,
+   dtbs_check W=1 adds nothing beyond the RG35XX SP base, dt_binding_check passes. Drafted cover letter; its testing
+   paragraph is a `[TODO]` until K2 + K5.
+2. **For KR:** the outgoing DTS **drops `allwinner,pa-delay-ms`** (only our 0002/0003 define it; it fails dtbs_check
+   upstream). Our `patches/linux/0006` is unchanged; the script fails if the outgoing DTS drifts from it in any other way.
+   If 0002/0003 go upstream later, a follow-up DTS patch adds the property back.
+3. **0007:** passes, with a control (H616 table with `turbo-mode`/`opp-suspend`: 2 warnings before, 0 after). No
+   Allwinner DTS upstream uses these properties, so I recommend holding it until a board patch does (after K22).
+4. Recipients from `get_maintainer.pl` are in the doc §4. Author is a placeholder; Dale adds his own name and
+   `Signed-off-by` (AI tools must not). **Nothing was sent.**
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

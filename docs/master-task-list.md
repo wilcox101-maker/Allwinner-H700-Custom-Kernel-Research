@@ -45,6 +45,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | done (desk): `r2-fel-test-kit.md`; runs as K4 |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | recurring: November done (`r11-upstream-check-2026-11.md`); next ~2026-12-14 |
 | R21 | "Redux on mainline" compatibility map: every stock-kernel interface the Redux frontend uses (fb0/vsync, backlight, battery, cpufreq, thermal, evdev names/codes, lid, power key, ALSA) vs our DTS/config, with shim/code verdicts. Found and fixed: power key driver `INPUT_AXP20X_PEK` was off | KR | done (desk): `r21-redux-on-mainline-map.md`; device check K23 |
+| R22 | Upstream prep for patch 0006 (RG34XX SP DTS, with its binding 0005) and 0007 (OPP schema) | DR | done (desk): `r22-upstream-prep.md`, `patches/outgoing/`, `scripts/upstream-check.sh`; all checks pass on sunxi `dt-for-7.5` / `next-20261113`. **Not sent; Dale decides.** Recommended: DTS after K2 + K5; 0007 held until a board uses it |
+| R23 | QEMU boot smoke test of the image in CI (GitHub Actions) | DR | claimed: DR (Manager, Dale GO 2026-11-14) |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -69,6 +71,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 14:30: R22 upstream prep (desk): RG34XX SP binding + DTS (0005/0006, minus our unmerged `pa-delay-ms`) and the OPP schema patch (0007) rebased to sunxi `dt-for-7.5` / `next-20261113`; checkpatch --strict, dtbs_check W=1, dt_binding_check, before/after control, maintainers lists, cover letter; `scripts/upstream-check.sh` re-runs it all. Nothing sent (DR, `r22-upstream-prep.md`).
 - 2026-11-14 13:55: R21 "Redux on mainline" map (desk): 22 interfaces; only fb0 `FBIO_WAITFORVSYNC` works unchanged (DRM fbdev emulation implements it); input needs code (5 devices by name, button numbers reused with other meanings, D-pad as keys, raw 0–4096 sticks), thermal_zone0 becomes the GPU, battery is `axp20x-battery` (current raw, ~450 mA offset), audio `hw:CARD=Codec`, mixer `Line Out`. Fix: `CONFIG_INPUT_AXP20X_PEK=m` (no power key before). Recommends a `platform_mainline.c` in Redux; K23 added (KR, `r21-redux-on-mainline-map.md`).
 - 2026-11-14 09:40: R1 + R2 (desk): `scripts/build-uboot.sh` builds SPL + BL31 + u-boot per DRAM type (u-boot **v2026.10**, which has the H616 LPDDR3 TPR6 fix that v2026.01 lacks; TF-A v2.14.0; PE6 DT selection + R8 boot counter); eGON checksum, size, strings and reproducibility checked; `--sources` writes the corresponding source for R9. Card layout confirmed (MBR, 8 KiB, FAT `/boot` @ 16 MiB). FEL kit for K4 (KR, `r1-boot-chain.md`, `r2-fel-test-kit.md`).
 - 2026-11-14 08:45: **Q1/Q2/Q5 decided by Dale** (via the Redux Manager): Q1 stock 115 °C, Q2 ROCKNIX H700 CPU table (1512 MHz boost-only, stress test K22), Q5 1024 mA until K14. Applied to `-redux` (+ new `…-cpu-opp.dtsi`, patch 0007 for the OPP schema); desk checks pass (KR).

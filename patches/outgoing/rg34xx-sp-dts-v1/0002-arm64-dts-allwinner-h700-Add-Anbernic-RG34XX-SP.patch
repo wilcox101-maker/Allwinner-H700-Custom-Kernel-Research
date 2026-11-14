@@ -1,0 +1,162 @@
+From 4fa1669838aa1d3f06cfba9545c6e1ccb5484f27 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.invalid>
+Date: Sat, 14 Nov 2026 13:50:58 -0500
+Subject: [PATCH 2/2] arm64: dts: allwinner: h700: Add Anbernic RG34XX SP
+
+The Anbernic RG34XX SP is an Allwinner H700 clamshell handheld built on
+the RG35XX SP board design, with two analog sticks and stick-click
+buttons added. Describe it on top of the RG35XX SP tree:
+
+- analog sticks: GPADC channel 0 behind a 4-way analog mux with select
+  lines PI1/PI2 and mux enable PI0, described as on the RG35XX H and
+  polled every 16 ms
+- stick-click buttons on PE8/PE9, as on the RG35XX H
+- battery: 3000 mAh, 170 mOhm, charge voltage limited to 4.10 V as in
+  the vendor firmware (the RG35XX trees use 4.20 V)
+
+Pin assignments and battery values come from the vendor device tree.
+The axis directions follow the RG35XX H with the right stick reversed.
+
+This patch was drafted with an AI coding assistant (Claude) from the
+vendor device tree and the upstream RG35XX H/SP trees, and checked with
+dtbs_check (CHECK_DTBS=y). It has not yet been tested on hardware.
+---
+ arch/arm64/boot/dts/allwinner/Makefile        |   1 +
+ .../sun50i-h700-anbernic-rg34xx-sp.dts        | 113 ++++++++++++++++++
+ 2 files changed, 114 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/allwinner/sun50i-h700-anbernic-rg34xx-sp.dts
+
+diff --git a/arch/arm64/boot/dts/allwinner/Makefile b/arch/arm64/boot/dts/allwinner/Makefile
+index d1f768dd64..ecf362c0d5 100644
+--- a/arch/arm64/boot/dts/allwinner/Makefile
++++ b/arch/arm64/boot/dts/allwinner/Makefile
+@@ -60,6 +60,7 @@ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero2w.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-orangepi-zero3.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-transpeed-8k618-t.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h618-yuzukihd-chameleon.dtb
++dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg34xx-sp.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg35xx-2024.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg35xx-h.dtb
+ dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg35xx-plus.dtb
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h700-anbernic-rg34xx-sp.dts b/arch/arm64/boot/dts/allwinner/sun50i-h700-anbernic-rg34xx-sp.dts
+new file mode 100644
+index 0000000000..30fffddd21
+--- /dev/null
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h700-anbernic-rg34xx-sp.dts
+@@ -0,0 +1,113 @@
++// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++/*
++ * Anbernic RG34XX SP: an RG35XX SP clamshell with two analog sticks
++ * and stick-click buttons.
++ */
++
++#include "sun50i-h700-anbernic-rg35xx-sp.dts"
++
++/ {
++	model = "Anbernic RG34XX SP";
++	compatible = "anbernic,rg34xx-sp", "allwinner,sun50i-h700";
++
++	adc-joystick {
++		compatible = "adc-joystick";
++		io-channels = <&adc_mux 0>,
++			      <&adc_mux 1>,
++			      <&adc_mux 2>,
++			      <&adc_mux 3>;
++		pinctrl-0 = <&joy_mux_pin>;
++		pinctrl-names = "default";
++		poll-interval = <16>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		axis@0 {
++			reg = <0>;
++			abs-flat = <32>;
++			abs-fuzz = <32>;
++			abs-range = <4096 0>;
++			linux,code = <ABS_X>;
++		};
++
++		axis@1 {
++			reg = <1>;
++			abs-flat = <32>;
++			abs-fuzz = <32>;
++			abs-range = <0 4096>;
++			linux,code = <ABS_Y>;
++		};
++
++		axis@2 {
++			reg = <2>;
++			abs-flat = <32>;
++			abs-fuzz = <32>;
++			abs-range = <4096 0>;
++			linux,code = <ABS_RX>;
++		};
++
++		axis@3 {
++			reg = <3>;
++			abs-flat = <32>;
++			abs-fuzz = <32>;
++			abs-range = <0 4096>;
++			linux,code = <ABS_RY>;
++		};
++	};
++
++	adc_mux: adc-mux {
++		compatible = "io-channel-mux";
++		channels = "left_x", "left_y", "right_x", "right_y";
++		#io-channel-cells = <1>;
++		io-channels = <&gpadc 0>;
++		io-channel-names = "parent";
++		mux-controls = <&gpio_mux>;
++		settle-time-us = <100>;
++	};
++
++	gpio_mux: mux-controller {
++		compatible = "gpio-mux";
++		mux-gpios = <&pio 8 1 GPIO_ACTIVE_LOW>, /* PI1 */
++			    <&pio 8 2 GPIO_ACTIVE_LOW>; /* PI2 */
++		#mux-control-cells = <0>;
++	};
++};
++
++&battery {
++	charge-full-design-microamp-hours = <3000000>;
++	factory-internal-resistance-micro-ohms = <170000>;
++	voltage-max-design-microvolt = <4100000>;
++};
++
++&gpadc {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++
++	channel@0 {
++		reg = <0>;
++	};
++};
++
++&gpio_keys_gamepad {
++	button-thumbl {
++		label = "GPIO Thumb Left";
++		gpios = <&pio 4 8 GPIO_ACTIVE_LOW>; /* PE8 */
++		linux,input-type = <EV_KEY>;
++		linux,code = <BTN_THUMBL>;
++	};
++
++	button-thumbr {
++		label = "GPIO Thumb Right";
++		gpios = <&pio 4 9 GPIO_ACTIVE_LOW>; /* PE9 */
++		linux,input-type = <EV_KEY>;
++		linux,code = <BTN_THUMBR>;
++	};
++};
++
++&pio {
++	joy_mux_pin: joy-mux-pin {
++		pins = "PI0";
++		function = "gpio_out";
++	};
++};
+-- 
+2.43.0
+

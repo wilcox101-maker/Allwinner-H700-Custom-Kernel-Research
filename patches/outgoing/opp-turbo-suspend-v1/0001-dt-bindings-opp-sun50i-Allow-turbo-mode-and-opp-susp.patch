@@ -1,0 +1,47 @@
+From d0a52c225138238d8b153e9e4f4b00905cd19359 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.invalid>
+Date: Sat, 14 Nov 2026 13:51:06 -0500
+Subject: [PATCH] dt-bindings: opp: sun50i: Allow turbo-mode and opp-suspend
+
+The Allwinner H6/A100/H616 OPP binding lists the properties an OPP node
+may have and rejects all others, so a board cannot mark an OPP as a
+boost frequency (turbo-mode) or as the frequency to use while
+suspending (opp-suspend). Both are generic properties defined by
+opp-v2-base.yaml, and the cpufreq-dt driver honours them.
+
+Allow them, so that a board can, for example, keep its fastest OPP as
+a boost frequency that is off by default.
+
+This patch was drafted with an AI coding assistant (Claude) and checked
+with dt_binding_check, and with dtbs_check on an H616 board whose OPP
+table uses both properties (rejected before this patch, accepted after).
+---
+Notes (below the cut, not part of the commit):
+- No board in the tree uses these properties in an Allwinner OPP table
+  yet. The intended user is the Anbernic RG34XX SP (H700), whose
+  downstream table keeps 1512 MHz as a boost OPP; [TODO before sending:
+  link the board series that uses them, or drop this patch until one
+  exists, since a binding change without a user is often refused].
+- [TODO before sending: add the hardware test, if any.]
+
+ .../bindings/opp/allwinner,sun50i-h6-operating-points.yaml      | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml b/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
+index 75ab552f6e..2aa53d7249 100644
+--- a/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
++++ b/Documentation/devicetree/bindings/opp/allwinner,sun50i-h6-operating-points.yaml
+@@ -49,6 +49,8 @@ patternProperties:
+       opp-hz: true
+       clock-latency-ns: true
+       opp-microvolt: true
++      opp-suspend: true
++      turbo-mode: true
+       opp-supported-hw:
+         maxItems: 1
+         description:
+
+base-commit: 84abb955b1015477aa11a96e2f3ac1b938b77f48
+-- 
+2.43.0
+
