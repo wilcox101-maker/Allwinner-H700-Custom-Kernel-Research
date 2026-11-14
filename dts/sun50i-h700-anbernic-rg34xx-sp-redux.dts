@@ -1,0 +1,203 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Anbernic RG34XX-SP, Redux draft device tree (Phase 2).
+ *
+ * DRAFT, NOT BOOTED. Written 2026-11-13 by the Redux Kernel Research chat from:
+ *  - upstream sun50i-h700-anbernic-rg35xx-sp.dts (torvalds/linux 97d73c8, v7.4-rc2), included below;
+ *  - the stick wiring in stock reference/stock-202505/board.dts (ANBERNIC-keys node);
+ *  - stock's own CPU OPP values (same file, opp_l_table).
+ * Original text, not copied from any other project's patches.
+ *
+ * What this adds on top of the upstream RG35XX SP tree:
+ *  1. Analog sticks via upstream adc-joystick + io-channel-mux (no out-of-tree driver).
+ *  2. A stock-parity, speed-bin-agnostic CPU OPP table (see the comment there).
+ *  3. GPU OPPs 420-600 MHz on the fixed 0.94 V shared rail (sun50i-h700-redux-gpu-opp.dtsi).
+ *  4. Battery charge voltage capped at stock's 4.10 V (upstream's RG35XX tree says 4.20 V).
+ *  5. Speaker amplifier delay 100 ms, as stock (needs the Redux sun4i-codec patch; without it the
+ *     property is ignored and mainline's 700 ms applies).
+ *  6. Stick-click buttons L3/R3 on PE8/PE9 (stock keyL3/keyR3; same pins as upstream RG35XX-H).
+ * What it deliberately does NOT add:
+ *  - Display/panel nodes. Mainline has none for the H616 yet; the panel must come from the
+ *    display patch set AND a panel identified at boot (u-boot DT selection). Never guess a panel.
+ *  - Thermal changes: see sun50i-h700-redux-stock-thermal.dtsi, included only if Dale picks
+ *    "stock 115 C" for the critical trip.
+ */
+
+#include "sun50i-h700-anbernic-rg35xx-sp.dts"
+#include "sun50i-h700-redux-gpu-opp.dtsi"
+
+/ {
+	model = "Anbernic RG34XX-SP";
+	compatible = "anbernic,rg34xx-sp", "allwinner,sun50i-h700";
+
+	/*
+	 * Sticks. Stock: GPADC channel 0 behind a 4-way analog mux; mux select A0/A1 = PI1/PI2,
+	 * mux enable PI0 (stock amux-en-gpios <bank 8, pin 0>, driven high). Same wiring as the
+	 * upstream RG35XX-H tree. Axis order and signs below are UNVERIFIED: confirm with evtest
+	 * (ROCKNIX inverts the right stick on this model, relative to its own driver).
+	 * Stock polls at 20 ms; upstream RG35XX-H uses 60 ms. 16 ms is one 60 Hz frame.
+	 */
+	adc-joystick {
+		compatible = "adc-joystick";
+		io-channels = <&redux_adc_mux 0>, <&redux_adc_mux 1>,
+			      <&redux_adc_mux 2>, <&redux_adc_mux 3>;
+		pinctrl-0 = <&redux_joy_mux_en_pin>;
+		pinctrl-names = "default";
+		poll-interval = <16>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		axis@0 {
+			reg = <0>;
+			abs-flat = <32>;
+			abs-fuzz = <32>;
+			abs-range = <4096 0>;	/* left X, sign to verify */
+			linux,code = <ABS_X>;
+		};
+
+		axis@1 {
+			reg = <1>;
+			abs-flat = <32>;
+			abs-fuzz = <32>;
+			abs-range = <0 4096>;	/* left Y, sign to verify */
+			linux,code = <ABS_Y>;
+		};
+
+		axis@2 {
+			reg = <2>;
+			abs-flat = <32>;
+			abs-fuzz = <32>;
+			abs-range = <4096 0>;	/* right X, reversed vs RG35XX-H, to verify */
+			linux,code = <ABS_RX>;
+		};
+
+		axis@3 {
+			reg = <3>;
+			abs-flat = <32>;
+			abs-fuzz = <32>;
+			abs-range = <0 4096>;	/* right Y, reversed vs RG35XX-H, to verify */
+			linux,code = <ABS_RY>;
+		};
+	};
+
+	redux_adc_mux: adc-mux {
+		compatible = "io-channel-mux";
+		channels = "left_x", "left_y", "right_x", "right_y";
+		#io-channel-cells = <1>;
+		io-channels = <&gpadc 0>;
+		io-channel-names = "parent";
+		mux-controls = <&redux_gpio_mux>;
+		settle-time-us = <100>;
+	};
+
+	redux_gpio_mux: mux-controller {
+		compatible = "gpio-mux";
+		mux-gpios = <&pio 8 1 GPIO_ACTIVE_LOW>,	/* PI1 = stock A0 */
+			    <&pio 8 2 GPIO_ACTIVE_LOW>;	/* PI2 = stock A1 */
+		#mux-control-cells = <0>;
+	};
+
+	/*
+	 * CPU OPPs: interim "stock-parity, bin-agnostic" table.
+	 *
+	 * Upstream's sun50i-h616-cpu-opp.dtsi runs lower voltages than stock at some steps
+	 * (1416 MHz: 1.10 V upstream vs 1.15/1.16 V stock) and its speed bins can't yet be mapped
+	 * to stock's. Until the mapping is known, offer only the steps every stock bin has
+	 * (480, 1008, 1200 MHz), each at the HIGHEST voltage any stock bin uses for it. That never
+	 * undervolts a chip relative to stock and never exceeds a stock frequency or voltage.
+	 * The full per-bin table returns once the fuse-to-bin mapping is recovered.
+	 * Fuse: 16 bits at SID 0x03006200 (stock and upstream read the same cell).
+	 */
+	redux_cpu_opp_table: opp-table-reduxcpu {
+		compatible = "allwinner,sun50i-h616-operating-points";
+		nvmem-cells = <&cpu_speed_grade>;
+		opp-shared;
+
+		opp-480000000 {
+			opp-hz = /bits/ 64 <480000000>;
+			opp-microvolt = <900000>;	/* stock: 900 mV in every bin */
+			clock-latency-ns = <244144>;
+			opp-supported-hw = <0x3f>;
+		};
+
+		opp-1008000000 {
+			opp-hz = /bits/ 64 <1008000000>;
+			opp-microvolt = <1020000>;	/* stock: 900-1020 mV by bin; max taken */
+			clock-latency-ns = <244144>;
+			opp-supported-hw = <0x3f>;
+		};
+
+		opp-1200000000 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <1100000>;	/* stock: 960-1100 mV by bin; max taken */
+			clock-latency-ns = <244144>;
+			opp-supported-hw = <0x3f>;
+		};
+	};
+};
+
+&cpu0 {
+	operating-points-v2 = <&redux_cpu_opp_table>;
+};
+
+&cpu1 {
+	operating-points-v2 = <&redux_cpu_opp_table>;
+};
+
+&cpu2 {
+	operating-points-v2 = <&redux_cpu_opp_table>;
+};
+
+&cpu3 {
+	operating-points-v2 = <&redux_cpu_opp_table>;
+};
+
+/*
+ * Battery, from stock's AXP2202 settings (board.dts bat-power-supply): charge target 4100 mV
+ * (pmu_init_chgvol), capacity 3000 mAh (pmu_battery_cap), resistance 170 mOhm (pmu_battery_rdc).
+ * Charge current stays at upstream's 1024 mA (stock: 1500 mA); raise it only after a charging
+ * temperature check on the device.
+ */
+&battery {
+	voltage-max-design-microvolt = <4100000>;
+	charge-full-design-microamp-hours = <3000000>;
+	factory-internal-resistance-micro-ohms = <170000>;
+};
+
+&codec {
+	allwinner,pa-delay-ms = <100>;	/* stock pa-pin-msleep-0 */
+};
+
+&gpadc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	channel@0 {
+		reg = <0>;
+	};
+};
+
+&gpio_keys_gamepad {
+	button-thumbl {
+		label = "GPIO Thumb Left";
+		gpios = <&pio 4 8 GPIO_ACTIVE_LOW>; /* PE8 */
+		linux,input-type = <EV_KEY>;
+		linux,code = <BTN_THUMBL>;
+	};
+
+	button-thumbr {
+		label = "GPIO Thumb Right";
+		gpios = <&pio 4 9 GPIO_ACTIVE_LOW>; /* PE9 */
+		linux,input-type = <EV_KEY>;
+		linux,code = <BTN_THUMBR>;
+	};
+};
+
+&pio {
+	/* PI0: stock amux-en, output high while the sticks are read. */
+	redux_joy_mux_en_pin: joy-mux-en-pin {
+		pins = "PI0";
+		function = "gpio_out";
+	};
+};

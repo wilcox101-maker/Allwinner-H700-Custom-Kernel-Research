@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Option (a) for Dale's thermal decision: restore stock's CPU critical trip (115 C) and drop the
+ * critical trips upstream added on GPU/VE/DDR, which stock does not have.
+ * Include this LAST from the board DTS only if Dale chooses (a). DRAFT, NOT BOOTED.
+ * Stock source: reference/stock-202505/board.dts thermal-zones (cpu 60/70 passive, 115 critical).
+ */
+
+&cpu_critical {
+	temperature = <115000>;
+};
+
+/ {
+	thermal-zones {
+		gpu-thermal {
+			/delete-node/ trips;
+		};
+
+		ve-thermal {
+			/delete-node/ trips;
+		};
+
+		ddr-thermal {
+			/delete-node/ trips;
+		};
+	};
+};
