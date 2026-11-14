@@ -29,6 +29,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K14 | Charging temperature at stock's 1500 mA (draft: 1024 mA, 4.10 V cap) | Charge current in the board DT | custom-patches §8 | blocked: device |
 | K15 | Speaker start-up: UI sounds with the 100 ms amp delay (patches 0002/0003) vs mainline's fixed 700 ms | Keep 100 ms or adjust | custom-patches §8 | blocked: device |
 | K16 *(proposed)* | Bluetooth config check: on mainline with upstream `rtl_bt/rtl8821cs_config.bin` (lacks stock's 4 extra entries `0xd9=0f, 0xe4=08, 0x8d=fa, 0x8f=bf`), pair a controller + headset; check range, audio dropouts, `btmon` errors. If bad, retry with stock's config on a spare card | Whether we ship upstream's BT config or need a board-specific one (licensing → R9) | `r4-noble-firmware-audit.md` | blocked: device |
+| K17 *(proposed)* | Kernel rollback on hardware (R8): spare card, our u-boot with the R8 bootcount fragment; install a second kernel whose entry can't boot; expect 3 resets, then the previous kernel, `failed-kernels` written, next reboot clean. Also confirm the sunxi watchdog resets a hang | Trust automatic rollback before shipping kernel updates | `r8-update-rollback.md` | blocked: device (needs K3, R1) |
 | — | Full release test matrix (M6): tiers, both SD slots, display, input, audio, Wi-Fi, BT, HDMI, charging, battery, suspend, recovery | Release 0.1 | assessment §5–6 | blocked: device, later |
 
 ## B. Desk tasks (no device needed)
@@ -36,7 +37,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 |---|---|---|---|
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
-| R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
 | R19 | Display layer for the mainline base (Q6): carry the upstream H616/H700 display series (DE33 mixer, LCD/TCON DT, PWM, panel) pinned by name, version and date on top of `patches/linux`, with the RG34XX-SP panel nodes behind the PE6 panel ID; build- and schema-checked, then K-tasks for the device | KR | claimed: KR (2026-11-14) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
@@ -62,6 +62,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 03:10: R8 update/rollback: apt for everything (Ubuntu archive + our signed repo for kernel/board/display/frontend; u-boot only by image); kernel rollback via u-boot BOOTCOUNT_ENV + `altbootcmd` → `extlinux-fallback.conf`, cleared by `h700-boot-ok`; full loop tested in QEMU with a real u-boot (3 panics → fallback → good kernel → fallback made default → clean reboot) (DR, `r8-update-rollback.md`).
 - 2026-11-14 02:40: R7 image tooling: mmdebstrap + genimage + u-boot-menu; `image/build-image.sh` builds an MBR card image (u-boot slot at 8 KiB, FAT32 /boot with extlinux + synced DTBs, ext4 root grown on first boot); with our kernel it boots in QEMU at 512 MB without initramfs, firstboot/apt/network OK, 189 pkgs / 440 MB, no Python. Card layout still provisional on R1 (DR, `r7-image-tooling.md`).
 - 2026-11-14 02:27: **Q6 decided by Dale: mainline + our patches** is the kernel base; display comes as a separate, pinned layer (new task R19, KR). The assessment's ROCKNIX-7.2 plan needs updating (DR).
 - 2026-11-14 02:40: KR audit of the kernel work: fresh-clone reproduction passed; kernel builds made bit-reproducible (244/245 package files identical across two build dirs); fixes for wording (iwd), compiler version, broken link and Project paths (DR audit D3), test-copy drift check (D4), SPDX tags. Kernel base decision (DR audit D1, **Q6**): KR recommendation added (KR, sync 02:40).

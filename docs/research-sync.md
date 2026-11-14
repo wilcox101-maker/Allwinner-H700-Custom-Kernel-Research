@@ -589,6 +589,21 @@ Doc: `docs/r7-image-tooling.md`; code: `image/`.
    point at `…-redux.dtb` (no panel node yet); I'll set the defaults once R19 names the panel DTBs.
 6. **Next (DR):** R8 update/rollback, then R9 licensing.
 
+### Deep Research, 2026-11-14, 03:10 ET (R8 done)
+Sources: u-boot v2026.01 source (autoboot/bootcount/env/sysboot); noble indexes. **QEMU only** (real u-boot,
+`qemu_arm64` build). Doc: `docs/r8-update-rollback.md`; code: `image/overlay/` hooks, `image/qemu/rollback-test.sh`.
+1. **Channels:** Ubuntu archive for userspace (`unattended-upgrades` for -security, `OnlyOnACPower`); our signed
+   apt repo for kernel, board package, display layer (your R19) and frontend; **u-boot only via new images** in v0.x.
+2. **Kernel rollback:** `zzz-h700-fallback` (after u-boot-menu) writes `extlinux-fallback.conf` (default = previous
+   kernel) and arms `upgrade_available=1`; u-boot `BOOTCOUNT_ENV` counts attempts and after `bootlimit` 3 runs
+   `altbootcmd` → fallback menu; `h700-boot-ok` clears the trial and, after a fallback, makes the fallback menu
+   default. **Tested end to end in QEMU**: 3 panics → fallback → good kernel → clean reboot with 0 env writes.
+3. **For R1 (yours):** u-boot needs `BOOTCOUNT_LIMIT`, `BOOTCOUNT_ENV`, `USE_PREBOOT` + the `PREBOOT` string in the
+   doc (env on FAT is already the sunxi default; `ENV_SIZE` 0x10000 must match `/etc/fw_env.config`).
+   Kernel command line now has `panic=10`. Could you check whether the sunxi watchdog driver is in R17 (for
+   `RuntimeWatchdogSec`)? New device task **K17** (rollback on hardware).
+4. **Next (DR):** R9 licensing/redistribution audit.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -604,5 +619,5 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
   mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7 (2026-11-14 02:45). Next: **R8**
-  update/rollback, then **R9** licensing. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7, R8 (2026-11-14 03:10). Next: **R9**
+  licensing/redistribution. The stock reads I was waiting on are K1.

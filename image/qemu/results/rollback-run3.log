@@ -1,0 +1,68 @@
+Bloblist at 0 not found (err=-2)
+alloc space exhausted ptr 400 limit 0
+Bloblist at 0 not found (err=-2)
+
+
+U-Boot 2026.01 (Nov 14 2026 - 02:52:10 -0500)
+
+DRAM:  512 MiB
+using memory 0x5e68c000-0x5f69c000 for malloc()
+Core:  51 devices, 14 uclasses, devicetree: board
+Flash: 64 MiB
+Loading Environment from FAT... OK
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+No USB controllers found
+Net:   eth0: virtio-net#30
+[?25h
+Hit any key to stop autoboot:  2 Hit any key to stop autoboot: 1[KHit any key to stop autoboot: 0[K
+Scanning for bootflows in all bootdevs
+Seq  Method       State   Uclass    Part  Name                      Filename
+---  -----------  ------  --------  ----  ------------------------  ----------------
+Scanning global bootmeth 'efi_mgr':
+7[r[999;999H[6n8Cannot persist EFI variables without system partition
+Missing TPMv2 device for EFI_TCG_PROTOCOL
+Missing RNG device for EFI_RNG_PROTOCOL
+  0  efi_mgr      ready   (none)       0  <NULL>                    
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'virtio 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+Scanning bootdev 'fw-cfg@9020000.bootdev':
+fatal: no kernel available
+scanning bus for devices...
+Scanning bootdev 'virtio-blk#31.bootdev':
+  1  extlinux     ready   virtio       1  virtio-blk#31.bootdev.par /extlinux/extlinux.conf
+** Booting bootflow 'virtio-blk#31.bootdev.part_1' with extlinux
+U-Boot menu
+1:	NEW (simulated bad kernel)
+2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+3:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp (rescue target)
+Enter choice: 2:	Ubuntu 24.04 RG34XX-SP 7.4.0-rc2-rg34xxsp
+Retrieving file: /vmlinuz-7.4.0-rc2-rg34xxsp
+append: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 quiet
+   Uncompressing Kernel Image to 0
+## Flattened Device Tree blob at 40000000
+   Booting using the fdt blob at 0x40000000
+Working FDT set to 40000000
+   Loading Device Tree to 000000005d435000, end 000000005d537fff ... OK
+Working FDT set to 5d435000
+
+Starting kernel ...
+
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [   45.238878] r8-check[222]: R8BEGIN
+[   45.303485] r8-check[222]: == cmdline: root=PARTUUID=48373030-02 ro rootwait console=ttyAMA0 panic=10 quiet
+[   45.364923] r8-check[222]: == uname: 7.4.0-rc2-rg34xxsp
+[   45.539462] r8-check[222]: == env: upgrade_available=0 bootcount=0
+[   45.543594] r8-check[222]: == boot-ok
+[   45.747182] r8-check[235]: Starting h700-boot-ok.service - RG34XX-SP: mark this boot good (clears u-boot's boot counter after a kernel update)...
+[   45.749670] r8-check[235]: h700-boot-ok.service: Deactivated successfully.
+[   45.750932] r8-check[235]: Finished h700-boot-ok.service - RG34XX-SP: mark this boot good (clears u-boot's boot counter after a kernel update).
+[   46.170458] r8-check[222]: == menus: extlinux.conf default l1, fallback default l1, l0 = NEW (simulated bad kernel)
+[   46.257670] r8-check[222]: == failed-kernels: 2026-11-14T08:01:30Z kernel 7.4.0-rc2-rg34xxsp failed 3 boot attempts; running 7.4.0-rc2-rg34xxsp
+[   46.260722] r8-check[222]: R8END
+[   50.526035] reboot: Power down
