@@ -2,6 +2,8 @@
 
 Stage 2 (research and compatibility assessment), 2026-11-13. Research only: nothing was built, flashed or tested on hardware.
 
+> **Update 2026-11-14 (Dale's decision Q6):** the kernel base is **mainline (torvalds/linux `97d73c8`, v7.4-rc2) + our own patches** (`patches/linux/`, built by `scripts/build-kernel.sh`), not ROCKNIX's 7.2 + its H700 set. ROCKNIX's patches are used only as references (names, commits), never copied. The display (DE33, LCD/TCON, panel, PWM backlight) comes as a **separate, pinned layer** of upstream series (task R19, Kernel Research). Sections 3–5 below are updated where they assumed ROCKNIX 7.2; the ROCKNIX survey in §2 stays as background.
+
 ## 1. Goal and current understanding
 
 **Goal:** a maintainable **Ubuntu 24.04 LTS (noble) arm64** distribution for H700 handhelds, starting with the RG34XXSP. No such image exists today. The handheld distros that do exist are either built on the stock 4.9 BSP kernel with Anbernic's Ubuntu 22.04 userspace (stock, StockOS-Mod, Knulli, muOS) or are mainline but not Ubuntu (ROCKNIX, postmarketOS).
@@ -53,14 +55,14 @@ Stage 2 (research and compatibility assessment), 2026-11-13. Research only: noth
 
 | | A: 24.04 userspace on the stock 4.9 kernel | **B: mainline kernel + mainline u-boot + 24.04 (recommended)** | C: wait for full upstream |
 |---|---|---|---|
-| Kernel | Frozen BSP binary, no source, no security fixes | Kernel 7.2 + about 32 patches, rebaseable | Upstream only |
+| Kernel | Frozen BSP binary, no source, no security fixes | **Mainline + our patches** (Q6, 2026-11-14), display as a pinned upstream-series layer (R19); originally "ROCKNIX 7.2 + ~32 patches" | Upstream only |
 | systemd 255 (noble) | 4.9 is above the 3.15 minimum but below the 4.15 "recommended baseline" (*verify against noble's README*) | Fine | Fine |
 | GPU | Closed libmali built for the old userspace; integrating it with noble is a risk | Panfrost + noble's Mesa 25.2.8 (noble-updates) | Panfrost |
 | Display | Works | Works with out-of-tree DE33/panel patches | Not yet usable |
 | Time to first boot | Short | Medium | Unknown |
 | Maintenance | Dead end | Rebase cost on each kernel move | Lowest, but not available |
 
-**Recommendation: B.** Ubuntu 24.04 is a five-year commitment, and option A pins it to a kernel nobody can fix. Option B is proven on this exact device by ROCKNIX. The cost is carrying the out-of-tree patch set until DE33, the panel driver and PWM land upstream. Keep A only as an emergency fallback, not as a product.
+**Recommendation: B.** Ubuntu 24.04 is a five-year commitment, and option A pins it to a kernel nobody can fix. Option B is proven on this exact device by ROCKNIX (with its own 7.2 patch set; we build the same idea from mainline + our patches, Q6). The cost is carrying the out-of-tree patch set until DE33, the panel driver and PWM land upstream. Keep A only as an emergency fallback, not as a product.
 
 **Ubuntu's own kernel is not an option.** It has no RG34XX-SP display support. We ship our own `linux-image` package.
 
@@ -72,7 +74,9 @@ layer              source                              per-device?
 boot ROM           SoC                                 no
 SPL + u-boot       mainline v2026.01 + 2 patches,      yes (LPDDR4 / LPDDR3 builds)
                    TF-A bl31
-kernel             7.2 + H700 patch set (from ROCKNIX) shared H700 kernel
+kernel             mainline + patches/linux (Q6);      shared H700 kernel
+                   display layer = pinned upstream
+                   series (R19)
 DTB                rg34xx-sp / rg34xx-sp-v2-panel      yes
 firmware           rtw88, rtl_bt, panel blobs          per panel
 initramfs          initramfs-tools (noble)             shared
@@ -92,7 +96,7 @@ device config      board package (udev, ALSA UCM,      yes
 |---|---|---|---|
 | M0 | Build host + serial console | Cross toolchain on WSL2/Linux; UART pads found and a 115200 console captured from stock | Low |
 | M1 | **Hardware baseline (no building)** | ROCKNIX DDR4 image on a **spare card** boots Dale's unit: record DRAM type, panel variant, dmesg | Low: separate card, stock card untouched |
-| M2 | Our boot chain | Our u-boot + kernel 7.2 + patches + RG34XX-SP DTB boot to a BusyBox shell on serial | Medium |
+| M2 | Our boot chain | Our u-boot + our mainline kernel package + RG34XX-SP DTB boot to a shell on serial (no display needed: K3/K4). Image built by `image/build-image.sh` (R7) | Medium |
 | M3 | Ubuntu 24.04 rootfs | mmdebstrap noble arm64 boots to a login on the panel; apt works | Medium |
 | M4 | Hardware enablement | Display, input, audio (speaker + jack), Wi-Fi, BT, battery, lid suspend/resume, HDMI | High (suspend, panel) |
 | M5 | Reproducible image | Scripted build (mmdebstrap + genimage or debos), checksums, versioned artifacts, CI | Medium |

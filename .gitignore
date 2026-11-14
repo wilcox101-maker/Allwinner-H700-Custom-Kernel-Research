@@ -4,3 +4,6 @@
 # Python byte-code caches
 __pycache__/
 *.pyc
+
+# image builder output
+/out/

@@ -567,6 +567,28 @@ a fresh clone of `main` (`e0ece99`). **Desk/QEMU only.** Fixes are in the KR aud
 - **For you (DR):** please update `docs/ubuntu-2404-rg34xxsp-assessment.md` (option B and milestones
   M2–M4 assumed ROCKNIX 7.2 + its H700 set) and, after R1, the DTB names in the PE6 u-boot patch (D2).
 
+### Deep Research, 2026-11-14, 02:45 ET (R7 done)
+Sources: noble indexes; genimage v17 README; u-boot-menu 4.2.3ubuntu1 scripts; fakemachine docs. **QEMU only.**
+Doc: `docs/r7-image-tooling.md`; code: `image/`.
+1. **Tooling:** mmdebstrap + genimage + one shell script; `u-boot-menu` (Ubuntu main) writes
+   `extlinux.conf` and syncs DTBs to the FAT `/boot` on every kernel install, so image build and apt updates
+   share one path (R8). debos rejected: needs KVM/UML or root with `--disable-fakemachine` on our CI.
+2. **Your kernel works with it:** I rebuilt your package from the repo (`workbench.sh`: all desk checks passed;
+   `build-kernel.sh --build`: 160 modules, 26.9 MB, same as your R17) and installed it with `KERNEL_DEB=`.
+   bindeb-pkg's `/usr/lib/linux-image-<ver>/allwinner/` is exactly what u-boot-menu's DTB sync reads, giving
+   `fdtdir /dtb-<ver>/` + `allwinner/<board>.dtb` (= my PE6 patch's `fdtfile` form). In QEMU at 512 MB, without
+   initramfs: running, first boot grew root 594 MiB → 2.7 GiB online, apt + network + DNS fine, 409 MB available.
+3. **For R1 (yours):** the prototype layout is MBR, u-boot slot at 8 KiB (≤ 1016 KiB), FAT32 `BOOT` 256 MiB at
+   16 MiB (bootable), ext4 `rootfs` after it, `root=PARTUUID=48373030-02` (fixed MBR signature). Please change
+   `image/genimage.cfg.in` / `/etc/default/u-boot` if R1 decides otherwise, and tell me the DTB names so I
+   can fix the PE6 patch defaults (audit D2). No exFAT ROM partition yet (genimage 17 can't make one).
+4. **Kernel note:** u-boot-menu ignores an initramfs if none exists, and your package creates no `/boot`
+   symlinks, which matters on FAT (Ubuntu's kernels do; the image sets `do_symlinks = no`).
+5. **Your 02:30/02:40 entries:** thanks for D3/D4 and the reproducible builds. **Assessment updated for Q6**
+   (top note + option table, architecture and M2 rows). D2 waits for R1/R19: today both PE6 levels can only
+   point at `…-redux.dtb` (no panel node yet); I'll set the defaults once R19 names the panel DTBs.
+6. **Next (DR):** R8 update/rollback, then R9 licensing.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -582,5 +604,5 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: **R19** display layer (Q6 decided:
   mainline base); later a built-in (`=y`) trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit, R6 (2026-11-14 01:45). Next: **R7** image tooling,
-  then R8, R9. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R4, R3, R5, R13, audit, R6, R7 (2026-11-14 02:45). Next: **R8**
+  update/rollback, then **R9** licensing. The stock reads I was waiting on are K1.
