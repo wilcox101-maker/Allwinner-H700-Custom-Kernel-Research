@@ -62,7 +62,7 @@ jobs:
           exec > >(tee "$RUNNER_TEMP/log-2-tools.txt") 2>&1
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-            gcc-aarch64-linux-gnu device-tree-compiler bc flex bison libssl-dev dpkg-dev fakeroot \
+            build-essential gcc-aarch64-linux-gnu device-tree-compiler bc flex bison libssl-dev dpkg-dev fakeroot \
             rsync kmod cpio debhelper libdw-dev libelf-dev python3-pip yamllint swig \
             mmdebstrap genimage dosfstools mtools e2fsprogs fdisk qemu-user-static qemu-system-arm
           pip install --user --break-system-packages -q dtschema ply gitpython
