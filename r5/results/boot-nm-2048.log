@@ -1,0 +1,72 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  149.985724] r5-measure[357]: R5BEGIN
+[  150.018661] r5-measure[357]: == mem
+[  150.154918] r5-measure[366]:                total        used        free      shared  buff/cache   available
+[  150.178967] r5-measure[366]: Mem:            1959         139        1801           0          84        1820
+[  150.188616] r5-measure[366]: Swap:            979           0         979
+[  150.319502] r5-measure[367]: MemTotal:        2006464 kB
+[  150.325652] r5-measure[367]: MemFree:         1844816 kB
+[  150.329746] r5-measure[367]: MemAvailable:    1863944 kB
+[  150.333466] r5-measure[367]: Buffers:            4820 kB
+[  150.335188] r5-measure[367]: Cached:            72268 kB
+[  150.348684] r5-measure[367]: AnonPages:         11580 kB
+[  150.354809] r5-measure[367]: Shmem:               484 kB
+[  150.359633] r5-measure[367]: Slab:              33464 kB
+[  150.362990] r5-measure[367]: SReclaimable:       9256 kB
+[  150.366541] r5-measure[367]: SUnreclaim:        24208 kB
+[  150.369863] r5-measure[367]: KernelStack:        1664 kB
+[  150.372697] r5-measure[367]: PageTables:          912 kB
+[  150.375873] r5-measure[367]: Percpu:             1104 kB
+[  150.378486] r5-measure[357]: == zram
+[  150.500930] r5-measure[368]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  150.506882] r5-measure[368]: /dev/zram0 zstd        979.5M   4K   64B   20K       4 [SWAP]
+[  150.623092] r5-measure[369]: NAME       TYPE        SIZE USED PRIO
+[  150.637721] r5-measure[369]: /dev/zram0 partition 979.5M   0B  100
+[  150.642524] r5-measure[357]: == boot
+[  150.994067] r5-measure[371]: Startup finished in 24.442s (kernel) + 1min 5.620s (userspace) = 1min 30.063s
+[  151.001963] r5-measure[371]: graphical.target reached after 1min 4.530s in userspace.
+[  184.644639] r5-measure[373]: 26.440s dev-vda.device
+[  184.680989] r5-measure[373]: 24.817s NetworkManager.service
+[  184.689980] r5-measure[373]: 18.889s systemd-udev-trigger.service
+[  184.700243] r5-measure[373]:  6.183s ldconfig.service
+[  184.706809] r5-measure[373]:  4.466s dev-hugepages.mount
+[  184.719895] r5-measure[373]:  4.431s systemd-binfmt.service
+[  184.730491] r5-measure[373]:  4.416s dev-mqueue.mount
+[  184.738145] r5-measure[373]:  4.376s sys-kernel-debug.mount
+[  184.749974] r5-measure[373]:  4.254s sys-kernel-tracing.mount
+[  184.762736] r5-measure[373]:  4.180s systemd-tmpfiles-setup.service
+[  184.769692] r5-measure[373]:  3.886s systemd-logind.service
+[  184.776659] r5-measure[373]:  3.845s kmod-static-nodes.service
+[  184.802550] r5-measure[357]: == services
+[  185.040496] r5-measure[375]: dbus.service
+[  185.049961] r5-measure[375]: getty@tty1.service
+[  185.065582] r5-measure[375]: measure.service
+[  185.078534] r5-measure[375]: NetworkManager.service
+[  185.090746] r5-measure[375]: serial-getty@ttyAMA0.service
+[  185.095707] r5-measure[375]: systemd-journald.service
+[  185.105698] r5-measure[375]: systemd-logind.service
+[  185.115111] r5-measure[375]: systemd-timesyncd.service
+[  185.123249] r5-measure[375]: systemd-udevd.service
+[  185.127583] r5-measure[375]: wpa_supplicant.service
+[  185.130693] r5-measure[357]: == rss_top
+[  185.677191] r5-measure[377]:   RSS COMMAND
+[  185.683775] r5-measure[377]: 17208 NetworkManager
+[  185.688945] r5-measure[377]: 11732 systemd
+[  185.691197] r5-measure[377]:  8288 systemd-journal
+[  185.698633] r5-measure[377]:  7228 systemd-logind
+[  185.705451] r5-measure[377]:  7128 systemd-timesyn
+[  185.710422] r5-measure[377]:  5828 wpa_supplicant
+[  185.715669] r5-measure[377]:  5612 systemd-udevd
+[  185.726116] r5-measure[377]:  4040 dbus-daemon
+[  185.731645] r5-measure[377]:  3592 ps
+[  185.740617] r5-measure[377]:  3240 r5-measure
+[  185.751861] r5-measure[377]:  1740 agetty
+[  186.206248] r5-measure[357]: == rss_sum_kB 80860
+[  186.764781] r5-measure[357]: == procs 99
+[  186.776493] r5-measure[357]: == disk
+[  186.932286] r5-measure[385]: /dev/vda            1946   505      1323  28% /
+[  186.940774] r5-measure[357]: R5END
+[  194.168165] reboot: Power down
+done-nm-2048
