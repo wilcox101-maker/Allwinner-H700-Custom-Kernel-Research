@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # R9 release checks on a built rootfs tree (docs/r9-licensing-redistribution.md §3, items 3 and 4).
 #
-# usage: [PRIVATE=1] image/check-licences.sh <rootfs-dir>
-#   PRIVATE=1  private image (build-image.sh PANEL_FW): panel files under /usr/lib/firmware/panels are
-#              reported as WARN instead of failing checks 2 and 3. Such an image must not be published.
+# usage: image/check-licences.sh <rootfs-dir>
 #   1. every installed package keeps its copyright file (/usr/share/doc/<pkg>/copyright)
 #   2. every file under /usr/lib/firmware belongs to an installed package (no hand-dropped blobs)
 #   3. no panel init blobs (*.panel) anywhere: ROCKNIX's carry no licence, ours come from stock
@@ -19,9 +17,6 @@ ADMIN=$R/var/lib/dpkg
 [ -f "$ADMIN/status" ] || { echo "no dpkg database in $R" >&2; exit 2; }
 fail=0
 bad() { printf 'FAIL %s\n' "$*"; fail=1; }
-PRIVATE=${PRIVATE:-0}
-# private images may carry the user's own panel files, and only there
-private_panel() { [ "$PRIVATE" = 1 ] && case $1 in /usr/lib/firmware/panels/*.panel) true ;; *) false ;; esac; }
 
 # 1. copyright files. A package's doc dir may be a relative symlink to another package's.
 n=0
@@ -40,17 +35,16 @@ fw=0
 if [ -d "$R/usr/lib/firmware" ]; then
 	while IFS= read -r f; do
 		fw=$((fw + 1)); p=${f#"$R"}
-		grep -qxF "$p" "$owned" && continue
-		if private_panel "$p"; then echo "WARN private image: $p (not from a package)"; else bad "firmware file not owned by any package: $p"; fi
+		grep -qxF "$p" "$owned" || bad "firmware file not owned by any package: $p"
 	done < <(find "$R/usr/lib/firmware" \( -type f -o -type l \))
 fi
 echo "2. firmware ownership: checked $fw files under /usr/lib/firmware"
 
 # 3 + 4. forbidden content
-while IFS= read -r f; do p=${f#"$R"}; private_panel "$p" || bad "panel blob: $p"; done < <(find "$R" -xdev -name '*.panel' 2>/dev/null)
+while IFS= read -r f; do bad "panel blob: ${f#"$R"}"; done < <(find "$R" -xdev -name '*.panel' 2>/dev/null)
 while IFS= read -r f; do bad "stock-image file: ${f#"$R"}"; done < <(find "$R/boot" "$R/usr/lib/firmware" \
 	\( -iname 'boot0*.bin' -o -iname 'boot_package*' -o -iname '*.fex' \) 2>/dev/null)
 echo "3-4. panel blob and stock-image file scan: done"
 
-if [ $fail = 0 ]; then echo "licence checks: PASS$([ "$PRIVATE" = 1 ] && echo ' (PRIVATE image: do not publish)')"; else echo "licence checks: FAIL"; fi
+if [ $fail = 0 ]; then echo "licence checks: PASS"; else echo "licence checks: FAIL"; fi
 exit $fail

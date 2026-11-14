@@ -38,7 +38,6 @@ die() { printf 'ERROR %s\n' "$*" >&2; exit 1; }
 if [ -n "$(git -C "$REPO" status --porcelain --untracked-files=no)" ] && [ "${ALLOW_DIRTY:-0}" != 1 ]; then
 	die "repo has uncommitted changes; the bundle must match what the image was built from (ALLOW_DIRTY=1 for tests)"
 fi
-case $NAME in *-private*) die "$NAME is a private image (stock-derived panel firmware, build-image.sh PANEL_FW): it must not be published" ;; esac
 case $NAME in *-uboot*) [ -f "${UBOOT_SRC:-}" ] || die "image carries u-boot: set UBOOT_SRC=<u-boot source tarball>" ;; esac
 
 mkdir -p "$DEST/ubuntu" "$DEST/ours"
