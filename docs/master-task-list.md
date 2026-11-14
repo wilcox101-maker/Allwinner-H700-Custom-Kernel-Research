@@ -36,7 +36,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 |---|---|---|---|
 | R1 | Boot-chain card layout for our images (MBR, SPL @ 8 KiB, FAT `/boot` + extlinux `FDTDIR`, per-DRAM SPL) | KR | claimed: KR (after the model checkpoint Dale was asked about) |
 | R2 | FEL test kit: exact `sunxi-fel` commands + expected u-boot output (incl. the PE6 line) | KR | claimed: KR |
-| R7 | Image build tooling decision (mmdebstrap + genimage vs debos vs others), with a working prototype script | DR | pending (after R5) |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
@@ -63,6 +62,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 02:40: R7 image tooling: mmdebstrap + genimage + u-boot-menu; `image/build-image.sh` builds an MBR card image (u-boot slot at 8 KiB, FAT32 /boot with extlinux + synced DTBs, ext4 root grown on first boot); with our kernel it boots in QEMU at 512 MB without initramfs, firstboot/apt/network OK, 189 pkgs / 440 MB, no Python. Card layout still provisional on R1 (DR, `r7-image-tooling.md`).
 - 2026-11-14 01:45: R6 Mesa/Panfrost in noble: Mesa 25.2.8 (noble-updates) → GLES 3.1 on G31; PanVK gated off on v7 (Vulkan 1.0 with an override); GL stack 226 MB disk (LLVM 136 MB), est. 8–10 MB RAM per GL process; recommend Ubuntu Mesa for v0.x, no `mesa-vulkan-drivers`; side finding: R5 rootfs lacks `apt` (DR, `r6-mesa-panfrost-noble.md`).
 - 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
 - 2026-11-14 00:30: R13 RAM-tier defaults: one self-scaling config (zram `min(ram,1024)` zstd, swappiness 100, page-cluster 0, earlyoom, journald 32M); QEMU OOM stress: kernel/earlyoom/oomd all recover, userspace killers 25–70 s sooner (DR, `r13-ram-tier-defaults.md`, `config/rootfs/`, `r13/`).
