@@ -1,0 +1,36 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# R13 QEMU check: confirms the tier config is applied, then fills memory twice and reports what
+# zram absorbed and what the kernel OOM killer did. Prints to the console, then powers off.
+sleep 45
+echo "R13BEGIN"
+echo "== mem"; grep -E '^(MemTotal|MemAvailable|SwapTotal):' /proc/meminfo
+echo "== zram"; zramctl; echo "swappiness=$(sysctl -n vm.swappiness) page-cluster=$(sysctl -n vm.page-cluster)"
+echo "== journald"; systemd-analyze cat-config systemd/journald.conf | grep -E '^(Storage|SystemMaxUse|RuntimeMaxUse)'
+echo "== accounting"; systemctl show -p DefaultMemoryAccounting
+# The allocations run as transient units (r13-hogA/B) so a userspace OOM killer acting on cgroups
+# kills the hog, not this reporter. Each test logs guest-clock seconds until the hog is gone.
+run_hog() {  # $1 name, $2 shell pipeline
+  local t0=$(date +%s)
+  systemd-run --quiet --unit="$1" --collect -p MemoryAccounting=yes sh -c "$2"
+  for i in $(seq 1 300); do sleep 2; systemctl is-active --quiet "$1" || break
+    [ $((i % 15)) = 0 ] && echo "  t=$(( $(date +%s) - t0 ))s $(grep -E '^MemAvailable' /proc/meminfo) $(zramctl --noheadings -o DATA,COMPR)"
+  done
+  echo "  $1 gone after $(( $(date +%s) - t0 ))s; result=$(systemctl show -p Result --value "$1" 2>/dev/null)"
+  zramctl --noheadings
+}
+MT=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
+# Test A: compressible anonymous memory (base64 of random data, ~1.3:1) to 1.25x RAM;
+# `tail -n 1` keeps the whole newline-free stream in memory.
+A=$(( MT * 5 / 4 )); echo "== testA_alloc_MB $A (base64, compressible)"
+run_hog r13-hogA "head -c $(( A * 3 / 4 ))M /dev/urandom | base64 -w0 | tail -n 1 >/dev/null"
+echo "== kills_so_far kernel=$(dmesg | grep -c 'Out of memory') earlyoom=$(journalctl -b -u earlyoom --no-pager 2>/dev/null | grep -c 'sending SIG') oomd=$(journalctl -b -u systemd-oomd --no-pager 2>/dev/null | grep -ci 'killed')"
+sleep 10
+# Test B: incompressible memory to 1.5x RAM.
+B=$(( MT * 3 / 2 )); echo "== testB_alloc_MB $B (random, incompressible)"
+run_hog r13-hogB "head -c ${B}M /dev/urandom | tr -d '\n' | tail -n 1 >/dev/null"
+echo "== kills_total kernel=$(dmesg | grep -c 'Out of memory') earlyoom=$(journalctl -b -u earlyoom --no-pager 2>/dev/null | grep -c 'sending SIG') oomd=$(journalctl -b -u systemd-oomd --no-pager 2>/dev/null | grep -ci 'killed')"
+dmesg | grep -E 'Killed process' | tail -3; journalctl -b -u earlyoom -u systemd-oomd --no-pager 2>/dev/null | grep -iE 'kill|sending' | tail -4
+echo "== survivors"; systemctl list-units --type=service --state=failed --no-legend | head; systemctl is-system-running
+echo "R13END"
+systemctl poweroff

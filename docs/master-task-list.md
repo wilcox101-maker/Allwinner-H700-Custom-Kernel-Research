@@ -43,7 +43,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
 | R17 | Kernel module trim: drop `defconfig` modules no RG34XX-SP node or noble feature needs; before/after sizes (R10 baseline: 924 modules, 38.5 MB) | KR | claimed: KR |
 | R18 | Kernel in QEMU (`virt`, Cortex-A53) with the R5 rootfs: boots, RAM after boot, initramfs size, for R13 | KR | claimed: KR (after R17; R5's rootfs scripts are in `r5/`) |
-| R13 | RAM-tier defaults: zram sizing, services per tier, OOM policy; fold R5's measurements, then K12 into a per-tier spec | DR | claimed: DR (2026-11-13 22:45) |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -53,6 +52,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q3 | Mapping for PE6-high in our u-boot | `-v2-panel` DTB (Anbernic V1.0.6 behaviour) vs a no-panel DTB until K9 | blocked: decision (recommend: no-panel until K9) |
 | Q4 | Project instructions still say "Ubuntu 22.04" and "LPDDR4" for every tier | Update to 24.04 target and LPDDR4 (original) / LPDDR3 (revised). Only Dale can edit the instructions | blocked: decision |
 | Q5 | Battery charge current on mainline | Upstream 1024 mA (draft) vs stock 1500 mA after K14. Charge voltage is already capped at stock's 4.10 V (upstream tree: 4.20 V) | blocked: decision (recommend: 1024 mA until K14) |
+| Q6 | Kernel base for our image | R10 builds mainline + our 6 patches (no display until DE33/LCD/panel/PWM series are carried) vs the assessment's ROCKNIX 7.2 + H700 set (display works; patches only referenced, not copied). Audit D1 | blocked: decision |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
@@ -66,6 +66,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
+- 2026-11-14 00:30: R13 RAM-tier defaults: one self-scaling config (zram `min(ram,1024)` zstd, swappiness 100, page-cluster 0, earlyoom, journald 32M); QEMU OOM stress: kernel/earlyoom/oomd all recover, userspace killers 25–70 s sooner (DR, `r13-ram-tier-defaults.md`, `config/rootfs/`, `r13/`).
 - 2026-11-13 23:00: R10 kernel config + cross-build + `bindeb-pkg` for noble on mainline `97d73c8` + our series (not ROCKNIX 7.2; reasons in the doc). Config checks: fragment holds, every DT node has a driver. Package `linux-image-7.4.0-rc2-rg34xxsp_7.4.0~rc2-1`: 56.4 MB installed, vmlinuz 9.3 MB, 924 modules / 38.5 MB. Built, not booted (KR, `kernel-build-r10.md`).
 - 2026-11-13 22:45: R5 noble arm64 userspace prototype in QEMU: base idles at ~11 MB anon / 33–38 MB PSS at 512 MB–2 GB; iwd+networkd stack = −73 MB disk, −53 packages, no Python, ~5 MB less RAM than NM; zram works (DR, `r5-noble-userspace-prototype.md`, `r5/`).
 - 2026-11-13 22:30: R16 upstream-style `sun50i-h700-anbernic-rg34xx-sp.dts` as patch 0006 (sticks, stick clicks PE8/PE9, battery, speaker delay); `dtbs_check` 0 warnings, checkpatch clean; held for submission until K5. Stick clicks also added to the Redux tree. `scripts/workbench.sh` reruns every desk check (KR, `kernel-custom-patches.md` §10).

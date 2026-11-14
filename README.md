@@ -32,6 +32,8 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/kernel-findings-2026-11-13.md`](docs/kernel-findings-2026-11-13.md) | Open questions 1–6: upstream SP tree, display/PWM status, ROCKNIX panel choice and suspend, OPPs/thermal vs stock, sticks |
 | [`docs/device-checklist-rocknix.md`](docs/device-checklist-rocknix.md) | One-page ROCKNIX 20261101 spare-card checklist (device task K2) |
 | [`docs/r5-noble-userspace-prototype.md`](docs/r5-noble-userspace-prototype.md) | R5: minimal noble arm64 rootfs, QEMU at 512 MB / 1 GB / 2 GB, NM vs iwd+networkd |
+| [`docs/audit-2026-11-14.md`](docs/audit-2026-11-14.md) | Audit of all research and work to 2026-11-14: re-checks, errors fixed, open issues |
+| [`docs/r13-ram-tier-defaults.md`](docs/r13-ram-tier-defaults.md) | R13: RAM-tier defaults (zram, swappiness, earlyoom, journald) + QEMU OOM stress test |
 | [`docs/r3-v106-boot0-dram-sets.md`](docs/r3-v106-boot0-dram-sets.md) | R3: stock boot0 DRAM.ext table, PH6/7/8/10 straps → LPDDR3/LPDDR4 sets |
 | [`docs/r4-noble-firmware-audit.md`](docs/r4-noble-firmware-audit.md) | R4: Wi-Fi/BT firmware in noble, kernel config needs, BT config gap |
 | [`docs/ubuntu-2404-rg34xxsp-assessment.md`](docs/ubuntu-2404-rg34xxsp-assessment.md) | 24.04 compatibility assessment; option B (mainline + noble); milestones M0–M6 |
