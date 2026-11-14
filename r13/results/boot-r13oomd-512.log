@@ -1,0 +1,43 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  124.911075] r13-check[408]: R13BEGIN
+[  124.926344] r13-check[408]: == mem
+[  125.032577] r13-check[414]: MemTotal:         464592 kB
+[  125.038003] r13-check[414]: MemAvailable:     391832 kB
+[  125.043698] r13-check[414]: SwapTotal:        463868 kB
+[  125.060951] r13-check[408]: == zram
+[  125.315781] r13-check[415]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  125.326787] r13-check[415]: /dev/zram0 zstd          453M   4K   64B   20K       4 [SWAP]
+[  125.533864] r13-check[408]: swappiness=100 page-cluster=0
+[  125.543667] r13-check[408]: == journald
+[  125.870851] r13-check[419]: Storage=persistent
+[  125.879849] r13-check[419]: SystemMaxUse=32M
+[  125.888021] r13-check[419]: RuntimeMaxUse=16M
+[  125.912261] r13-check[408]: == accounting
+[  126.237437] r13-check[420]: DefaultMemoryAccounting=yes
+[  126.385883] r13-check[408]: == testA_alloc_MB 566 (base64, compressible)
+[  166.033583] r13-check[408]:   t=39s MemAvailable:     224248 kB   4K   64B
+[  205.546349] r13-check[408]:   t=79s MemAvailable:      83220 kB   4K   64B
+[  284.487658] r13-check[408]:   t=155s MemAvailable:      28904 kB 151.8M 113.1M
+[  391.568579] r13-check[408]:   t=265s MemAvailable:      15132 kB 402.2M 298.3M
+[  395.071254] r13-check[408]:   r13-hogA gone after 268s; result=success
+[  395.182281] r13-check[570]: /dev/zram0 zstd          453M  8.4M  1.5M  4.3M       4 [SWAP]
+[  396.129151] r13-check[408]: == kills_so_far kernel=0 earlyoom=0 oomd=1
+[  406.236086] r13-check[408]: == testB_alloc_MB 679 (random, incompressible)
+[  447.644029] r13-check[408]:   t=41s MemAvailable:     264884 kB  8.2M  1.5M
+[  487.702570] r13-check[408]:   t=81s MemAvailable:     153156 kB  8.2M  1.5M
+[  529.226706] r13-check[408]:   t=122s MemAvailable:      42580 kB  8.2M  1.5M
+[  668.822388] r13-check[408]:   t=262s MemAvailable:      20612 kB 330.2M 292.9M
+[  710.317821] r13-check[408]:   r13-hogB gone after 303s; result=success
+[  710.473847] r13-check[734]: /dev/zram0 zstd          453M  10M  1.7M  6.7M       4 [SWAP]
+[  711.579614] r13-check[408]: == kills_total kernel=0 earlyoom=0 oomd=4
+[  712.233737] r13-check[749]: Nov 14 05:05:57 rg34xxsp systemd-oomd[248]: Considered 24 cgroups for killing, top candidates were:
+[  712.239521] r13-check[749]: Nov 14 05:06:00 rg34xxsp systemd-oomd[248]: Killed /system.slice/r13-hogB.service due to memory used (461664256) / total (475742208) and swap used (432357376) / total (475000832) being more than 90.00%
+[  712.245512] r13-check[749]: Nov 14 05:06:03 rg34xxsp systemd-oomd[248]: Considered 24 cgroups for killing, top candidates were:
+[  712.249639] r13-check[749]: Nov 14 05:06:03 rg34xxsp systemd-oomd[248]: Killed /system.slice/r13-hogB.service due to memory used (457469952) / total (475742208) and swap used (437542912) / total (475000832) being more than 90.00%
+[  712.260051] r13-check[408]: == survivors
+[  712.784482] r13-check[752]: running
+[  712.808052] r13-check[408]: R13END
+[  721.848289] reboot: Power down
+done-r13oomd-512

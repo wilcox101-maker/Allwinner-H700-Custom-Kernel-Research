@@ -1,0 +1,9 @@
+[Unit]
+Description=R13 RAM-tier check (prints to console, then powers off)
+After=multi-user.target systemd-zram-setup@zram0.service
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/r13-check
+StandardOutput=journal+console
+[Install]
+WantedBy=multi-user.target

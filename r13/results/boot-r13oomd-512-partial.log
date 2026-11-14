@@ -1,0 +1,27 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  125.052839] r13-check[411]: R13BEGIN
+[  125.066690] r13-check[411]: == mem
+[  125.292918] r13-check[417]: MemTotal:         464592 kB
+[  125.328169] r13-check[417]: MemAvailable:     391748 kB
+[  125.335466] r13-check[417]: SwapTotal:        463868 kB
+[  125.344387] r13-check[411]: == zram
+[  125.493407] r13-check[418]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  125.500780] r13-check[418]: /dev/zram0 zstd          453M   4K   64B   20K       4 [SWAP]
+[  125.700570] r13-check[411]: swappiness=100 page-cluster=0
+[  125.705808] r13-check[411]: == journald
+[  126.018769] r13-check[422]: Storage=persistent
+[  126.024240] r13-check[422]: SystemMaxUse=32M
+[  126.027880] r13-check[422]: RuntimeMaxUse=16M
+[  126.047396] r13-check[411]: == accounting
+[  126.328692] r13-check[423]: DefaultMemoryAccounting=yes
+[  126.471953] r13-check[411]: == testA_alloc_MB 566 (base64, compressible)
+[  165.587691] r13-check[411]:   t=38s MemAvailable:     225548 kB   4K   64B
+[  205.016875] r13-check[411]:   t=78s MemAvailable:      68156 kB   4K   64B
+[  318.059949] r13-check[411]:   t=190s MemAvailable:      37108 kB 190.1M 141.7M
+[  391.352619] r13-check[411]:   t=264s MemAvailable:      23236 kB 405.8M 301.3M
+[  396.005300] r13-check[411]:   r13-hogA gone after 268s; result=oom-kill
+[  396.187104] r13-check[574]: /dev/zram0 zstd          453M  5.7M 908.3K  3.6M       4 [SWAP]
+[  397.327923] r13-check[411]: == kills_so_far kernel=0 earlyoom=0 oomd=1
+[  407.450380] r13-check[411]: == testB_alloc_MB 679 (random, incompressible)

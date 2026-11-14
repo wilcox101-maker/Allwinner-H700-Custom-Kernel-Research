@@ -24,7 +24,7 @@ Stock boot0 picks its DRAM settings with Allwinner's **`DRAM.ext`** mechanism. T
 1. If header word `0x94` is negative, skip selection (prints `dram return write ok`). It is 0 in both images.
 2. Check the `DRAM.ext` magic; configure the strap pins; wait 5 ms.
 3. **Mode 1:** for slot n = 0…3, read the pin's bit from the PIO data register `0x0300B010 + (port−1)·0x24` and put it in bit n of the index. Slots: **PH6 → bit 0, PH7 → bit 1, PH8 → bit 2, PH10 → bit 3**, each input with pull-up.
-4. **Fuse quirk:** if the speed fuse at `0x03006200` reads `0x5000`, SID `+0x228` is non-negative and bit 8 of SID `+0x22c` is clear, boot0 adds 16 to the index (it prints `total dram para:32`). The table has only 15 sets, so such a chip would always fall back to the default block. [Observed in code; whether any RG34XX-SP has that fuse is unknown. Fuse `0x5000` is one of the stock "mask 0x1" CPU bins.]
+4. **Fuse quirk:** if the speed fuse at `0x03006200` reads `0x5000`, SID `+0x228` is non-negative and bit 8 of SID `+0x22c` is clear, boot0 adds 16 to the index. (Any chip with fuse `0x5000` also prints `total dram para:%d`: 32 when the two SID conditions hold, 16 otherwise.) The table has only 15 sets, so such a chip would always fall back to the default block. [Observed in code; whether any RG34XX-SP has that fuse is unknown. Fuse `0x5000` is one of the stock "mask 0x1" CPU bins.]
 5. Index 0 → keep the default block. Index i ≥ 1 → if set i's `dram_clk` is non-zero, copy its 128 bytes over the default block; otherwise print `dram para%d invalid use default para`.
 6. Print `vaild para:%d  select dram para%d` (count of non-empty sets, chosen index). **This line is in stock's boot0 UART log**, so a UART capture on stock (K3) shows Dale's index directly.
 

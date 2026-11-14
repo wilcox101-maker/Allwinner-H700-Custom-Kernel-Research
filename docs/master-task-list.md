@@ -41,7 +41,6 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
-| R13 | RAM-tier defaults: zram sizing, services per tier, OOM policy; fold R5's measurements, then K12 into a per-tier spec | DR | claimed: DR (2026-11-13 22:45) |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -51,6 +50,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q3 | Mapping for PE6-high in our u-boot | `-v2-panel` DTB (Anbernic V1.0.6 behaviour) vs a no-panel DTB until K9 | blocked: decision (recommend: no-panel until K9) |
 | Q4 | Project instructions still say "Ubuntu 22.04" and "LPDDR4" for every tier | Update to 24.04 target and LPDDR4 (original) / LPDDR3 (revised). Only Dale can edit the instructions | blocked: decision |
 | Q5 | Battery charge current on mainline | Upstream 1024 mA (draft) vs stock 1500 mA after K14. Charge voltage is already capped at stock's 4.10 V (upstream tree: 4.20 V) | blocked: decision (recommend: 1024 mA until K14) |
+| Q6 | Kernel base for our image | R10 builds mainline + our 6 patches (no display until DE33/LCD/panel/PWM series are carried) vs the assessment's ROCKNIX 7.2 + H700 set (display works; patches only referenced, not copied). Audit D1 | blocked: decision |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
@@ -64,6 +64,8 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-14 00:30: Audit of all work to date (`audit-2026-11-14.md`): re-checks pass; DR errors E1–E8 fixed; D1 (kernel base: mainline vs ROCKNIX 7.2) needs Dale (DR).
+- 2026-11-14 00:30: R13 RAM-tier defaults: one self-scaling config (zram `min(ram,1024)` zstd, swappiness 100, page-cluster 0, earlyoom, journald 32M); QEMU OOM stress: kernel/earlyoom/oomd all recover, userspace killers 25–70 s sooner (DR, `r13-ram-tier-defaults.md`, `config/rootfs/`, `r13/`).
 - 2026-11-14 00:30: R18 our kernel under R5's iwd rootfs in QEMU at 512 MB/1 GB/2 GB: boots without an initramfs, all services up, zram works; **+26 MB MemTotal, +31–37 MB MemAvailable** vs Ubuntu 6.8; rootfs 423 → 209 MB. QEMU only (KR, `r18-kernel-in-qemu.md`).
 - 2026-11-14 00:15: R17 module trim by allowlist (`config/module-keep.txt`): 924 → 160 modules, 38.5 → 10.6 MB; package 56.4 → 26.9 MB installed. Found and fixed: iwd's 4 missing kernel options (R10 package would not run iwd), exFAT/uhid/uinput/controller drivers missing, PlayStation pad lost to a dependency. Built, not booted (KR, `kernel-module-trim-r17.md`).
 - 2026-11-13 23:00: R10 kernel config + cross-build + `bindeb-pkg` for noble on mainline `97d73c8` + our series (not ROCKNIX 7.2; reasons in the doc). Config checks: fragment holds, every DT node has a driver. Package `linux-image-7.4.0-rc2-rg34xxsp_7.4.0~rc2-1`: 56.4 MB installed, vmlinuz 9.3 MB, 924 modules / 38.5 MB. Built, not booted (KR, `kernel-build-r10.md`).

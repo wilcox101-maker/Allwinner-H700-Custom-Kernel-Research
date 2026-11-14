@@ -11,7 +11,7 @@ Research note, 2026-11-13 (Deep Research chat). Static analysis of the stock boo
 | Where did ROCKNIX's panel files come from? | From stock u-boot. `rg34xx-sp-v2-panel.panel` = the V1.0.6 PE6-high sequence, **byte-identical** apart from stock's trailing exit-sleep (`01 11`). `rg34xx-sp-panel.panel` = the PE6-low sequence with **one byte changed** (below) | `tools/extract_rg34xxsp_panels.py` rebuild + `cmp` |
 | Which DTB for which level? | PE6 low → `sun50i-h700-anbernic-rg34xx-sp.dtb`; PE6 high → `sun50i-h700-anbernic-rg34xx-sp-v2-panel.dtb` | Mapping above + ROCKNIX DTS panel compatibles |
 | Panel controller | NewVision **NV3052C**-family on the original panel (`FF 30 / FF 52 / FF 01` page select, as in the mainline `panel-newvision-nv3052c.c`) | Init sequence |
-| DRAM cross-check | ROCKNIX's `lpddr3` u-boot defconfig = the V1.0.6 boot0 LPDDR3 set (`06060606/0d0d0d0d/1919/9988eeee`, TPR6 `2fb08080`, TPR10 `402f4489`). The `lpddr4` defconfig = the 2025 boot0 set. Full table: `docs/r3-v106-boot0-dram-sets.md` | boot0 at 8 KiB |
+| DRAM cross-check | ROCKNIX's `lpddr3` u-boot defconfig = the V1.0.6 boot0 LPDDR3 set (`06060606/0d0d0d0d/1919/9988eeee`, TPR6 `2fb08080`, TPR10 `402f4489`). The `lpddr4` defconfig matches the 2025 boot0 set on clock, drive/ODT and TPR10, **not** on TPR6/TPR11/TPR12 (corrected 2026-11-14, audit). Full table: `docs/r3-v106-boot0-dram-sets.md` | boot0 at 8 KiB |
 
 ### Stock routine, decoded (2025 and V1.0.6 identical)
 ```

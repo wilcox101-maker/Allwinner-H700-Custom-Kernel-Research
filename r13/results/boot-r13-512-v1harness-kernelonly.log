@@ -1,0 +1,24 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  121.728408] r13-check[409]: R13BEGIN
+[  121.742245] r13-check[409]: == mem
+[  121.862031] r13-check[415]: MemTotal:         464592 kB
+[  121.871551] r13-check[415]: MemAvailable:     393988 kB
+[  121.878553] r13-check[415]: SwapTotal:        463868 kB
+[  121.882992] r13-check[409]: == zram
+[  122.032489] r13-check[416]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  122.037388] r13-check[416]: /dev/zram0 zstd          453M   4K   64B   20K       4 [SWAP]
+[  122.368874] r13-check[409]: swappiness=100 page-cluster=0
+[  122.374294] r13-check[409]: == journald
+[  122.792833] r13-check[420]: Storage=persistent
+[  122.802994] r13-check[420]: SystemMaxUse=32M
+[  122.813217] r13-check[420]: RuntimeMaxUse=16M
+[  122.835574] r13-check[409]: == accounting
+[  123.126038] r13-check[421]: DefaultMemoryAccounting=yes
+[  123.254983] r13-check[409]: == testA_alloc_MB 566 (base64, compressible)
+[  264.832752] r13-check[468]: MemAvailable:      19536 kB
+[  264.969402] r13-check[468]: SwapFree:         255228 kB
+[  265.205345] r13-check[469]: /dev/zram0 zstd          453M 203.3M 151.5M 155.4M       4 [SWAP]
+[  397.994002] Out of memory: Killed process 426 (tail) total-vm:512700kB, anon-rss:57216kB, file-rss:0kB, shmem-rss:0kB, UID:0 pgtables:1044kB oom_score_adj:0
+qemu-system-aarch64: terminating on signal 15 from pid 18078 (pkill)

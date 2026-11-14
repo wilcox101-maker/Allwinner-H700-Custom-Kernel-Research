@@ -1,0 +1,41 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  126.361975] r13-check[409]: R13BEGIN
+[  126.372009] r13-check[409]: == mem
+[  126.477955] r13-check[415]: MemTotal:         464588 kB
+[  126.484262] r13-check[415]: MemAvailable:     391332 kB
+[  126.492351] r13-check[415]: SwapTotal:        463868 kB
+[  126.506954] r13-check[409]: == zram
+[  126.641240] r13-check[416]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  126.646658] r13-check[416]: /dev/zram0 zstd          453M   4K   64B   20K       4 [SWAP]
+[  126.845822] r13-check[409]: swappiness=100 page-cluster=0
+[  126.850640] r13-check[409]: == journald
+[  127.247764] r13-check[420]: Storage=persistent
+[  127.252873] r13-check[420]: SystemMaxUse=32M
+[  127.256705] r13-check[420]: RuntimeMaxUse=16M
+[  127.264083] r13-check[409]: == accounting
+[  127.573183] r13-check[421]: DefaultMemoryAccounting=yes
+[  127.766880] r13-check[409]: == testA_alloc_MB 566 (base64, compressible)
+[  167.424725] r13-check[409]:   t=39s MemAvailable:     220936 kB   4K   64B
+[  207.277106] r13-check[409]:   t=79s MemAvailable:      68788 kB   4K   64B
+[  327.353886] r13-check[409]:   t=197s MemAvailable:      31900 kB 202.1M 151.7M
+[  380.388151] r13-check[409]:   t=250s MemAvailable:      11052 kB 393.7M 290.5M
+[  386.719747] r13-check[409]:   r13-hogA gone after 258s; result=success
+[  386.861608] r13-check[574]: /dev/zram0 zstd          453M  9.1M  1.5M  4.3M       4 [SWAP]
+[  387.851872] r13-check[409]: == kills_so_far kernel=0 earlyoom=1 oomd=0
+[  398.015393] r13-check[409]: == testB_alloc_MB 679 (random, incompressible)
+[  440.663332] r13-check[409]:   t=42s MemAvailable:     273100 kB  8.4M  1.4M
+[  479.952007] r13-check[409]:   t=81s MemAvailable:     160028 kB  8.4M  1.4M
+[  519.576595] r13-check[409]:   t=121s MemAvailable:      44520 kB  8.4M  1.4M
+[  658.515814] r13-check[409]:   t=259s MemAvailable:      21084 kB 284.5M 249.1M
+[  702.929726] r13-check[409]:   r13-hogB gone after 304s; result=success
+[  703.075836] r13-check[745]: /dev/zram0 zstd          453M  9.4M  1.6M  5.2M       4 [SWAP]
+[  704.114623] r13-check[409]: == kills_total kernel=0 earlyoom=2 oomd=0
+[  704.667583] r13-check[760]: Nov 14 04:13:01 rg34xxsp earlyoom[284]: sending SIGTERM to process 430 uid 0 "tail": badness 1014, VmRSS 74 MiB
+[  704.676729] r13-check[760]: Nov 14 04:18:17 rg34xxsp earlyoom[284]: sending SIGTERM to process 592 uid 0 "tail": badness 968, VmRSS 13 MiB
+[  704.682618] r13-check[409]: == survivors
+[  705.222755] r13-check[763]: running
+[  705.243641] r13-check[409]: R13END
+[  714.147855] reboot: Power down
+done-r13earlyoom-512

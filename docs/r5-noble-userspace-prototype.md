@@ -28,7 +28,7 @@ A minimal noble arm64 rootfs built with mmdebstrap from ports.ubuntu.com boots t
 | Python | 37 MB | 0 | NM → `netplan.io` → `python3-netplan` |
 | `linux-firmware-realtek` | 6 MB | 6 MB | (R4) |
 
-The 53 packages iwd drops are NM's whole dependency tree: netplan and Python, polkit, GLib, GnuTLS, libcurl, libssh, LDAP/SASL, ModemManager glue, bluez's `libbluetooth3`, and teamd. The arm64 userspace is larger than the earlier amd64 proxy (211 MB without kernel) mainly because this build includes the noble-updates/security pockets and `linux-firmware-realtek`.
+The 53 packages iwd drops are NM's whole dependency tree: netplan and Python, polkit, GLib, GnuTLS, libcurl, libssh, LDAP/SASL, ModemManager glue, bluez's `libbluetooth3`, and teamd. The arm64 userspace is larger than the earlier amd64 proxy (211 MB without kernel). *Corrected 2026-11-14 (audit):* this first blamed the noble-updates/security pockets and `linux-firmware-realtek`, but the proxy build used both too; the difference is **not explained** (architecture, or a different measuring method in the earlier chat).
 
 ## 3. RAM at idle (60 s after boot, serial console only, no UI)
 | Run | MemTotal | MemAvailable | used (= total − available) | AnonPages | Slab | PSS sum (all processes) | zram size | Running services* |
@@ -61,15 +61,18 @@ Reading the numbers:
 
 ## 4. zram
 - Worked on all six runs with the distro kernel: `/dev/zram0`, zstd, size = RAM/2 (226 / 477 / 979 MB), swap priority 100. Nothing was swapped at idle, as expected.
-- **Our kernel needs `CONFIG_ZRAM=m` (or `y`) and `CONFIG_CRYPTO_ZSTD`** (and LZ4 if R13 picks it). Added to the R10 config list.
+- **Our kernel needs `CONFIG_ZRAM` (=m is fine) with `CONFIG_ZRAM_BACKEND_ZSTD`** (and `_LZ4` for the fallback). *Corrected 2026-11-14 (audit):* this first said `CONFIG_CRYPTO_ZSTD`; since Linux 6.12 zram compresses through its own back-ends, so the crypto option isn't what zram needs. The R10 config (`config/rg34xxsp.config`) already has both back-ends.
 - noble ships `systemd-zram-generator` 1.1.2; its documented default size is `min(ram / 2, 4096)`, which is what this prototype set explicitly.
 
 ## 5. Boot time (QEMU TCG, for comparison between variants only)
 Emulated Cortex-A53 on a shared 2-core host, so absolute times mean nothing for the device. Uncontended runs: kernel 19–24 s, userspace **58–60 s (iwd) vs 65–69 s (NM)**. In `systemd-analyze blame`, `NetworkManager.service` takes 24–25 s; `iwd.service` 17 s, `systemd-networkd` 6 s and `systemd-resolved` 7 s run in parallel. Real boot time is K12.
 
+### Not tested in R5 (added 2026-11-14, audit)
+- **No network traffic was checked.** QEMU had only a wired virtio NIC and the hook didn't print addresses, so "the network stack works" is not shown for either variant, and iwd/Wi-Fi was not exercised at all. R7's QEMU check should print `networkctl status` and resolve a name; Wi-Fi is device-only (K-list).
+
 ## 6. Recommendations (feed R7 and R13)
 1. **Default network stack: iwd + systemd-networkd + systemd-resolved.** No Python on the device, 73 MB less disk, ~5 MB less RAM, fewer packages to patch. iwd (2.14) and `systemd-zram-generator` (1.1.2) are both in noble `universe` (checked in the ports index), so their security fixes come from the community rather than Canonical; record this under R8/R9. NM remains an option for users who want it (one apt command).
-2. **Base package list for R7: add `libpam-systemd` and `tzdata` explicitly.** The NM variant got them only as NM dependencies; without `libpam-systemd` logins don't get logind sessions (user services, seat access for the game UI later).
+2. **Base package list for R7: add `libpam-systemd`, `tzdata` and `netbase` explicitly.** The NM variant got them only as NM dependencies (checked in `r5/results/*-packages.txt`); without `libpam-systemd` logins don't get logind sessions (user services, seat access for the game UI later), and `netbase` provides `/etc/services` and `/etc/protocols`. (`netbase` added 2026-11-14, audit.)
 3. **Never install the `linux-image-generic` or `linux-firmware` metapackages** in the image; our kernel package plus `linux-firmware-realtek` covers the hardware (R4).
 4. **SSH:** the image bakes host keys at build time. R7 must regenerate them on first boot (delete keys in the image; `ssh-keygen -A` in a first-boot unit), or every card shares the same keys.
 5. **Measure again on hardware (K12)** with our kernel: MemTotal, MemAvailable, Slab, PSS, boot time per stage.

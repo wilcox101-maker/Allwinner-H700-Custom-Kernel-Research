@@ -1,0 +1,43 @@
+
+Ubuntu 24.04.5 LTS rg34xxsp ttyAMA0
+
+rg34xxsp login: [  125.535976] r13-check[396]: R13BEGIN
+[  125.546456] r13-check[396]: == mem
+[  125.710852] r13-check[413]: MemTotal:         464592 kB
+[  125.716747] r13-check[413]: MemAvailable:     393960 kB
+[  125.727533] r13-check[413]: SwapTotal:        463868 kB
+[  125.738148] r13-check[396]: == zram
+[  125.926940] r13-check[414]: NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+[  125.942698] r13-check[414]: /dev/zram0 zstd          453M   4K   64B   20K       4 [SWAP]
+[  126.219719] r13-check[396]: swappiness=100 page-cluster=0
+[  126.231981] r13-check[396]: == journald
+[  126.712902] r13-check[418]: Storage=persistent
+[  126.729964] r13-check[418]: SystemMaxUse=32M
+[  126.742744] r13-check[418]: RuntimeMaxUse=16M
+[  126.776459] r13-check[396]: == accounting
+[  127.204101] r13-check[419]: DefaultMemoryAccounting=yes
+[  127.408319] r13-check[396]: == testA_alloc_MB 566 (base64, compressible)
+[  175.813275] r13-check[396]:   t=48s MemAvailable:     298752 kB   4K   64B
+[  222.058802] r13-check[396]:   t=94s MemAvailable:     184068 kB   4K   64B
+[  260.536129] r13-check[396]:   t=133s MemAvailable:      55616 kB   4K   64B
+[  378.551977] r13-check[396]:   t=247s MemAvailable:      20804 kB  234M 174.8M
+[  456.986615] Out of memory: Killed process 428 (tail) total-vm:510804kB, anon-rss:53504kB, file-rss:128kB, shmem-rss:0kB, UID:0 pgtables:1040kB oom_score_adj:0
+[  458.315798] r13-check[396]:   r13-hogA gone after 330s; result=success
+[  458.465682] r13-check[596]: /dev/zram0 zstd          453M  8.6M  1.4M  4.4M       4 [SWAP]
+[  459.557895] r13-check[396]: == kills_so_far kernel=1 earlyoom=0 oomd=0
+[  469.704679] r13-check[396]: == testB_alloc_MB 679 (random, incompressible)
+[  510.017954] r13-check[396]:   t=40s MemAvailable:     269048 kB  8.5M  1.4M
+[  549.100885] r13-check[396]:   t=79s MemAvailable:     148328 kB  8.4M  1.4M
+[  588.150856] r13-check[396]:   t=118s MemAvailable:      28828 kB  8.4M  1.4M
+[  733.962726] r13-check[396]:   t=264s MemAvailable:      26884 kB 322.2M 285.2M
+[  796.467175] Out of memory: Killed process 615 (tail) total-vm:444376kB, anon-rss:384kB, file-rss:0kB, shmem-rss:0kB, UID:0 pgtables:912kB oom_score_adj:0
+[  798.848220] r13-check[396]:   r13-hogB gone after 329s; result=success
+[  799.021004] r13-check[773]: /dev/zram0 zstd          453M  9.6M  1.6M  5.6M       4 [SWAP]
+[  800.034594] r13-check[396]: == kills_total kernel=2 earlyoom=0 oomd=0
+[  800.407581] r13-check[785]: [  456.986615] Out of memory: Killed process 428 (tail) total-vm:510804kB, anon-rss:53504kB, file-rss:128kB, shmem-rss:0kB, UID:0 pgtables:1040kB oom_score_adj:0
+[  800.418899] r13-check[785]: [  796.467175] Out of memory: Killed process 615 (tail) total-vm:444376kB, anon-rss:384kB, file-rss:0kB, shmem-rss:0kB, UID:0 pgtables:912kB oom_score_adj:0
+[  800.764443] r13-check[396]: == survivors
+[  801.312257] r13-check[791]: running
+[  801.334532] r13-check[396]: R13END
+[  810.208311] reboot: Power down
+done-r13none-512
