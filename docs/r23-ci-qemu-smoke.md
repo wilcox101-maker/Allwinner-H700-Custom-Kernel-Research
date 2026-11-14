@@ -50,6 +50,16 @@ The workflow has read-only repository permissions.
 - Two fixes found by running it: the build leaves a `-dbg` kernel package next to the real one (the workflow now copies
   only the real one and refuses more than one), and `sfdisk` comes from the `fdisk` package (now installed).
 
+## 2a. GitHub runs (PR #33)
+- **First green run: 2026-11-14 20:23–20:43 UTC (20 min, cold kernel cache)** on commit `5f90e70`: workbench checks,
+  kernel package (~12 min on the 4-vCPU runner), image, QEMU boot; the job only passes when all 12 checks pass.
+- Three earlier runs failed and each was fixed: (1) `tools/apply_upstream.py` runs `git am`, which needs a committer
+  identity a fresh runner doesn't have (the job now sets `GIT_COMMITTER_NAME/EMAIL`; the patch author is kept);
+  (2) `bindeb-pkg` checks `build-essential`; (3) mmdebstrap needs `arch-test` (a recommend) for arm64 on amd64, so
+  tools are installed with recommends, as on our desk machines.
+- Step logs can't be read here without a browser, so a failing step now posts its last 60 lines (and the tail of
+  `.work/*.log`) as `::error` annotations, visible on the PR and through the check-runs API.
+
 ## 3. Use by hand
 ```sh
 sudo image/qemu/smoke-test.sh out/reduxos-rg34xxsp-noble-<date>-deb.img 512   # boot + check, exit 0 = pass
@@ -61,5 +71,4 @@ image/qemu/smoke-test.sh --check-log out/<image>.qemu-512.log                   
   u-boot's extlinux/bootcount path with the `qemu_arm64` u-boot; it could become a second CI job later.
 - The `-uboot` image variant (real SPL at 8 KiB) can't boot in QEMU `virt`; its layout checks stay in the
   handoff's "image with the real bootloader" task.
-- First CI run time on GitHub's 4-vCPU runner: see the PR's check; expected ~40–70 min with a cold kernel
-  cache, ~15 min after.
+- Run time: 20 min with a cold kernel cache; the kernel step is skipped while its inputs are unchanged.

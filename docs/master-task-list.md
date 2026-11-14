@@ -46,7 +46,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | recurring: November done (`r11-upstream-check-2026-11.md`); next ~2026-12-14 |
 | R21 | "Redux on mainline" compatibility map: every stock-kernel interface the Redux frontend uses (fb0/vsync, backlight, battery, cpufreq, thermal, evdev names/codes, lid, power key, ALSA) vs our DTS/config, with shim/code verdicts. Found and fixed: power key driver `INPUT_AXP20X_PEK` was off | KR | done (desk): `r21-redux-on-mainline-map.md`; device check K23 |
 | R22 | Upstream prep for patch 0006 (RG34XX SP DTS, with its binding 0005) and 0007 (OPP schema) | DR | done (desk): `r22-upstream-prep.md`, `patches/outgoing/`, `scripts/upstream-check.sh`; all checks pass on sunxi `dt-for-7.5` / `next-20261113`. **Not sent; Dale decides.** Recommended: DTS after K2 + K5; 0007 held until a board uses it |
-| R23 | QEMU boot smoke test of the image in CI (GitHub Actions) | DR | done (desk/QEMU): `.github/workflows/image-smoke.yml`, `image/qemu/smoke-test.sh`, `r23-ci-qemu-smoke.md`; local run 12/12 at 512 MB, negative controls fail as they should; first GitHub run: see the PR |
+| R23 | QEMU boot smoke test of the image in CI (GitHub Actions) | DR | done (desk/QEMU): `.github/workflows/image-smoke.yml`, `image/qemu/smoke-test.sh`, `r23-ci-qemu-smoke.md`; local run 12/12 at 512 MB, negative controls fail as they should; first green GitHub run 2026-11-14 (20 min, PR #33) |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
