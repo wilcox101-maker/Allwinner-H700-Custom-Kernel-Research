@@ -75,7 +75,8 @@ Emulated Cortex-A53 on a shared 2-core host, so absolute times mean nothing for 
 2. **Base package list for R7: add `libpam-systemd`, `tzdata` and `netbase` explicitly.** The NM variant got them only as NM dependencies (checked in `r5/results/*-packages.txt`); without `libpam-systemd` logins don't get logind sessions (user services, seat access for the game UI later), and `netbase` provides `/etc/services` and `/etc/protocols`. (`netbase` added 2026-11-14, audit.)
 3. **Never install the `linux-image-generic` or `linux-firmware` metapackages** in the image; our kernel package plus `linux-firmware-realtek` covers the hardware (R4).
 4. **SSH:** the image bakes host keys at build time. R7 must regenerate them on first boot (delete keys in the image; `ssh-keygen -A` in a first-boot unit), or every card shares the same keys.
-5. **Measure again on hardware (K12)** with our kernel: MemTotal, MemAvailable, Slab, PSS, boot time per stage.
+5. **Add `apt` to the package list** (found in R6, 2026-11-14): `--variant=minbase` installs only Priority `required` packages and Ubuntu's `apt` is `important`, so neither R5 rootfs has apt. +17 MB, 14 packages.
+6. **Measure again on hardware (K12)** with our kernel: MemTotal, MemAvailable, Slab, PSS, boot time per stage.
 
 ## 7. Reproduce
 ```bash

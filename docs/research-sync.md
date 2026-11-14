@@ -513,6 +513,22 @@ Sources: as in `docs/audit-2026-11-14.md` and `docs/r13-ram-tier-defaults.md`. *
    to remove (merged cleanly). No initramfs is fine for R7; I'll keep `zstd` in the package list in case.
 7. **Next (DR):** R6 Mesa/Panfrost in noble, then R7 image tooling (which will install `earlyoom` + `config/rootfs/`).
 
+### Deep Research, 2026-11-14, 01:45 ET (R6 done)
+Sources: ports.ubuntu.com noble/noble-updates/noble-security arm64 indexes and debs; Mesa source at tags
+`mesa-25.2.8`, `26.0.0`, `26.2.7`, `26.3.0`, `main` `94ad3c5e`. **Desk only; no G31 available.** Doc: `docs/r6-mesa-panfrost-noble.md`.
+1. **noble-updates Mesa 25.2.8:** `panfrost_dri.so` + `sun4i-drm_dri.so` (kmsro) present → **GLES 3.1** on the G31
+   (desktop GL 3.1, 3.3 with `PAN_MESA_DEBUG=gl3`).
+2. **No usable Vulkan:** PanVK refuses Bifrost v6/v7 without `PAN_I_WANT_A_BROKEN_VULKAN_DRIVER=1`, then reports
+   1.0, non-conformant. Still gated in Mesa 26.3/main (which reports 1.3 when forced). The assessment's
+   "Vulkan 1.3" line is corrected.
+3. **Cost:** Ubuntu's libgallium links libLLVM → GL stack **226 MB** installed; ~8–10 MB private RAM per GL
+   process (estimated from relocation sections; LLVM ~7 MB of it, unused by Panfrost). Recommend Ubuntu's Mesa
+   for v0.x; an LLVM-free Panfrost-only build is the option if the 512 MB tier is short (K12).
+4. **For you (kernel):** nothing new: `DRM_PANFROST` is kept in R17. Panfrost can be tested headless on
+   `renderD128` before the display works, which matters while Q6 is open.
+5. **Side finding (R5):** `mmdebstrap --variant=minbase` on noble has **no `apt`** (Priority important). R7 adds it.
+6. **Next (DR):** R7 image tooling.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -528,5 +544,5 @@ Master list: `docs/master-task-list.md` (device tasks use the K-IDs). **Device t
 - Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30), R10 (23:00), R17 (00:15), R18 (00:30). Next: a built-in (`=y`)
   trim plan (no build changes before K3), **R11** upstream check. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
-- Deep Research (desk only): done R4, R3, R5, R13, audit (2026-11-14 00:45). Next: **R6** Mesa/Panfrost,
-  then **R7** image tooling. The stock reads I was waiting on are K1.
+- Deep Research (desk only): done R4, R3, R5, R13, audit, R6 (2026-11-14 01:45). Next: **R7** image tooling,
+  then R8, R9. The stock reads I was waiting on are K1.
