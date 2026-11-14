@@ -375,6 +375,37 @@ Desk only. Picking up from `claude/handoff-deep-research-2026-11-13.md`.
    Cortex-A53 at 512 MB / 1 GB / 2 GB, plus an iwd + systemd-networkd variant. Then **R3**, then **R13**.
 3. Note for KR: K16 isn't in KR package j yet. It can ride along in DR package DR-a (H1–H3).
 
+### Kernel Research, 2026-11-13, 22:30 ET (new KR chat; R16 done; repo import)
+Sources: torvalds/linux `97d73c8251226cf27cc6656b4c542869bb8c69fa`; Redux `reference/stock-202505/board.dts`
+(main `1fc2430`); the kernel's `Documentation/process/coding-assistants.rst` and `generated-content.rst`
+at that commit. **Desk only; nothing ran on the device.**
+1. **This repo is now our work home** (Dale, 21:48–21:56). The kernel work is in `patches/linux/` (0001–0006),
+   `dts/`, `tests/`, `tools/gen_cpu_opp_stock.py` + `tools/findconst.py`, `docs/kernel-*.md`,
+   `docs/device-checklist-rocknix.md` and `scripts/workbench.sh`. I followed your layout.
+   **Proposal:** this file and `docs/master-task-list.md` become the canonical copies; the Project
+   copies get a one-line pointer here, so the two never drift. Disagree under "Open conflicts".
+2. **R16 done: patch 0006**, upstream-style `sun50i-h700-anbernic-rg34xx-sp.dts`: sticks (RG35XX-H
+   nodes and labels, 16 ms), battery 4.10 V / 3000 mAh / 170 mΩ, `pa-delay-ms` 100. It inherits
+   upstream OPPs and thermal unchanged, so it is for upstream review only; **our image keeps the
+   `-redux` tree**. Held for submission until K5.
+3. **New finding: stick clicks.** Stock `ANBERNIC-keys` has `keyL3` on **PE8** and `keyR3` on **PE9**,
+   as upstream's RG35XX-H does; the SP tree and our first Redux draft lacked them. Both of our trees
+   now have them. All other stock key pins match the upstream 2024 base. K5 now also checks both clicks.
+4. **Kernel rules for AI-made patches** (`coding-assistants.rst`): a tool must never add
+   `Signed-off-by` (ours have none), and the changelog should say how a tool helped. 0006 says so;
+   0001–0005 need that line before any submission. Same applies to your u-boot patch if it goes
+   upstream (u-boot's own rules not checked).
+5. **`scripts/workbench.sh`**: from an empty work directory, it fetches Linux at the pinned SHA, applies the
+   series, and runs `dtbs_check` on 3 DTBs, checkpatch on 6 patches, the 28-case xlate test, the
+   generator round trip and `dt_binding_check` on 3 schemas. **Last full run 22:20 ET: all passed.**
+   A wrong DT property and a wrong schema value each made it fail (negative controls).
+6. **Licence:** the README said GPL-3.0 "(see `LICENSE`)", but `LICENSE` was deleted in `7900b6e`
+   before your import. The README now marks it as an open question for Dale.
+7. **Next (KR):** R10 kernel config + cross-build + `bindeb-pkg` for noble, starting from mainline
+   `97d73c8` + our series (ROCKNIX's 7.2 H700 set only by reference: names and commits, no copies),
+   with `FW_LOADER_COMPRESS_ZSTD`, RTW88 SDIO/8821C, BT RTL, ZRAM per your R4/R5. R1/R2 still wait
+   for the model checkpoint.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
@@ -387,8 +418,8 @@ Desk only. Picking up from `claude/handoff-deep-research-2026-11-13.md`.
 
 ## Next steps (claimed so we don't duplicate)
 Master list: `claude/master-task-list.md` (device tasks use the K-IDs). **Device tasks are blocked until Redux v0.5.**
-- Kernel Research (desk only): done R12, R14, R15 (21:55). Next: **R16** upstream-ready RG34XX-SP DT
-  (bindings already done), then **R10** kernel cross-build + `bindeb-pkg`. **R1/R2** (card layout, FEL
+- Kernel Research (desk only): done R12, R14, R15 (21:55), R16 (22:30). Next: **R10** kernel cross-build +
+  `bindeb-pkg`. **R1/R2** (card layout, FEL
   kit) wait for the model checkpoint Dale was asked about. **R11** monthly upstream check.
 - Deep Research (desk only): done R4 (22:00). In progress: **R5** noble arm64 rootfs + QEMU at
   512 MB/1 GB/2 GB (handoff file has the state); then **R3**, **R13**. The stock reads I was waiting on are K1.

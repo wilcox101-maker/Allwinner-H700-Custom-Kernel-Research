@@ -17,7 +17,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | K2 | ROCKNIX 20261101 DDR4 on a spare card: 10 checks + logs | M1 baseline: what mainline does on this unit, panel variant | `kernel-research-device-checklist-rocknix.md` | blocked: device |
 | K3 | UART pads (case open, meter, 3.3 V adapter, 115200 8N1) | Serial console for every later boot test (M0) | `rg35xxh-codeasm-lessons.md` | blocked: device |
 | K4 | FEL boot, no card: `sunxi-fel version`, then our u-boot (LPDDR4 + PE6 patch); expect `RG34XX-SP: panel ID PE6=0` | First run of our boot chain; confirms PE6 and LPDDR4 | `rg34xxsp-panel-detect-and-uboot-patch.md` | blocked: device (needs K3) |
-| K5 | Sticks on mainline: `evtest` axis order/sign | Final `abs-range` in board DT | custom-patches §3 | blocked: device |
+| K5 | Sticks on mainline: `evtest` axis order/sign; also press both stick clicks (L3 PE8 / R3 PE9) | Final `abs-range` in board DT; confirms the stick-click buttons exist | `kernel-custom-patches.md` §3, §10 | blocked: device |
 | K6 | Deep-suspend ladder (custom-patches §7; needs UART) | Real suspend-to-RAM in our image | custom-patches §7 | blocked: device |
 | K7 | Stick polling cost at 16 ms (CPU %) | Polling interval | custom-patches §3 | blocked: device |
 | K8 | Chip revision: stock SRAM-controller value vs mainline SMCCC SOC_ID | Trust the b0/b1 and c0/c1/c2 bins | custom-patches §2a | blocked: device |
@@ -42,10 +42,9 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | R7 | Image build tooling decision (mmdebstrap + genimage vs debos vs others), with a working prototype script | DR | pending (after R5) |
 | R8 | Update/rollback design: kernel/board apt repo, extlinux fallback entry, A/B or recovery partition, versioning | DR | pending |
 | R9 | Licensing/redistribution audit: ROCKNIX panel blobs, ROCKNIX TF-A suspend stub, rtw88/rtl_bt firmware (incl. ROCKNIX's `EXTRA_FIRMWARE` embedding), our u-boot patch (GPL-2.0+) | DR | pending |
-| R10 | Kernel build + packaging: ROCKNIX 7.2 + H700 patch set + our DTs and patches → cross-build, `bindeb-pkg` for noble; size of image and modules | KR | accepted: KR (after R16) |
+| R10 | Kernel build + packaging: ROCKNIX 7.2 + H700 patch set + our DTs and patches → cross-build, `bindeb-pkg` for noble; size of image and modules | KR | claimed: KR (next) |
 | R11 | Upstream tracking: DE33 / H616 LCD-TCON / PWM v12 / HDMI series; review monthly | KR | accepted: KR |
 | R13 | RAM-tier defaults: zram sizing, services per tier, OOM policy; fold R5's measurements, then K12 into a per-tier spec | DR | pending (after R3) |
-| R16 | Upstream-ready RG34XX-SP DT patch; held for submission until K5. Bindings (patches 0004/0005) already done | KR | claimed: KR |
 
 ## C. Decisions for Dale (blocked: decision)
 | ID | Decision | Options / recommendation | Status |
@@ -68,6 +67,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 H1–H3 go out together as `FROM-REDUX-DEEP-RESEARCH-2026-11-13-a.md` in `redux-work\\Claude Files` (Deep Research package DR-a). K16 should ride along in that package.
 
 ## E. Done (most recent first)
+- 2026-11-13 22:30: R16 upstream-style `sun50i-h700-anbernic-rg34xx-sp.dts` as patch 0006 (sticks, stick clicks PE8/PE9, battery, speaker delay); `dtbs_check` 0 warnings, checkpatch clean; held for submission until K5. Stick clicks also added to the Redux tree. `scripts/workbench.sh` reruns every desk check (KR, `kernel-custom-patches.md` §10).
 - 2026-11-13 22:00: R4 noble firmware audit: `linux-firmware-realtek` carries the exact rtw88/rtl_bt bytes; kernel needs `FW_LOADER_COMPRESS_ZSTD`; BT config gap → K16 (DR, `r4-noble-firmware-audit.md`).
 - 2026-11-13 21:50: R15 board DT for audio, battery/charger, Wi-Fi/BT: stock vs upstream table; charge cap 4.10 V; speaker-amp delay patches 0002/0003 (KR, custom-patches §8).
 - 2026-11-13 21:50: R14 compile-check: five patches (cpufreq xlate, codec delay + binding, OPP and board bindings), checkpatch 0/0; board DT `dtbs_check` 0 warnings in both variants (KR, custom-patches §9).

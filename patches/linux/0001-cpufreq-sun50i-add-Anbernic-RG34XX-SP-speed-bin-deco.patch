@@ -1,0 +1,145 @@
+From 443a95105d69ca912b7e387d523d66b237f8adc6 Mon Sep 17 00:00:00 2001
+From: Redux Kernel Research <redux@invalid>
+Date: Fri, 13 Nov 2026 21:14:48 -0500
+Subject: [PATCH 1/6] cpufreq: sun50i: add Anbernic RG34XX-SP speed-bin decode
+
+Reproduce the speed-bin decision of the RG34XX-SP vendor 4.9 kernel so
+the board can carry the vendor-validated OPP rows. Fuse values map to an
+opp-supported-hw index (0-8). Revision-dependent bins fall back to the
+vendor default when the SoC revision is not available over SMCCC. Two
+optional nvmem cells (speed-aux-a/b) feed the 0x5c00 split.
+
+Draft for the Redux project, compile-tested only.
+---
+ drivers/cpufreq/sun50i-cpufreq-nvmem.c | 87 +++++++++++++++++++++++++-
+ 1 file changed, 86 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/cpufreq/sun50i-cpufreq-nvmem.c b/drivers/cpufreq/sun50i-cpufreq-nvmem.c
+index 9261d148a..01ed4cfd2 100644
+--- a/drivers/cpufreq/sun50i-cpufreq-nvmem.c
++++ b/drivers/cpufreq/sun50i-cpufreq-nvmem.c
+@@ -29,6 +29,8 @@ static struct platform_device *cpufreq_dt_pdev, *sun50i_cpufreq_pdev;
+ 
+ struct sunxi_cpufreq_data {
+ 	u32 (*efuse_xlate)(u32 speedbin);
++	/* Optional: decoders that also need other cells of the OPP node */
++	u32 (*efuse_xlate_np)(struct device_node *np, u32 speedbin);
+ };
+ 
+ static u32 sun50i_h6_efuse_xlate(u32 speedbin)
+@@ -124,6 +126,82 @@ static u32 sun50i_h616_efuse_xlate(u32 speedbin)
+ 	return value;
+ }
+ 
++/* Read an optional named nvmem cell (up to 4 bytes, little endian) of @np. */
++static int sun50i_read_aux_cell(struct device_node *np, const char *name, u32 *val)
++{
++	struct nvmem_cell *cell;
++	void *buf;
++	size_t len;
++
++	*val = 0;
++	cell = of_nvmem_cell_get(np, name);
++	if (IS_ERR(cell))
++		return PTR_ERR(cell);
++
++	buf = nvmem_cell_read(cell, &len);
++	nvmem_cell_put(cell);
++	if (IS_ERR(buf))
++		return PTR_ERR(buf);
++
++	if (len <= 4)
++		memcpy(val, buf, len);
++	*val = le32_to_cpu(*val);
++	kfree(buf);
++
++	return 0;
++}
++
++/*
++ * Anbernic RG34XX-SP (Allwinner H700): reproduce the speed-bin decision of the
++ * vendor 4.9 kernel, so the board can use the vendor-validated OPP rows.
++ * Returned index (opp-supported-hw bit in the board's OPP table):
++ *   0: vendor mask 0x1    1: vendor mask 0x2    3: vendor mask 0x8 (default)
++ *   2: vendor "a1"        4/5: vendor "b0"/"b1"  6/7/8: vendor "c0"/"c1"/"c2"
++ * "b" and "c" depend on the SoC revision; if it is unknown, fall back to 3.
++ */
++static u32 anbernic_rg34xxsp_efuse_xlate(struct device_node *np, u32 speedbin)
++{
++	int rev = get_soc_id_revision();
++	u32 aux_a, aux_b;
++
++	switch (speedbin & 0xffff) {
++	case 0x2400:
++	case 0x5000:
++	case 0x5400:
++	case 0x7400:
++		return 0;
++	case 0x2c00:
++		return 1;
++	case 0x2000:
++	case 0x2800:
++		return 2;
++	case 0x6c00:
++	case 0x7c00:
++		if (rev == SMCCC_RET_NOT_SUPPORTED)
++			return 3;
++		return (rev & 0x7) == 0 ? 4 : 5;
++	case 0x5c00:
++		if (rev == SMCCC_RET_NOT_SUPPORTED)
++			return 3;
++		if ((rev & 0x7) == 0)
++			return 6;
++		if (sun50i_read_aux_cell(np, "speed-aux-a", &aux_a) ||
++		    sun50i_read_aux_cell(np, "speed-aux-b", &aux_b))
++			return 8;
++		aux_a = (aux_a & 0xff) << 5;
++		aux_b &= 0x3ff;
++		if (aux_b - 0x26 <= 7 && aux_a - 0xa60 <= 0x940)
++			return 7;
++		return 8;
++	default:
++		return 3;
++	}
++}
++
++static struct sunxi_cpufreq_data anbernic_rg34xxsp_cpufreq_data = {
++	.efuse_xlate_np = anbernic_rg34xxsp_efuse_xlate,
++};
++
+ static struct sunxi_cpufreq_data sun50i_h6_cpufreq_data = {
+ 	.efuse_xlate = sun50i_h6_efuse_xlate,
+ };
+@@ -146,6 +224,9 @@ static const struct of_device_id cpu_opp_match_list[] = {
+ 	{ .compatible = "allwinner,sun50i-h616-operating-points",
+ 	  .data = &sun50i_h616_cpufreq_data,
+ 	},
++	{ .compatible = "anbernic,rg34xx-sp-operating-points",
++	  .data = &anbernic_rg34xxsp_cpufreq_data,
++	},
+ 	{}
+ };
+ 
+@@ -214,6 +295,7 @@ static int sun50i_cpufreq_get_efuse(void)
+ 
+ 	opp_data = match->data;
+ 
++	/* With several cells listed, the speed cell must be the first one. */
+ 	speedbin_nvmem = of_nvmem_cell_get(np, NULL);
+ 	if (IS_ERR(speedbin_nvmem))
+ 		return dev_err_probe(cpu_dev, PTR_ERR(speedbin_nvmem),
+@@ -228,7 +310,10 @@ static int sun50i_cpufreq_get_efuse(void)
+ 		memcpy(&speedbin, speedbin_ptr, len);
+ 	speedbin = le32_to_cpu(speedbin);
+ 
+-	ret = opp_data->efuse_xlate(speedbin);
++	if (opp_data->efuse_xlate_np)
++		ret = opp_data->efuse_xlate_np(np, speedbin);
++	else
++		ret = opp_data->efuse_xlate(speedbin);
+ 
+ 	kfree(speedbin_ptr);
+ 
+-- 
+2.43.0
+
