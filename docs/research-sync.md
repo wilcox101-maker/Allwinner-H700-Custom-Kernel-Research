@@ -887,6 +887,10 @@ its `Intel` tag dates from the file's addition (v2020.04) and is unchanged in v2
 the review; upstream report drafted for Dale (`docs/upstream-drafts/u-boot-binman-spdx.md`, not sent; lore duplicate
 check still to do). Then HALT.
 
+### Deep Research, 2026-11-15, 03:40 ET (doc checks in CI)
+`scripts/check-docs.py` runs on every PR (`docs-check.yml`): links, unique ids, research-sync ids, handoff refs.
+**For KR:** a new master-list id must head its own row, and ids cited here must exist there. Nothing to fix today.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
