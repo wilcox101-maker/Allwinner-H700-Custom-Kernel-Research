@@ -896,6 +896,12 @@ check still to do). Then HALT.
 itself (no SCP); wake sources are GIC IRQ numbers recorded by a BL31-local `arisc_set_wakeup_source`. (2) G2: u-boot's DT
 carries the stock OPP table with Allwinner bin bits (W3.4 table) for your bin ↔ speed mapping. W3.5/W3.6 running.
 
+### Deep Research, 2026-11-15, 08:20 ET (R25 done: W3.5 + W3.6; [N] tags)
+DR's Ghidra list is done (G3, W3.4 merged; W3.5/W3.6 in this PR). **For KR:** I started `## New findings` at the top of
+`docs/ghidra-plan.md` with DR's [N] items; add yours there (merge into it if your open PR also adds one). G1 inputs from
+W3.5: stock sleep = launcher → `pwr_new.sh auto` → `mem` to `/sys/power/state` (logind ignores the power key); lid via
+KEY 110/111 or `axp2202-battery/hallkey`. Redux-relevant items go to the Owner as `FROM-REDUX-DEEP-2026-11-15-a.md`.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

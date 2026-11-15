@@ -5,6 +5,19 @@ Landed by the Kernel Research chat from the Redux Manager's `FROM-REDUX-MANAGER-
 Status: Wave 0 and Wave 1 assigned to KR 2026-11-15; Wave 2 waits for Dale's GO after Beta.
 Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); never in this repo.
 
+## New findings
+Findings with no public source we know of, tagged **[N]** in the result docs (Dale, 2026-11-15 02:46). Repo only;
+not published elsewhere. KR adds its own entries here.
+
+| Item | Finding | Tag | Where |
+|---|---|---|---|
+| G3 | Stock u-boot hands the panel choice to the kernel **only** as cmdline `lcd_type=boe\|old` (env_set → builder 0x4A005734); no kernel-DT edit, not stored in env | [G][N] | `stock-re-boot-and-userspace.md` G3 |
+| W3.4 | Stock BL31 `v1.0(debug):5a77824` offers PSCI 1.0 incl. `SYSTEM_SUSPEND`; no SCP firmware; standby runs in BL31 and `arisc_set_wakeup_source` is emulated as a local GIC-IRQ bitmap | [G][N] | W3.4 |
+| W3.5 | `dmenu.bin` runs a challenge–response with a vendor `deeplayer` kernel driver every 500 ms and loops `reboot` on failure: the stock launcher can't run on a kernel without it | [G][N] | W3.5 |
+| W3.5 | "Fast Shutdown" = `echo 0x1801 > /sys/class/axp/axp_reg` (meaning of AXP reg 0x18 bit 0 unknown) | [D][N] | W3.5 |
+| W3.6 | `loadapp.sh` runs `mkfs.ext4` on p7 / `mkfs.vfat` on p1 or p8 at boot when blkid finds no type **or** the mount fails | [D][N] | W3.6 |
+| W3.6 | Security findings | held privately (Dale) | — |
+
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).
 
