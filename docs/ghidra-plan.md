@@ -2,7 +2,8 @@
 
 Landed by the Kernel Research chat from the Redux Manager's `FROM-REDUX-MANAGER-2026-11-15-e.md`
 (Dale, 2026-11-15 01:54: "Roll out Ghidra testing plan and document."). Plan text unchanged below.
-Status: Wave 0 and Wave 1 assigned to KR 2026-11-15; Wave 2 waits for Dale's GO after Beta.
+Status: **Wave 0 and Wave 1 done 2026-11-15** (desk; results sent to Redux as KR package m, see "Results" at the end);
+Wave 2 waits for Dale's GO after Beta.
 Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); never in this repo.
 
 ## New findings
@@ -62,3 +63,16 @@ Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 G0.1 → G0.2 (DECIDE if it fails) → G0.3 → G0.4 → G1 → package to Redux → **HALT**.
 Wave 2 starts only on Dale's GO after Beta, one item per PR, each followed by its package.
 The weekly audit checks the tags: a [V] without a hw-result note is an S1 finding.
+
+## Results (Kernel Research, 2026-11-15)
+Full text: Redux `docs/kernel-research/stock-kernel-ghidra.md` via KR package m (`FROM-REDUX-KERNEL-2026-11-15-m.md`).
+| Id | Result |
+|---|---|
+| G0.1 | `…815a2b0` = `printk` (kallsyms); renamed by `ReduxApplyKallsyms.java` (tested on a project copy, export shows `printk`). Dale's own project changes when he runs the script (optional). |
+| G0.2 | `tools/kallsyms_49.py` (stdlib): 90,760 symbols; **36,849 of 36,849** functions named (36,271 exact, 578 split pieces); 17/17 spot checks reference their own `__func__`; 480 earlier guessed names corrected. Why attempt 1 failed: 256-byte padding between tables and `relative_base` = 0 in a relocatable Image. Cross-checked with `vmlinux-to-elf` 1.4.0 (Dale's decision, 2026-11-15 02:22): identical list, 0 differences; its ELF is a new file in Dale's `REA\BootImage\kallsyms`. |
+| G0.3 | `adc_cal` (0644) + `amux_debug` on the stock `gpio-keys-polled` device (`/soc@03000000/gpio_keys`) [G][D]. |
+| G0.4 | Backlight row and open questions 13/14 updated (in the package). |
+| G1 | Real suspend-to-RAM: `mem` → PSCI `SYSTEM_SUSPEND` to BL31 + `arisc`, registered only if firmware supports it; no `mem_sleep` in 4.9; wake: power key, lid (when power-key wake is on), RTC, `time_to_wakeup_ms`; `os_sleep` switch turns power-key/lid wake off [G][D]. Device checks listed in the package. |
+
+For mainline (deep suspend, K6): stock relies on firmware `SYSTEM_SUSPEND`; deep `mem` on mainline needs it too, from our
+TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake source in the board tree.

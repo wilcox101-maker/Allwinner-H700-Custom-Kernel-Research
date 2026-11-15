@@ -20,8 +20,8 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer: RG34XX-SP entry in the upstream NV3052C panel driver (init table from stock u-boot, decision Q8) and its binding |
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
-| [`tests/`](tests/) | Host test of the CPU speed-bin decoder (patch 0001) |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment), `gen_nv3052c_table.py` (panel init table from a stock image) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) |
+| [`tests/`](tests/) | Host tests: CPU speed-bin decoder (patch 0001); kallsyms reader on a synthetic image |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment), `gen_nv3052c_table.py` (panel init table from a stock image) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) and `kallsyms_49.py` (symbol table of the stock 4.9 Image, Ghidra plan G0.2) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |

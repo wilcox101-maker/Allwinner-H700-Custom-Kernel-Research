@@ -169,6 +169,9 @@ python3 -I "$REPO/tools/check_xlate_copy.py" "$REPO"/patches/linux/0001-*.patch 
 cc -Wall -Werror -o "$WORK/xlate_test" "$REPO/tests/xlate_test.c"
 "$WORK/xlate_test" | tail -1
 
+log "5c. kallsyms reader host test"
+python3 -I "$REPO/tests/test_kallsyms_49.py" | tail -1 || fail "tests/test_kallsyms_49.py"
+
 if [ -n "$STOCK_DTS" ]; then
 	log "5c. OPP generator round trip"
 	python3 -I "$REPO/tools/gen_cpu_opp_stock.py" "$STOCK_DTS" |
