@@ -36,6 +36,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/ghidra-w3-1-kernel-inventory.md`](docs/ghidra-w3-1-kernel-inventory.md) | Ghidra W3.1: stock kernel inventory: vendor sysfs files, `/dev/disp` ioctls, module parameters, input codes, devices |
 | [`docs/ghidra-g5-g6-audio-rumble.md`](docs/ghidra-g5-g6-audio-rumble.md) | Ghidra G5/G6: stock headphone jack, speaker amp, mixer controls and rumble motor |
 | [`docs/ghidra-w3-3-dt-diff.md`](docs/ghidra-w3-3-dt-diff.md) | Ghidra W3.3: stock V1.0.6 device tree vs our RG34XX-SP trees, node by node; mainline gaps (TF2, ALDO3, PE11) |
 | [`docs/ghidra-w3-2-stock-modules.md`](docs/ghidra-w3-2-stock-modules.md) | Ghidra W3.2: stock kernel modules, Mali and 8821cs interfaces, Wi-Fi parameter defaults, GPU OPPs |
