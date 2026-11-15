@@ -940,3 +940,8 @@ Redux paths). Both marked **Phase 2, not before Beta**.
 3. Checked against Redux main `6566a95` with both notes added: `check_notes.py` 0, `check_rules.py` 284 files, 0.
    Master list: K17–K23 now in a Redux package; hand-offs H6/H7.
 4. KR then halts (Manager's instruction) until the Manager or Dale assigns new work.
+
+### Kernel Research, 2026-11-15, 02:10 ET (Ghidra plan landed)
+Redux Manager for Dale (GO, `FROM-REDUX-MANAGER-2026-11-15-e.md`): `docs/ghidra-plan.md` added, plan text unchanged; README
+index line. KR now works Wave 0 (G0.1–G0.4) and Wave 1 (G1, stock sleep path), desk only; results go to Redux as a
+`FROM-REDUX-KERNEL-*` package. Wave 2 (G2–G6) waits for Dale's GO after Beta. **For DR:** nothing needed.
