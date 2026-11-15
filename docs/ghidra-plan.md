@@ -115,3 +115,4 @@ TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake sourc
 |---|---|
 | G2 | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md): fuse → stock bin → mainline `speedN` table; for 4 fuse values (0x2C00, 0x5D00, 0x6000, unknown) mainline allows a higher step than stock. |
 | G4 | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md): % comes from the PMIC gauge (reg 0xA4), stock loads a 128-byte gauge model mainline doesn't; 1472 mA charge (64 mA steps), 4.10 V, warnings at 15 %. |
+| W3.2 | [`ghidra-w3-2-stock-modules.md`](ghidra-w3-2-stock-modules.md): only `8821cs` and Mali r20p0 are loaded (rc.local, no params); Wi-Fi power save on by default (`rtw_power_mgnt` 2); GPU 420–648 MHz table, no GPU supply. |
