@@ -56,7 +56,7 @@ Full text: Redux `docs/kernel-research/stock-kernel-ghidra.md` via KR package m 
 | Id | Result |
 |---|---|
 | G0.1 | `…815a2b0` = `printk` (kallsyms); renamed by `ReduxApplyKallsyms.java` (tested on a project copy, export shows `printk`). Dale's own project changes when he runs the script (optional). |
-| G0.2 | `tools/kallsyms_49.py` (stdlib): 90,760 symbols; **36,849 of 36,849** functions named (36,271 exact, 578 split pieces); 17/17 spot checks reference their own `__func__`; 480 earlier guessed names corrected. Why attempt 1 failed: 256-byte padding between tables and `relative_base` = 0 in a relocatable Image. No DECIDE needed. |
+| G0.2 | `tools/kallsyms_49.py` (stdlib): 90,760 symbols; **36,849 of 36,849** functions named (36,271 exact, 578 split pieces); 17/17 spot checks reference their own `__func__`; 480 earlier guessed names corrected. Why attempt 1 failed: 256-byte padding between tables and `relative_base` = 0 in a relocatable Image. Cross-checked with `vmlinux-to-elf` 1.4.0 (Dale's decision, 2026-11-15 02:22): identical list, 0 differences; its ELF is a new file in Dale's `REA\BootImage\kallsyms`. |
 | G0.3 | `adc_cal` (0644) + `amux_debug` on the stock `gpio-keys-polled` device (`/soc@03000000/gpio_keys`) [G][D]. |
 | G0.4 | Backlight row and open questions 13/14 updated (in the package). |
 | G1 | Real suspend-to-RAM: `mem` → PSCI `SYSTEM_SUSPEND` to BL31 + `arisc`, registered only if firmware supports it; no `mem_sleep` in 4.9; wake: power key, lid (when power-key wake is on), RTC, `time_to_wakeup_ms`; `os_sleep` switch turns power-key/lid wake off [G][D]. Device checks listed in the package. |
