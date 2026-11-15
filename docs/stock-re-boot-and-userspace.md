@@ -3,7 +3,7 @@
 Items **G3, W3.4, W3.5, W3.6** of the Ghidra plan (Manager files 2026-11-15-e/-f; the plan itself is KR's
 `docs/ghidra-plan.md`). One PR per item; this file is the record.
 
-**Rules:** desk only; stock files read, never written, never committed; names, addresses, constants, tables and
+**Rules:** desk only; **[N]** marks a finding with no public source we know of (Dale, 2026-11-15 02:46); stock files read, never written, never committed; names, addresses, constants, tables and
 behaviour only, **no decompiled code**. Tags: **[G]** disassembly, **[D]** DT/strings/config, **[V]** device-verified
 (only from a Dale hw-result note). Nothing here is [V].
 
@@ -27,7 +27,7 @@ No `scp` item: see W3.4.
 
 ## G3. Panel selection in stock u-boot
 
-**Result:** one strap pin, **PE6**, read once in u-boot; the result reaches the kernel **only as the cmdline argument
+**Result [G][N]:** one strap pin, **PE6**, read once in u-boot; the result reaches the kernel **only as the cmdline argument
 `lcd_type=boe|old`**. u-boot does not edit the kernel DT and does not save the value to the env partition.
 
 ### Read and decide [G] (detail and both init sequences: Project doc `rg34xxsp-panel-detect-and-uboot-patch.md`, 2026-11-13)
@@ -74,7 +74,7 @@ passes it as a DTB choice (`fdtfile`). A stock-kernel-based Redux must keep `lcd
 
 ## W3.4. Boot package: u-boot, ATF BL31, (no) SCP
 
-**Result:** BL31 is Allwinner's ATF fork `v1.0(debug):5a77824` (built 2024-08-02, `plat/sun50iw9p1`) offering
+**Result [G][N]:** BL31 is Allwinner's ATF fork `v1.0(debug):5a77824` (built 2024-08-02, `plat/sun50iw9p1`) offering
 **PSCI 1.0 with `SYSTEM_SUSPEND`**. **There is no SCP/AR100 firmware** anywhere in boot0 or the boot package: BL31
 performs "universal standby" itself on the ARM core (DRAM controller and PHY, RTC/PRCM registers) and **emulates the
 `arisc` wakeup-source API locally**. u-boot reaches the kernel only through the cmdline (G3 table) and its env.
@@ -228,3 +228,703 @@ Plus 14 `*-ab` nodes (opp-microvolt-a1/b0/b1/c0/c1/c2 per-grade voltages) for fr
 - *optional:* stock serial log: the `BL3-1:` and `standby_type` lines, and the `PSCI` version the kernel prints.
 - *optional:* on stock, `cat /sys/power/state /sys/power/mem_sleep` (with KR's G1).
 - *optional:* `evtest` on the stock key device: Start reports `BTN_TR`, L2 reports `BTN_SELECT`.
+
+---
+
+## W3.5. Stock launcher `dmenu.bin` and its scripts
+
+*Drafted by a DR worker agent from the extracts; DR re-checked the key strings and scripts (`ANBERNIC-keys`, `deeplayer/debug_reg`, `axp_reg 0x1801`, `pwr_new.sh` → `mem`, `rtcwake`, `hallkey`, `localpad.map`). "I/my" in this section = that worker.*
+
+**Summary (5 lines)**
+1. `dmenu.bin` (32-bit armhf SDL1.2, stripped, Linaro GCC 4.9) reads the keypad by scanning `/dev/input/event*` for the device named `ANBERNIC-keys`, and reads the power key/lid from a hard-coded `/dev/input/event0`. It turns both into one 19-bit key mask (19 codes, which `/mnt/data/dmenu/localpad.map` can remap).
+2. Sleep is always `system("/mnt/vendor/ctrl/pwr_new.sh auto")`, which writes `mem` to `/sys/power/state`. The triggers are: a power-key release after ≥100 ms, a lid KEY 110 press/release, `hallkey`=0 polled every 500 ms, or an idle timer of 1/2/5/10 min (off for index ≥4). Holding power for 2 s gives a goodbye splash and then `poweroff`.
+3. Brightness has 8 levels (`5,10,20,50,70,140,200,255`) and is set with `/dev/disp` ioctl 0x102 (get 0x103). It changes with MENU(BTN_TL2 312)+VOL±. VOL± alone changes volume level 0–10. In the launcher that level only scales its own UI sounds; in games `portsCtrl.dge`/`ndsCtrl.dge` write it to ALSA card 0 control #2 (values `0..31`). The levels persist in the vendor sysfs attributes `axp2202-battery/brightness` and `openbor_volume`.
+4. Battery: the launcher reads `axp2202-battery/{capacity,voltage_now,status}` once a second, picks the icon from capacity thresholds, and treats `status`=="Charging" as charging. It shuts down (lowpower splash, then `poweroff`) after more than 20 consecutive 1 s polls with capacity==0 and voltage ≤3420 mV while not charging. `charg.dge` is the boot-mode-1 charger UI: USB unplugged → `poweroff`, power held 2 s → `reboot`, idle 20 s or lid closed → suspend.
+5. Notable **[G][N]**: there is a periodic challenge–response with a vendor kernel driver (`/sys/class/deeplayer/deeplayer/debug_reg`); if it fails, the launcher runs `reboot` in a loop. Brightness/volume/sleep policy is spread across dmenu, the ctrl daemons, and custom AXP2202 sysfs attributes. Nothing here has been checked on a device.
+
+Tags: **[G]** = from disassembly (addresses are ELF virtual addresses), **[D]** = from strings/config/script text. Register-level reasoning is summarised in my own words. No code or scripts are reproduced. Nothing is device-verified.
+
+---
+
+### 0. Inputs, hashes, build info
+
+| File | SHA-256 | Type / notes |
+|---|---|---|
+| appfs/bin/dmenu.bin | `5a6bbce625d7defcf31c501b436d7ac92b471683a58efffd0a9d88d1b1ef1c38` | ELF32 ARM EABI5 armhf, dynamic, stripped, BuildID `30bcfabc937b8169847e4069341da8762be34818`; entry 0x13585 (Thumb) |
+| appfs/bin/charg.dge | `eeb7583e02b74ae10187a229ed97ca083b66d6cf5961f93ab24b75e0a20f074e` | ELF32 armhf, stripped, BuildID `cc4213d9…a45248` |
+| appfs/bin/portsCtrl.dge | `b836f4a568419107827d8c94b2517c14e7bc581130c7b50810e6a4eedba30afe` | ELF32 armhf, stripped; in-game hotkey daemon |
+| appfs/bin/ndsCtrl.dge | `eba357f3eb037f9b1d5743d123de44f25752282c136c89dc5fd022226fe83aca` | ELF32 armhf, stripped; DraStic hotkey daemon |
+| appfs/bin/wiliwili/wiliwili | `39fe0fca009c938f0b0e6d06f0ec38988b1c7228096bdee8d0b02886caa42746` | ELF64 aarch64 PIE, not stripped (3rd-party Bilibili client; not analysed beyond launch.sh) |
+| appfs/bin/wiliwili/launch.sh | `02439e7075c38b71d09585933db45829511e58628dfb1291c6d5531ae6a8ebb3` | PortMaster-style launcher |
+| ctrl/*.sh, dmenu_ln, oem/*.ini | see hash list at end of §9 | |
+
+Build/version strings [D]: `GCC: (crosstool-NG linaro-1.13.1-4.9-2014.08 - Linaro GCC 4.9-2014.08) 4.9.2 20140811` (all four 32-bit binaries); the system-info page shows the literal `Allwinner H700 Linux 4.9.170` (0x41416); `oem/version.ini`=`20260526`, `oem/board.ini`=`RG34xxSP`, `oem/language.ini`=`2` (index 2 = English, see §7). rootfs: Ubuntu 22.04 LTS "jammy", hostname `ANBERNIC`, kernel module path `/lib/modules/4.9.170/…`.
+
+The extract has none of the appfs/bin items listed in the stock image: `cexpert, ebook, default.ttf, tinyplay, tinymixer, evtest, fbtest3, arcade-plus.csv, video, music, game, pdf, fileM, arcade-oem.csv, muos2.bin, muos1.bin`. dmenu references `default.ttf`, `arcade-plus.csv`, `game/`, `pdf/`, `muos1/2.bin`, `video/vp.dge`, so those paths cannot be checked from here. `/etc/init.d/launcher.sh` (1146 B, 5-Dec-2025) is in the rootfs listing but not in the `etc` extract. It is what starts `loadapp.sh` (per loadapp.sh/rc.local comments [D]).
+
+---
+
+### 1. Hotkey / input map
+
+#### 1.1 Input devices [G]
+| Node | How chosen | Used by | Events consumed |
+|---|---|---|---|
+| keypad | Scan `/dev/input/event*` (up to 6 entries); open each and keep the one whose `EVIOCGNAME` == `ANBERNIC-keys` (0x147b4). The error text names `/dev/input/event1`, but that path is not opened directly | dmenu, portsCtrl, ndsCtrl | EV_KEY (type 1) through the remap table; EV_ABS (type 3) codes 16/17 (HAT0X/Y) → d-pad bits; ABS 2/3 → d-pad bits; ABS 4/5 → extra bits, used only in UI states 30/31 (test/joy-map) |
+| power/lid | `/dev/input/event0`, opened directly, O_RDONLY (0x148f8) | dmenu, charg.dge, portsCtrl, ndsCtrl | EV_KEY only; code 110 and 111 have special meaning (lid), any other code = power key |
+| external pads | `/sys/class/input/*/device` + `…/device/uevent` scan, `EVIOCGBIT/EVIOCGID/EVIOCGABS` | dmenu joystick-map UI | builds RetroArch autoconfig (§7) |
+
+Both fds are polled with a 300 ms timeout in thread `read_adc2key_thread` (0x143e8) [G].
+
+#### 1.2 Default key table (`localpad.map` layout) [G]
+`/mnt/data/dmenu/localpad.map` is a raw 38-byte file of 19 × int16 Linux key codes. If it is missing or short, the defaults at .data 0x55388 are copied (0x14790). The order of the table = the bit assignment below. SDL keysym = what dmenu's UI receives (0x28f94). "Likely button" is my inference from the dingux keysym convention and the UI strings. It is **not verified**.
+
+| Idx | Default code | Linux name | Mask bit | dmenu SDL keysym | Likely button (unverified) |
+|---|---|---|---|---|---|
+| 0 | 103 | KEY_UP | — (table slot only; the d-pad actually comes from ABS_HAT0Y<0) | — | Up |
+| 1 | 108 | KEY_DOWN | — | — | Down |
+| 2 | 105 | KEY_LEFT | — | — | Left |
+| 3 | 106 | KEY_RIGHT | — | — | Right |
+| hat | ABS_HAT0Y<0 / >0 / HAT0X<0 / >0 | — | 0x1 / 0x2 / 0x4 / 0x8 | 273 UP / 274 DOWN / 276 LEFT / 275 RIGHT | D-pad |
+| 4 | 304 | BTN_SOUTH | 0x10 | 306 LCTRL | A |
+| 5 | 305 | BTN_EAST | 0x20 | 308 LALT | B |
+| 6 | 307 | BTN_NORTH | 0x80 | 32 SPACE | X (or Y) |
+| 7 | 306 | BTN_C | 0x40 | 304 LSHIFT | Y (or X) |
+| 8 | 311 | BTN_TR | 0x100 | 13 RETURN | START (ndsCtrl treats 0x100 as START, per its "start to exit" string) |
+| 9 | 310 | BTN_TL | 0x200 | 27 ESCAPE | SELECT |
+| 10 | 308 | BTN_WEST | 0x400 | 8 BACKSPACE | R1 |
+| 11 | 309 | BTN_Z | 0x800 | 9 TAB | L1 |
+| 12 | 314 | BTN_SELECT | 0x1000 | 52 '4' | L2 or R2 |
+| 13 | 315 | BTN_START | 0x2000 | 53 '5' | R2 or L2 |
+| 14 | 313 | BTN_TR2 | 0x20000 | 54 '6' | ? |
+| 15 | 316 | BTN_MODE | 0x40000 | 55 '7' (lowest priority) | ? |
+| 16 | 312 | BTN_TL2 | 0x10000 | 51 '3' | **MENU/FN** (it changes VOL± to brightness) |
+| 17 | 115 | KEY_VOLUMEUP | 0x4000 | not translated | VOL+ |
+| 18 | 114 | KEY_VOLUMEDOWN | 0x8000 | not translated | VOL− |
+
+The ABS handling has no deadzone. Any non-zero value sets the bit [G]. Bit 0x100000 is set when `poll()` fails (treated as "ctrl+c/quit") [G].
+
+#### 1.3 Hotkey actions
+| Context | Combination | Action | Source |
+|---|---|---|---|
+| Launcher | VOL+ / VOL− (edge) | volume level +1/−1, range 0–10; applied as the software gain for dmenu's own PCM playback (gain table `0,84,211,581,1460,3050,5181,6522,8211,10337,16384`, Q14) | [G] 0x12fe8, 0x13d74, 0x35ae0 |
+| Launcher | MENU(0x10000) held + VOL+/VOL− | brightness level +1/−1, range 0–7 → `/dev/disp` 0x102; skipped while HDMI is active | [G] 0x12fe8–0x1301c |
+| Launcher | MENU pressed and released alone (no VOL while held) | tap state machine at 0x225a60 → opens UI page state 20 via 0x2ac00. Which page this is: **not determined** | [G] 0x14360, 0x1c7b8 |
+| Launcher | Power key press ≥100 ms then release | suspend: `pwr_new.sh auto` | [G] 0x1467e–0x146f8 |
+| Launcher | Power key release <100 ms after press | ignored (debounce) | [G] 0x14692 |
+| Launcher | Power key held 2000 ms | SDL timer → "ready to poweroff" → shutdown type 1 → goodbye splash (~2 s) → `poweroff` | [G] 0x31044, 0x31014 |
+| Launcher | event0 KEY 110 press then release (lid "hall_down"), no HDMI | suspend (`pwr_new.sh auto`) | [G] 0x14618, 0x1463e |
+| Launcher | event0 KEY 111 release | sets ready_sleep=1 (cancels sleep; lid-open path) | [G] 0x14668 |
+| Launcher | SELECT (ESC) in some UI states | UI navigation (state 35) — UI only | [G] 0x13174 |
+| Settings pages | START+SELECT | exit button-custom / factory test screens | [D] strings 0x3db1b…, 0x4413e… |
+| Factory test (`/mnt/sdcard/test.ini`) | MENU+SELECT | motor test: writes `90`/`0` to `axp2202-battery/moto` | [D] 0x440d9, [G] 0x13d34 |
+| Joystick-map UI | hold B 3 s | exit mapping | [D] 0x3d1b7 |
+| In game (portsCtrl/ndsCtrl) | VOL+/VOL− | volume 0–10 → tinymixer card 0 ctl #2 = `0,5,10,16,19,21,23,25,27,29,31`; writes `openbor_volume` | [G] ports 0x11d58, 0x13420 |
+| In game (portsCtrl/ndsCtrl) | MENU+VOL± | brightness 0–7 → `/dev/disp` 0x102 (same table), writes sysfs `brightness`; skipped if `/sys/class/extcon/hdmi/state` = 1 | [G] ports 0x11d58, 0x113cc |
+| In game (portsCtrl/ndsCtrl) | Power held >2000 ms | portsCtrl: `poweroff` directly. ndsCtrl: writes shutdown type to `/tmp/shutdown.ini`, then `setNDS.sh stop` (dmenu then powers off on its next start, §2.4) | [G] ports 0x110b0–0x110de; nds 0x110ee–0x1115a |
+| DraStic (ndsCtrl) | MENU + START (either order; strings "start to exit", "menu to exit") | `/mnt/vendor/ctrl/setNDS.sh stop` (kill drastic) | [G] nds 0x11148–0x1116c |
+| Charger UI (charg.dge) | Power held 2 s | exit code 2 → `reboot` (boots into the normal OS) | [G] charg 0x1293c, 0x127d0, 0x1277c |
+| Charger UI | Power ≥100 ms release / lid 110 | suspend (`pwr_new.sh`, no argument) | [G] charg 0x128c4–0x12904 |
+| Retroarch games | — | no stock ctrl daemon runs. Hotkeys come from `/mnt/vendor/deep/retro/ANBERNIC-keys.cfg` (not in extract) | [D] setRA.sh |
+
+When dmenu launches an app it writes the gating value to `nds_esckey`: 0 at launcher start, 1 for ports/case-29 apps, 3 for the video player [G 0x12626, 0x2320c, 0x23278, 0x164b6]. portsCtrl/ndsCtrl run only while `nds_esckey`==1 (polled every 40 ms tick) [G ports 0x10faa]. On exit they set volume level 10 (ctl #2 = 31) [G ports 0x1118e].
+
+---
+
+### 2. Sleep / lid / power-key policy
+
+#### 2.1 Triggers (dmenu) [G]
+| Trigger | Condition | Call |
+|---|---|---|
+| Power key | release ≥100 ms after press; global enable 0x55aa0≠0; ready_sleep≠1 | `enter_sleep_state(1)` 0x1439c |
+| Lid via input | KEY 110 down sets hall_down=1; on 110 up, if HDMI is inactive and hall_down was set → sleep | same |
+| Lid via sysfs | every 500 ms: `axp2202-battery/hallkey` reads 0, HDMI inactive, latch 0x22f742==0 → "++++ hall to sleep" | same (0x13424) |
+| Idle timer | `now − last_activity > T[idx]`, idx = attr+28; T = `60000, 120000, 300000, 600000` ms (table at 0x3dcf0); idx>3 = never; suppressed while flag 0x21d0e8+1416 is set (likely music playback — unverified) | same (0x133ac) |
+| Activity | any key/power event or UI action calls 0x29514 (records SDL_GetTicks) | — |
+
+Default idle index = 0 (60 s) in the built-in attribute defaults [G 0x1232e]. The settings UI labels the options 1/2/5/10 and an off string [G 0x2ab66].
+
+`enter_sleep_state(arg)` [G 0x1439c]: sets ready_sleep=1, builds `"%s auto"` when arg≠0, otherwise `"%s "`. **Every caller passes 1**, so the effective command is always `/mnt/vendor/ctrl/pwr_new.sh auto`, run with `system()` (it blocks until resume). The function then resets the idle timer.
+
+#### 2.2 `pwr_new.sh` behaviour [D]
+| Step | Effect |
+|---|---|
+| If `/mnt/mod/ctrl/pwr_new.sh` exists | delegates to it with the same argument (mod hook) |
+| Else, if no lock `/tmp/.power_key` | creates the lock (mode 777), writes `mem` (no newline) to `/sys/power/state`, deletes the lock 0.3 s later in the background |
+| Argument `auto` | not used by the stock script |
+| Not touched | mem_sleep, backlight, cpufreq, wake sources (none written by dmenu or the script; any handling must be in the kernel) |
+
+Related sysfs written at boot from attributes [G]: `axp2202-battery/workled_sleep` ← attr+132 bit0 (0x140d8); `axp2202-battery/os_sleep` ← attr+132 bit4 (0x14110). Strings "Super Standby" / "Normal Standby" / "<Need to restart the system>" [D] suggest os_sleep selects the standby type. That is an inference.
+
+#### 2.3 Shutdown / reboot paths (dmenu `app_deinit` 0x295b4, type in 0x22f644) [G]
+| Type | Set by | Splash | Final command |
+|---|---|---|---|
+| 0 | game/app launch (writes `/tmp/.next`) | "running" png (zh/en) | exits; `sync`; `echo 3 > /proc/sys/vm/drop_caches` |
+| 1 | power held 2 s; settings item 16; `/tmp/shutdown.ini`=1 | `res1/shutdown/goodbye.png`, 200×10 ms | `poweroff` |
+| 2 | low battery; `/tmp/shutdown.ini`=2 | `res1/shutdown/lowpower.png` | `poweroff` |
+| 3 | settings "Reboot" (confirmation) | — | `reboot` |
+| 4 | "Start Retroarch" | — | `/mnt/vendor/ctrl/setRA.sh run` |
+| 5 | Moonlight start | — | moonlight path 0x2f404 |
+| 6 | settings "Fast Shutdown" (快速关机) | — | [N] `echo 0x1801 > /sys/class/axp/axp_reg` (vendor AXP register poke; register 0x18, value 0x01 — meaning not determined) |
+
+For types ≥1, before the final command dmenu writes `brightness` (level) and `openbor_volume` (level) to sysfs and creates `/tmp/stopAPP.ini`. That file stops the `loadapp.sh` relaunch loop. `forceOS.sh` [D] does `rest`/`shutdwn` = sync, sleep 1, reboot/poweroff (with commented-out axp_reg variants 0x270a/0x2709).
+
+#### 2.4 Startup policy flags (dmenu main) [G]
+`/mnt/mmc/dmenu.del` → delete it and `dmenu_attr.ini` (reset settings). `/mnt/sdcard/adfu.ini` → `reboot efex` (Allwinner FEL/USB-burn mode) and exit. `/mnt/sdcard/test.ini` + TF state → factory test. `/mnt/data/logo.ini` absent → shows `res1/boot/logo.png`. `/tmp/shutdown.ini` with value 1/2 → immediate shutdown of that type. `/tmp/boot.ini` absent (= first launch since boot) → create it and push all attributes to hardware/sysfs. Otherwise re-read `brightness`/`openbor_volume` sysfs (the in-game daemons may have changed them).
+
+#### 2.5 Charger mode (`loadapp.sh` + `charg.dge`) [D]+[G]
+`loadapp.sh` reads `axp2202-battery/boot_mode`. If it is 1: rfkill-block BT and Wi-Fi, stop and mask `bluetooth.service` and `NetworkManager.service`, run `charg.dge`, then `sleep 5; poweroff` if it returns. In charg.dge: cpu `powersave` at start; the loop polls power/lid on a 100 ms poll; idle >20000 ms or `hallkey`=0 → cpu `powersave`, `pwr_new.sh` (no argument), then cpu `full`. USB `axp2202-usb/online`≠1 → `poweroff`. Power held 2 s → `reboot`.
+
+---
+
+### 3. Brightness and volume
+
+#### 3.1 Brightness [G]
+| Item | Value |
+|---|---|
+| Levels | 8, index 0–7 |
+| Table (all four binaries) | `5, 10, 20, 50, 70, 140, 200, 255` (dmenu .rodata 0x38480; charg 0x12b84; portsCtrl 0x139e8) |
+| Default | index 5 (=140) |
+| Set | `open("/dev/disp", O_RDWR)`, ioctl **0x102** with arg[0]=0 (screen 0), arg[1]=value (fn `set_brightness_ioctl` 0x13664) |
+| Get | ioctl **0x103**, arg[0]=0 (0x139f4) |
+| Blank | level path with value 0 at 0x13a54 |
+| Persistence | `/sys/class/power_supply/axp2202-battery/brightness` ← level index (vendor attribute used as cross-process storage), plus dmenu_attr.ini +24 |
+| HDMI | brightness changes are skipped when HDMI is active (0x56c94) |
+| `/sys/class/backlight` | **not referenced** by any analysed binary |
+
+#### 3.2 Volume / audio routing [G]+[D]
+| Item | Value |
+|---|---|
+| Level | 0–10, default 10 (attr+36) |
+| Launcher (dmenu) | software gain on its own sample playback (table above); hardware mixer forced at display init: card 0 ctl #1 → 63 if different, ctl #2 → 31, ctls #3, #5, #8 → 1 (0x13c7a–0x13cdc) |
+| Game daemons | card 0 ctl #2 ← `0,5,10,16,19,21,23,25,27,29,31` (portsCtrl .rodata 0x143ec; ndsCtrl same values) |
+| Persistence | `axp2202-battery/openbor_volume` ← level 0–10 |
+| Speaker vs headphone | `/sys/module/snd_soc_sunxi_component_jack/parameters/jack_state` (1 = headphone). card 0 ctl #4 ← 0 when headphone or HDMI, else 1 (0x13d94). ctl #4 is probably the speaker switch — inference |
+| HDMI audio | when HDMI is active and no headphone, PCM opened on card 2; launch commands prepend `AUDIODEV=hw:2,0` [D] |
+| Control names | dmenu/daemons use **numeric ids only**, no names. asound.conf [D] names `LINEOUT Switch`, `SPK Switch`, `OutputL/R Mixer DACL/R Switch`, `digital volume` (63) on `hw:audiocodec`, and `playback_hdmi` = card `ahubhdmi`. Mapping id→name **not determined** (check with tinymix) |
+| Card for HDMI state | dmenu: `/sys/class/switch/hdmi/state` ("HDMI=%d"); charg/ports/nds: `/sys/class/extcon/hdmi/state` — two different paths |
+
+On HDMI plug/unplug (polled every 500 ms) dmenu does "reset sound": it switches output with `/dev/disp` ioctl 0x0F to HDMI type 4 mode 5 (720p60 per the disp2 enum; inference) or LCD type 1. After returning to LCD it runs `rtcwake -d rtc1 -m mem -s 1` (or `rtcwake -m mem -s 1` if `/sys/class/rtc/rtc1` is absent) to force a 1 s suspend/resume, then restores brightness and audio routing [G 0x13a94].
+
+---
+
+### 4. Battery
+
+| Item | dmenu [G 0x17374] | charg.dge [G 0x11b6c] | portsCtrl/ndsCtrl [G] |
+|---|---|---|---|
+| Poll period | 1000 ms | 1000 ms | 1000 ms |
+| Capacity | `axp2202-battery/capacity`, clamped 0–100 (101 = read error) | same | — |
+| Voltage | `axp2202-battery/voltage_now` (µV); if >3,199,999 → /10000×10 = mV (10 mV steps), else 0 | same; shown as `voltage:%.2fv` | same |
+| Charging | `axp2202-battery/status` starts with `Charging` | same | — |
+| Other | — | `axp2202-usb/online` (≠1 → poweroff), `axp2202-battery/present` | `axp2202-usb/online` |
+| Icon thresholds | cap>99 → 6 (full, no animation), >70 → 6, >50 → 5, >20 → 4, >10 → 3, >3 → 2, 1–3 → 1, 0 → 0; images `desktop_res/title/{lcd,hdmi}/bat_%d.png`; charging animation cycles a 0–4 counter | >99 → 4 (full), >85 → 4, >70 → 3, >55 → 2, >35 → 1, >10 → 0, ≤10 → 5; frames `res1/charg_mode/0..5.png` | — |
+| Low-battery shutdown | not charging, cap==0, V≤3420 mV, >20 consecutive polls → type 2 (lowpower splash, poweroff) | — | USB offline and V≤3420 mV for >20 polls → poweroff (shutdown flag 2) |
+| Low-battery warning UI | none found (only the icon) | — | — |
+
+---
+
+### 5. Paths, sysfs/procfs/dev, files, env vars, external commands
+
+R/W = read/write as inferred from the open mode / fopen mode / write call.
+
+#### 5.1 Kernel interfaces
+| Path | R/W | Binary/script | Purpose |
+|---|---|---|---|
+| /dev/disp | RW ioctl | dmenu, charg, ports, nds | sunxi disp2: brightness, output switch, layers (§6) |
+| /dev/fb0 | RW mmap | dmenu | clear 0x708000 B (1280×720×… buffer) at init |
+| /dev/ion | RW ioctl | dmenu, charg | Allwinner ION buffer alloc (CdcIon*) |
+| /dev/input/event0 | R | dmenu, charg, ports, nds | power key / lid |
+| /dev/input/event* (name `ANBERNIC-keys`) | R | dmenu, ports, nds | keypad |
+| /sys/class/input/*/device[/uevent] | R | dmenu | external gamepad discovery |
+| /dev/snd/controlC%u | RW ioctl | dmenu, ports, nds | tinyalsa mixer |
+| /dev/snd/pcmC%uD%u%c | W ioctl | dmenu | UI sound playback (44100 Hz, 2 ch, S16, period 1024×4) |
+| /dev/mmcblk1 | R (exists) | dmenu | TF2 presence |
+| /dev/rtc0, /dev/rtc1 | via hwclock | dmenu | `hwclock -lw -f /dev/rtc1` or `rtc0` after date change |
+| /sys/class/rtc/rtc1 | access | dmenu | choose rtcwake device |
+| /sys/class/rtc/rtc0/date | R | loadapp.sh | set RTC once if empty |
+| /sys/class/switch/hdmi/state | R | dmenu | HDMI=%d |
+| /sys/class/extcon/hdmi/state | R | charg, ports, nds | HDMI=%d |
+| /sys/module/snd_soc_sunxi_component_jack/parameters/jack_state | R | dmenu, charg | headphone |
+| /sys/class/power_supply/axp2202-battery/capacity | R | dmenu, charg | % |
+| …/axp2202-battery/voltage_now | R | dmenu, charg, ports, nds | µV |
+| …/axp2202-battery/status | R | dmenu, charg | "Charging" |
+| …/axp2202-battery/present | R | charg | battery present |
+| …/axp2202-usb/online | R | charg, ports, nds | USB power |
+| …/axp2202-battery/hallkey | R | dmenu, charg | lid (0 = closed) |
+| …/axp2202-battery/brightness | RW | dmenu, ports, nds | brightness level store (0–7) |
+| …/axp2202-battery/openbor_volume | RW | dmenu, ports, nds | volume level store (0–10) |
+| …/axp2202-battery/nds_esckey | RW | dmenu (W), ports/nds (R/W) | app-mode flag 0/1/3 that gates the ctrl daemons |
+| …/axp2202-battery/nds_pwrkey | W | ports, nds | power-key mode flag (exact semantics not determined) |
+| …/axp2202-battery/workled_sleep | W | dmenu | attr+132 bit0 |
+| …/axp2202-battery/os_sleep | W | dmenu | attr+132 bit4 |
+| …/axp2202-battery/moto | W | dmenu, ports, nds | rumble: `90` on / `0` off (factory test in dmenu) |
+| …/axp2202-battery/led_test | W | dmenu | write 1 in factory test |
+| …/axp2202-battery/otg_id | R | dmenu | factory test OTG-in/out |
+| …/axp2202-battery/spk_state | R | dmenu | read, used by the UI speaker icon (exact use not traced) |
+| …/axp2202-battery/boot_mode | R | loadapp.sh | 1 = charger boot |
+| …/axp2202-battery/display_id | R | setFlycast, setSaturn, wiliwili launch.sh | "1" → HDMI audio env |
+| …/axp2202-battery/work_led | W | dmenu_ln | LED cfg from `/mnt/mod/ctrl/configs/led_exit.cfg` / `led_launch.cfg` |
+| /sys/class/axp/axp_reg | W | dmenu (fast shutdown) | vendor AXP register write `0x1801` |
+| /sys/class/deeplayer/deeplayer/debug_reg | W then R | dmenu | anti-clone challenge/response (§9) |
+| /sys/class/net/wlan0/address | R | dmenu | MAC display / Wi-Fi present |
+| /sys/class/iommu | access | dmenu, charg | ION mem type check |
+| /sys/power/state | W `mem` | pwr_new.sh | suspend |
+| /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor, scaling_setspeed | W | cpu_setting.sh | governor |
+| /sys/kernel/debug/sunxi_gpu/write | W | cpu_setting.sh (only the unused `adjust_ddr` function) | DDR DVFS |
+| /sys/class/pwm/pwmchip0/{export,unexport,pwm2/*} | W | moto.sh | PWM rumble (no binary calls moto.sh) |
+| /proc/mounts | R | dmenu, mmc*.sh, udisk.sh, loadapp.sh | mount state |
+| /proc/sys/vm/drop_caches | W 3 | dmenu | before launches/shutdown |
+| /proc/swaps | R | loadapp.sh (unused function) | swap |
+
+#### 5.2 Files (config/state/resources)
+| Path | R/W | Who | Purpose |
+|---|---|---|---|
+| /mnt/data/dmenu/dmenu_attr.ini | RW (136-B binary struct) | dmenu | global settings (§7) |
+| /mnt/data/dmenu/localpad.map | RW (38 B) | dmenu, ports, nds | key remap (§1.2) |
+| /mnt/data/misc/.favorite, .history, .mycore, .setcore, .hostap | RW | dmenu | lists (§7) |
+| /mnt/data/.hide, /mnt/data/.wifi | RW | dmenu | game-hide flag; saved SSIDs |
+| /mnt/data/save/, /mnt/data/misc/, /mnt/data/dmenu/ | mkdir | dmenu | |
+| /mnt/data/debug.ini, /mnt/sdcard/debug.ini | access | dmenu_ln, dmenu | debug: console logging; dmenu adds `-v` to retroarch |
+| /mnt/data/xudebug.ini | access | loadapp.sh | hold boot in a sleep loop |
+| /mnt/data/logo.ini | access | dmenu | skip boot logo |
+| /mnt/mmc/dmenu.del | access, rm | dmenu | reset settings |
+| /mnt/mmc/dmenu.bin, /mnt/vendor/bin/muos1.bin, muos2.bin, /mnt/vendor/muos1.ini, muos2.ini | access | dmenu_ln, dmenu (creates muos*.ini) | alternate launcher selection |
+| /mnt/mmc/appfs.img | access | loadapp.sh | loop-mounted over /mnt/vendor |
+| /mnt/mmc/gpio_keys_polled.ko, gpio_keys_gpadc.ko | insmod | loadapp.sh | optional key drivers from SD |
+| /mnt/mod/ctrl/{autostart,pwr_new.sh,RA_launch.sh,ndscheat,sw,configs/*} | exec/R | loadapp, pwr_new, dmenu, setNDS, setRA, dmenu_ln | mod hooks |
+| /mnt/sdcard/test.ini, /mnt/sdcard/adfu.ini | access | dmenu | factory test; FEL reboot |
+| /tmp/.next | W (+`chmod 777`) | dmenu → dmenu_ln | next command script |
+| /tmp/stopAPP.ini, /tmp/boot.ini, /tmp/shutdown.ini, /tmp/vpRun.ini | RW | dmenu, ndsCtrl, loadapp, dmenu_ln | lifecycle flags |
+| /tmp/.power_key, /tmp/.mmc_mount, /tmp/.init_bt | lock | pwr_new, mmc_new, setBluetooth | locks |
+| /tmp/gameplace.cfg, /tmp/gamedir.cfg, /tmp/last_place.ext, /tmp/last_place.int, /tmp/search, /tmp/wifi_infor.log, /tmp/wifi_scan.log | RW | dmenu | UI state, nmcli output |
+| /mnt/vendor/oem/version.ini, language.ini | R | dmenu | FW version display; default language |
+| /mnt/vendor/bin/default.ttf | R | dmenu, charg | UI font |
+| /mnt/vendor/bin/arcade-plus.csv | R | dmenu | arcade name map |
+| /mnt/vendor/res1/{boot,loading,shutdown,theme,wallpapers,desktop_res/*,setjoy,setkey,sound,retro,res_apk,test,hostap,wifi,charg_mode}, /mnt/vendor/res2/{theme,desktop_res/misc} | R | dmenu/charg | images (`lcd/` and `hdmi/` variants), sounds `%d.wav`, `test.pcm` |
+| /mnt/vendor/deep/retro/{retroarch,retroarch.cfg,cores,autoconfig/udev,joydefCFG,ANBERNIC-keys.cfg} | R/W | dmenu, setRA, loadapp | RetroArch |
+| /.config/retroarch/retroarch.cfg | RW | dmenu (`-c`), setRA, loadapp | RA config (HOME=/) |
+| /mnt/vendor/deep/{drastic,drastic-modify,ppsspp,openBOR,emuJava}, /emuelec/{saturn,flycast} | exec | dmenu & scripts | emulators |
+| /mnt/mmc/Roms/…, /mnt/sdcard/Roms/…, …/APPS, …/PDF, /mnt/mmc/EXE/pico-8/ | R | dmenu | content roots ("TF1/INT." = /mnt/mmc, "TF2/EXT." = /mnt/sdcard) |
+| /etc/hostapd/hostapd.conf | R (dmenu), W via sed (setHostapd) | | hotspot ssid/wpa_passphrase/channel |
+| /etc/NetworkManager/system-connections/* | rm | dmenu | forget networks |
+| /etc/allen_resize.cfg | W | loadapp.sh | one-shot resize2fs of `/dev/mmcblk0p5` |
+
+#### 5.3 Environment variables
+| Var | Where | Value/purpose |
+|---|---|---|
+| SDL_NOMOUSE | dmenu, charg (setenv) | 1 |
+| LD_LIBRARY_PATH | dmenu_ln, loadapp, /etc/profile | `/usr/lib32:/usr/lib:/mnt/vendor/lib` (+ prepends `/mnt/vendor/lib`) |
+| AUDIODEV | dmenu launch template, setFlycast/Saturn, wiliwili | `hw:2,0` when HDMI / display_id=1 |
+| HOME | setFlycast/Saturn, wiliwili | per-card save dirs; `/root` |
+| SDL_GAMECONTROLLERCONFIG_FILE | setFlycast | `/emuelec/flycast/gamecontrollerdb.txt` |
+| PC_IP | dmenu (moonlight) | target PC IP |
+| ACTION | mmc*.sh, udisk.sh | udev add/remove |
+| PATH | /etc/environment | adds `/mnt/vendor/bin` |
+
+#### 5.4 External commands (system()/popen/fork-exec)
+| Command (template) | Binary | Purpose |
+|---|---|---|
+| `/mnt/vendor/ctrl/pwr_new.sh auto` | dmenu | suspend |
+| `/mnt/vendor/ctrl/pwr_new.sh` | charg | suspend |
+| `/mnt/vendor/ctrl/cpu_setting.sh {full,user,powersave,deflt}` | dmenu (full at startup, deflt before launching apps), charg (powersave/full) | governor |
+| `/mnt/vendor/ctrl/setBluetooth.sh {init,enable,restart,all}` | dmenu | BT (init at boot if enabled, enable from the UI) |
+| `/mnt/vendor/ctrl/setHostapd.sh {disable, ssid X, password X}` (enable via script) | dmenu | hotspot |
+| `/mnt/vendor/ctrl/setSSH.sh` | dmenu | `systemctl restart ssh` |
+| `/mnt/vendor/ctrl/setRA.sh {run,rest,language L,adv,easy}`; `setPSP.sh {language,recover}`; `setNDS.sh {run,savedir,recover,stop}`; `setSaturn.sh {HLE,BIOS}`; `setFlycast.sh`; `/mnt/vendor/deep/drastic-modify/recovery.sh` | dmenu, ndsCtrl | emulator setup/launch |
+| `/mnt/vendor/ctrl/mmc_new.sh add`, `/mnt/vendor/ctrl/mmc.sh remove` | dmenu | TF2 hot-plug mount (on card-state change) |
+| `rtcwake -d rtc1 -m mem -s 1` / `rtcwake -m mem -s 1` | dmenu | display re-init after HDMI→LCD |
+| `reboot`, `poweroff`, `reboot efex`, `echo 0x1801 > /sys/class/axp/axp_reg`, `sync`, `echo 3 > /proc/sys/vm/drop_caches` | dmenu (+charg/ports) | power |
+| `date -s …`, `hwclock -lw [-f /dev/rtc0|rtc1]` | dmenu | clock set |
+| `nmcli dev wifi connect "%s" [password "%s"]`, `nmcli con up/c down "%s"`, `nmcli connection delete "%s"`, `nmcli networking on/off`, `nmcli -f NAME c show --active`, `nmcli -f IN-USE,SSID,SIGNAL,SECURITY dev wifi`, `nmcli -p networking connectivity`, `rm /etc/NetworkManager/system-connections/…` | dmenu | Wi-Fi (auto-scan every 10 s, up to 3 tries) |
+| `bluetoothctl -- {power on/off, scan off, --timeout 15 scan on, devices, pairable on, pair/trust/connect/disconnect/remove MAC, info MAC}`, `hciconfig hci0 up/down`, `hcitool name/con` | dmenu | BT |
+| `moonlight pair %s`, `/usr/bin/moonlight stream … -mapping … -fps` (fork/exec) | dmenu | game streaming |
+| `./retroarch [-v] -c /.config/retroarch/retroarch.cfg -L <core>`, `./PPSSPPSDL`, `./pcsx`, `./OpenBOR.dge`, `./{fbaverti,fbasdl,xmame,gba_emu,vbanext,fc_emu,sfc_emu,smsgg_emu,md_emu,gbcgb_emu,pce,ngp,swanemu}.dge`, `./vp.dge`, `ap.dge`, `xplayerdemo2`, `reader_{mmc,sdcard}.dge`, `dinguxCommand_{zh,en}.dge`, `<dir>/launch.sh`, `rm -rf "%s"` | dmenu (written to /tmp/.next) | launches; per-app `cd "%s"` |
+| `rtk_hciattach -n -s 115200 ttyS1 rtk_h5`, `hciconfig hci0 up / -a hci0 lm master / auth`, `systemctl stop/start bluetooth` | setBluetooth.sh | Realtek BT over UART ttyS1 |
+| `ifconfig wlan0 192.168.1.1 up`, `hostapd -B /etc/hostapd/hostapd.conf`, `kill -9 hostapd`, `nmcli networking off`, `sed -i` on ssid/wpa_passphrase/channel | setHostapd.sh | hotspot |
+| `ntpdate cn.pool.ntp.org` | ntpd.sh (no caller found in dmenu) | time |
+| `mkfs.ext4/vfat`, `mount`, `resize2fs`, `mkswap/swapon` (unused), `rfkill`, `systemctl {mask,unmask,stop,restart} {bluetooth,NetworkManager}.service`, `insmod` | loadapp.sh | boot |
+| `insmod …/8821cs.ko`, `insmod /lib/modules/mali_kbase.ko` | /etc/rc.local | Wi-Fi + GPU modules; `/etc/modules` loads `rtl_btlpm` |
+
+---
+
+### 6. ioctl numbers
+
+| Request | Decoded (_IOC dir,type,nr,size) | Device | Meaning | Binary / evidence |
+|---|---|---|---|---|
+| 0x07, 0x08 | none,0,7/8,0 | /dev/disp | DISP_GET_SCN_WIDTH / HEIGHT | dmenu, charg [G]; name from Allwinner disp2 header (inference) |
+| 0x0B | 0,0,11 | /dev/disp | DISP_VSYNC_EVENT_EN | [G]+[D] error string |
+| 0x0C | 0,0,12 | /dev/disp | DISP_BLANK | [G]+[D] |
+| 0x0D | 0,0,13 | /dev/disp | DISP_SHADOW_PROTECT | [G]+[D] |
+| 0x0E | 0,0,14 | /dev/disp | DISP_HWC_COMMIT (also used for sync timeline create/destroy) | [G]+[D] |
+| 0x0F | 0,0,15 | /dev/disp | DISP_DEVICE_SWITCH (args: screen 0, type 4 HDMI / 1 LCD, mode 5) | [G] in `allen_lcd_hdmi_switch`; name is an inference |
+| 0x10 | 0,0,16 | /dev/disp | DISP_GET_OUTPUT (output info) | [G]+[D] |
+| 0x49 | 0,0,0x49 | /dev/disp | DISP_LAYER_SET_CONFIG2 | [G]+[D] |
+| 0x102 | 0,0,0x102 | /dev/disp | DISP_LCD_SET_BRIGHTNESS | [G] (`set_brightness_ioctl`) all 4 binaries |
+| 0x103 | 0,0,0x103 | /dev/disp | DISP_LCD_GET_BRIGHTNESS | [G] |
+| 0xC0144900 | RW,'I',0,20 | /dev/ion | ION_IOC_ALLOC (legacy 4.9 ABI) | dmenu, charg |
+| 0xC0184900 | RW,'I',0,24 | /dev/ion | ION_IOC_ALLOC (new ABI fallback) | dmenu, charg |
+| 0xC0044901 | RW,'I',1,4 | /dev/ion | ION_IOC_FREE | |
+| 0xC0084902 | RW,'I',2,8 | /dev/ion | ION_IOC_MAP | |
+| 0xC0084904 | RW,'I',4,8 | /dev/ion | ION_IOC_SHARE | |
+| 0xC0084905 | RW,'I',5,8 | /dev/ion | ION_IOC_IMPORT | |
+| 0xC0084906 | RW,'I',6,8 | /dev/ion | ION_IOC_CUSTOM (AW phys addr / TEE addr / pool info) | [D] strings |
+| 0xC0084907 | RW,'I',7,8 | /dev/ion | ION_IOC_SYNC | |
+| 0xC0184908 | RW,'I',8,24 | /dev/ion | ION_IOC_HEAP_QUERY | |
+| 0x80804506 | R,'E',6,128 | evdev | EVIOCGNAME(128) | dmenu, ports, nds |
+| 0x80044520 | R,'E',0x20,4 | evdev | EVIOCGBIT(0) | dmenu |
+| 0x80604521 | R,'E',0x21,96 | evdev | EVIOCGBIT(EV_KEY) | dmenu |
+| 0x80084523 | R,'E',0x23,8 | evdev | EVIOCGBIT(EV_ABS) | dmenu |
+| 0x80084502 | R,'E',2,8 | evdev | EVIOCGID | dmenu |
+| 0x80184540+axis | R,'E',0x40+n,24 | evdev | EVIOCGABS(axis) (base constant ORed with 0x41+i) | dmenu |
+| 0x81785501 | R,'U',1,0x178 | controlC | SNDRV_CTL_IOCTL_CARD_INFO | dmenu, ports, nds |
+| 0xC0485510 | RW,'U',0x10,0x48 | controlC | ELEM_LIST | |
+| 0xC1105511 | RW,'U',0x11,0x110 | controlC | ELEM_INFO | |
+| 0xC2C85512 / 0xC2C85513 | RW,'U',0x12/0x13,0x2c8 | controlC | ELEM_READ / ELEM_WRITE | |
+| 0x81204101 | R,'A',1,0x120 | pcm | SNDRV_PCM_IOCTL_INFO | dmenu |
+| 0xC25C4110 / 0xC25C4111 | RW,'A',0x10/0x11,0x25c | pcm | HW_REFINE / HW_PARAMS | |
+| 0xC0684113 | RW,'A',0x13,0x68 | pcm | SW_PARAMS | |
+| 0x40044103 | W,'A',3,4 | pcm | TTSTAMP | |
+| 0xC0844123 | RW,'A',0x23,0x84 | pcm | SYNC_PTR | |
+| 0x4140 / 0x4142 / 0x4143 | none,'A',0x40/42/43 | pcm | PREPARE / START / DROP | |
+| 0x400C4150 / 0x800C4151 | W/R,'A',0x50/0x51,12 | pcm | WRITEI_FRAMES / READI_FRAMES | |
+| 0x8915 | socket | AF_INET socket | SIOCGIFADDR on `wlan0` (IP display) | dmenu 0x35e8a |
+
+No ioctl is used on `/dev/input` for grabbing (no EVIOCGRAB), on fb0 (mmap only), or on backlight [G].
+
+---
+
+### 7. Config / ini keys
+
+| File | Format | Keys / fields |
+|---|---|---|
+| dmenu_attr.ini | 136-byte binary struct (copy of RAM 0x22f670) [G] | +20 =1 default; **+24 brightness idx** (def 5); **+28 idle-sleep idx** (def 0 → 60 s); +32 =1; **+36 volume** (def 10); **+40 sound enable** (def 1); **+44 language** (def 2); +48 =1; +52, +56, +60(byte), +124, +128 =0; **+132 flags** (def 1; bit0 → workled_sleep, bit4 → os_sleep). Other fields: theme/style/Wi-Fi/BT flags, not individually mapped |
+| localpad.map | 19 × int16 [G] | §1.2 |
+| /mnt/data/misc/.favorite | text, header `Version=1`, lines `%s:%s:%s:%d:%d:%d` (or `nul` in field 3) [D] | path:name:core:ids… |
+| /mnt/data/misc/.history | `%s:%s:%s:%d:%d` [D] | |
+| /mnt/data/misc/.mycore, .setcore | text lists [D] | per-game core association |
+| /mnt/data/.hide | `gamehide=%d` [D] | |
+| /tmp/gameplace.cfg | `start=`, `hight=`, `subdir=`, `parent_index=` [D] | list position |
+| /tmp/gamedir.cfg, /tmp/last_place.{ext,int} | `[myEmu]`/`[retro]` sections, curpos/page/retro [D] | |
+| /mnt/data/.wifi | `S:%s` lines [D] | saved SSIDs |
+| hostapd.conf | `ssid=`, `wpa_passphrase=`, `channel=` (read and edited) [D] | |
+| RetroArch autoconfig `/mnt/vendor/deep/retro/autoconfig/udev/<name>.cfg` | `%s = "%d"` / `%s = "%s"`: `input_driver, input_device, input_vendor_id, input_product_id, input_{b,y,select,start,up,down,left,right,a,x,l,r,l2,r2,l3,r3}_{btn,axis}, input_{l,r}_{x,y}_{plus,minus}_axis`, hat `h%dup/down/left/right` [D] | joystick mapping UI |
+| retroarch.cfg (via setRA.sh) | `user_language`, `audio_device`, `audio_volume`, `menu_show_{latency,overlays,rewind,video_layout}`, `quick_menu_show_{reset_core_association,save_core_overrides,save_game_overrides,set_core_association,shaders}` [D] | |
+| ppsspp.ini (setPSP.sh) | `Language` [D] | |
+| oem/board.ini | `RG34xxSP` | not read by dmenu (no string) |
+| oem/version.ini | `20260526` | firmware version shown in system info |
+| oem/language.ini | `2` | language index: 0 zh-CN, 1 zh-TW, 2 en, 3 ja, 4 ko, 5 es, 6 ru [G from string table at 0x3e52c]; de/fr/pt strings also present (index not mapped) |
+| asound.conf | default PCM = hooks on `hw:audiocodec` forcing LINEOUT/SPK/DAC switches=1, digital volume 63; `playback_hp`; `playback_hdmi` → card `ahubhdmi` [D] | |
+
+---
+
+### 8. CPU / rumble / storage / boot / network scripts
+
+| Script | Args | What it changes [D] | Called by |
+|---|---|---|---|
+| cpu_setting.sh | `full` → `performance`; `powersave` → `powersave`; `user` → `userspace` + setspeed 792000; anything else → `interactive` | cpu0 `scaling_governor` (and setspeed). The DDR DVFS function (debugfs `sunxi_gpu/write`: frequency/voltage 648 MHz/960 mV) exists but its calls are commented out. The comment lists CPU OPPs 480000–1512000 kHz | dmenu: `full` at startup [G 0x127ea], `deflt` (→ interactive) before every launch [G 0x164b0, 0x1a83e]. charg: `powersave` at start/sleep, `full` after resume |
+| moto.sh | start/stop | exports pwmchip0 channel 2, period 20 000 000 ns, duty 12 000 000 ns (60 %), normal polarity, enable/disable | **no caller in the analysed binaries**; dmenu/ports/nds use the `axp2202-battery/moto` attribute instead |
+| mmc_new.sh | add/remove (or $ACTION) | mounts the first of mmcblk2p1/mmcblk2/mmcblk1p1/mmcblk1 on `/mnt/sdcard` by blkid type: vfat / ntfs-3g / exfat with uid/gid 1000, dmask/fmask 000, noatime; lock `/tmp/.mmc_mount`; remove = `umount -l` | loadapp (add), dmenu (add) |
+| mmc.sh | add/remove | older version: vfat, falls back to exfat; no lock | dmenu (remove) |
+| udisk.sh | add/remove | sda1/sda/sdb1/sdb → `/mnt/udisk` vfat or exfat | udev (rule not in extract) |
+| loadapp.sh | — | resize rootfs `mmcblk0p5` once; mount/format data `mmcblk0p7` → `/mnt/data` (ext4, **auto-mkfs if blkid has no TYPE or mount fails**); ROMS `mmcblk0p8` (else p1) → `/mnt/mmc` vfat (**auto-mkfs.vfat** likewise); optional appfs.img over /mnt/vendor; seed RA cfg; charger branch (§2.5); otherwise unmask/restart NetworkManager + bluetooth and unblock rfkill; seed RTC; optional SD key modules; `mmc_new.sh add`; mod autostart; then loops dmenu_ln until `/tmp/stopAPP.ini` exists | /etc/init.d/launcher.sh (per comments) |
+| dmenu_ln | — | picks launcher (`/mnt/mmc/dmenu.bin` overrides; muos1/2 via ini; `/tmp/vpRun.ini` → video player); writes LED cfgs to `work_led`; runs the launcher, then runs `/tmp/.next` with `sh`; if the launcher fails, sleeps 30 s | loadapp |
+| forceOS.sh | rest/shutdwn | sync, 1 s, reboot/poweroff | not referenced by dmenu |
+| setBluetooth.sh | init/enable/all/restart | `rtk_hciattach` on ttyS1 115200 H5 (lock `/tmp/.init_bt`), hci0 up/master/auth, restart bluetooth service | dmenu |
+| setHostapd.sh | enable/disable/ssid/password/channel | static 192.168.1.1 on wlan0, hostapd -B, NetworkManager networking off, edits hostapd.conf | dmenu |
+| setSSH.sh | — | restart ssh | dmenu |
+| ntpd.sh | — | ntpdate cn.pool.ntp.org | no caller found |
+| setMusic.sh | stop | kill mplayer | (not referenced by dmenu strings) |
+| setNDS/setPSP/setRA/setSaturn/setFlycast | various | emulator cfg/launch; start portsCtrl/ndsCtrl (from `/mnt/mmc` if present); HDMI audio env | dmenu |
+
+---
+
+### 9. Strings groups, dependencies, symbols, integrity check
+
+- **NEEDED (dmenu, charg, portsCtrl, ndsCtrl — same list)** [D]: libSDL_image-1.2.so.0, libSDL_ttf-2.0.so.0, libfreetype.so.6, libSDL-1.2.so.0, libSDL_gfx.so.15, libiconv.so.2, libpng12.so.0, libjpeg.so.9, libm.so.6, libz.so.1, libpthread.so.0, libc.so.6; interpreter `/lib/ld-linux-armhf.so.3` (needs armhf multiarch on the rootfs).
+- **Imports, dmenu** [D]: SDL 1.2 (Init, SetVideoMode 1280×720×16 plus 720×480 / 1280×720 surfaces, AddTimer, GetTicks, EventState; **no SDL_PollEvent** — input is raw evdev), TTF, IMG_Load, zoomSurface; libc: system, popen/pclose, fork, execl, kill, waitpid, ioctl, mmap, poll, socket, inet_ntoa, statfs, sysinfo, scandir, pthread_*, libiconv.
+- **Internal function names** (from `__func__` strings; useful as anchors) [D]: set/get_brightness_ioctl, allen_lcd_hdmi_switch, lcd_and_hdmi_init_fb, init_fb_info, enter_sleep_state, read_adc2key_thread, open_adc_bnt_input, readglobalkeypad, Savelocalkeypad, readglobalproperty, writeglobalattr, app_deinit, get_shutd_type, init_device_display, init_my_system, Loop_listend, adjust_ui_type_byTFcard, bluetooth_{init,deinit,scan_thread,Manual_Scan,manual_connect}, wifi_{init,deinit,scan_thread}, nmcli_{connect_ssid,connection_info,scan}, hostap_{readcfg,writecfg,…}, moonlight_{run,pair_pthread_start}, gamelist_{init,run,retro_run,…}, set_retro_emulib, factory_test_draw, testkey_pthread_Sound_brightness, play_sample, tinymixer_{get,set}_value, My_JoystickDetect, HandleInputEvents, SetDevicePlayer, ReadConvertFromFile, SaveConvertToFile. charg: draw_bat_state, handle_powerkey_input. Embedded third-party code: tinyalsa (pcm/mixer), Allwinner "Cdc" ION allocator, sunxi disp2 HWC helper.
+- **Version strings**: §0.
+- **Anti-clone check** [G 0x22d60, called every 500 ms main-loop tick at 0x133ca]: srand(time) → 16 random bytes → combined with a 16-byte constant at .rodata 0x3c0f5 → written as comma-separated decimals to `/sys/class/deeplayer/deeplayer/debug_reg` → 16 values read back and compared with a locally computed expectation. On mismatch it loops forever on `system("reboot")` and prints "deeplay encryption fail". The key and transform are deliberately not reproduced here. **Consequence: stock `dmenu.bin` needs the vendor `deeplayer` kernel driver.**
+- Script/ini SHA-256: cpu_setting.sh 7c4f18fa…dee8; dmenu_ln ea880986…c1c7; forceOS.sh 806a1dfd…b719; loadapp.sh 06c8e574…d4b3; mmc.sh 94891469…60e3; mmc_new.sh 460d2139…4317; moto.sh a87f440b…89e7; ntpd.sh 1e6de7cf…7a41; pwr_new.sh dd3619ac…f0e7; setBluetooth.sh 445f21af…8b80; setFlycast.sh d25617a5…1502; setHostapd.sh c9a5cde5…c707; setMusic.sh 985ad06f…2a56; setNDS.sh c0ecea10…e253; setPSP.sh a4a613a3…7b35; setRA.sh 221a5e70…02629f1; setSSH.sh 6286b36b…065d; setSaturn.sh 633d241b…7eda; udisk.sh e0f3e340…ceec; board.ini 7dda8603…3c37697a; language.ini d4735e3a…ab35; version.ini cfccffd6…d9d9 (full hashes can be regenerated with `sha256sum` on the extract).
+
+#### Not determined (stated plainly)
+- Physical labels of codes 306–316 (only the dingux-convention inference above).
+- ALSA control names for card-0 ids 1, 2, 3, 4, 5, 8 (only numeric ids are used).
+- Meaning of AXP2202 reg 0x18 ← 0x01 ("Fast Shutdown"), and of `nds_pwrkey`, `os_sleep`, `workled_sleep`, `spk_state` values.
+- Which UI page a lone MENU tap opens (state 20).
+- What `/etc/init.d/launcher.sh` adds (file not extracted). RetroArch in-game hotkeys (ANBERNIC-keys.cfg not extracted).
+- Whether the kernel enables wake sources, or what `mem` maps to (mem_sleep is never written).
+
+---
+
+### Optional device checks (stock unit, read-only except where noted)
+
+1. `cat /proc/bus/input/devices` and `evtest` on the `ANBERNIC-keys` node and on event0 → confirm the physical button ↔ code map (§1.2) and whether the lid really sends KEY 110/111.
+2. `for f in hallkey brightness openbor_volume nds_esckey nds_pwrkey os_sleep workled_sleep spk_state boot_mode display_id; do echo $f=$(cat /sys/class/power_supply/axp2202-battery/$f); done`, then repeat with the lid closed, a game running, and the charger attached.
+3. `tinymix -D 0` (or `amixer -c 0 controls; amixer -c 0 contents`) → name the control ids 1/2/3/4/5/8 and their ranges (expect 63 and 31 maxima). `cat /proc/asound/cards`: is card 2 the HDMI card?
+4. `cat /sys/power/state /sys/power/mem_sleep`; `ls /sys/class/switch /sys/class/extcon`; `cat /sys/class/power_supply/axp2202-battery/voltage_now capacity status`.
+5. `ls -l /sys/class/deeplayer/deeplayer/` and `lsmod`/`dmesg | grep -i deeplay` → confirm the anti-clone driver exists and which module provides it (do not write to it).
+6. `hexdump -C /mnt/data/dmenu/dmenu_attr.ini` before and after changing brightness/volume/sleep timer in the UI → confirm offsets +24/+28/+36/+44/+132.
+7. `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor` in the launcher and inside a game → expect performance vs interactive.
+
+### What a replacement launcher / custom firmware must keep or stop doing
+
+**Keep (or provide an equivalent):**
+- A suspend path that works with the lid: either poll `axp2202-battery/hallkey` or handle KEY 110/111 on event0. Skip lid-sleep while HDMI is connected. Use a ≥100 ms power-key debounce, short press = suspend, 2 s hold = clean poweroff (`sync` first).
+- A low-battery shutdown (stock: capacity 0 and ≤3420 mV for about 20 s while not charging). Use `status`/`usb online` for charging detection.
+- Charger-mode handling when `boot_mode`=1 (keep radios off, show charge state, power off when USB is removed, power key → reboot into the OS).
+- Brightness control. On a stock/BSP kernel it goes through `/dev/disp` 0x102/0x103 with a non-linear table and a minimum of 5 (avoid 0 = black). On mainline it would use the backlight class instead; the stock launcher never touches `/sys/class/backlight`.
+- Headphone-jack speaker muting and HDMI audio routing (card 2 / `hw:2,0`). Restore the hardware mixer to sane maxima (ctl #1 63, ctl #2 31) or use one consistent volume mechanism.
+- Global hotkeys while games run: volume/brightness on VOL± / MENU+VOL±. Stock does this through separate daemons gated by `nds_esckey`.
+- Check whether a standalone mixer `sw` or `openbor_volume` state is expected by kept vendor emulators/scripts.
+
+**Stop / do not copy:**
+- The `deeplayer` challenge–response and its reboot loop (vendor DRM). A custom kernel without that driver would make stock dmenu reboot endlessly. That is another reason not to run stock dmenu on a custom kernel.
+- The silent auto-format of data/ROM partitions in `loadapp.sh` (mkfs when blkid shows no TYPE or a mount fails). This risks data loss on a transient mount error.
+- Using vendor `axp2202-battery/*` attributes (`brightness`, `openbor_volume`, `nds_esckey`) as IPC storage. Use a userspace state file instead.
+- The raw AXP register poke `echo 0x1801 > /sys/class/axp/axp_reg` and `reboot efex` triggered by a file on the SD card.
+- `cpu_setting.sh full` (performance governor) for the whole launcher session. Prefer schedutil/ondemand with a cap.
+- Hard-coded `/dev/input/event0` (enumeration order can change). Match by device name or capabilities, as the stock code already does for `ANBERNIC-keys`.
+- The `rtcwake … mem -s 1` hack after HDMI→LCD switching, unless a device test shows the display needs it.
+- Running every UI/helper as root through `system()` string templates (shell injection risk from file names in `cd "%s"`, `rm -rf "%s"`, nmcli SSIDs).
+
+---
+
+## W3.6. Stock daemons, boot scripts and `/etc`
+
+*Drafted by a DR worker agent from the extracts; DR re-checked `loadapp.sh`'s format conditions and the enabled units. Security findings held privately (Dale).*
+
+**Summary (5 lines)**
+1. Init is systemd. The stock app chain is a SysV script: `/etc/init.d/launcher.sh` (S50 only in `rc5.d`, so its generated unit is pulled in by graphical.target). It runs `resize2fs` on `/dev/mmcblk0p6` at every boot, mounts p6 ext4 at `/mnt/vendor`, then backgrounds `loadapp.sh` → endless `dmenu_ln`/`dmenu.bin` loop, all as root with `HOME=/`.
+2. **[D][N]** `loadapp.sh` does all the "system" work at every boot: one-time `resize2fs /dev/mmcblk0p5`, mounts p7 ext4 at `/mnt/data` and p1 (or p8) FAT at `/mnt/mmc`, and **runs `mkfs.ext4`/`mkfs.vfat` on those partitions if blkid finds no filesystem or the mount fails**; it also unmasks and restarts NetworkManager and bluetooth (bluetooth isn't enabled otherwise), or runs the charger UI `charg.dge` when `axp2202-battery/boot_mode`=1.
+3. Enabled at boot: NetworkManager, wpa_supplicant, systemd-resolved, rsyslog, cron, apparmor and the stock timers; hostapd, Bluetooth and timesyncd are not enabled. *Security findings held privately (Dale).*
+4. `logind.conf` sets `HandlePowerKey=ignore` (power key and suspend are owned by the launcher → `pwr_new.sh` → `mem`); `sleep.conf` is all defaults; journald `Storage=none`; `/etc/udev/rules.d` and `hwdb.d` are empty; `modprobe.d` holds only stock Ubuntu blacklists, with no module options.
+5. Kernel 4.9.170: `rc.local` insmods `8821cs.ko` and `/lib/modules/mali_kbase.ko`, and `modules-load.d` → `/etc/modules` loads `rtl_btlpm`; Bluetooth comes up through `rtk_hciattach ttyS1 rtk_h5 115200`. `fstab` is empty; ALSA default is `hw:audiocodec` with the speaker and line-out switches locked on and `digital volume` at 63. Build stamp: `RG34xxSP` / `20260526`.
+
+Tags: **[D]** = from files, strings or the listing; **[G]** = from disassembly (none used here); **[I]** = inference from [D] facts. Nothing is device-verified.
+
+**Inputs:** `rootfs/etc` (top-level files) plus `etc2/` (subdirectories: `systemd`, `init.d`, `rc?.d`, `ssh`, `udev`, `modprobe.d`, `modules-load.d`, `NetworkManager`, `bluetooth`, `hostapd`, `profile.d`, `network`, `wpa_supplicant`, `sudoers.d`, `security`, `default`), `rootfs-listing.txt`, `appfs/{ctrl,oem,bin}`. **Still not available:** `/lib/udev/rules.d`, `/etc/ufw/*` (`ufw.conf` ENABLED flag and the rules), `/etc/alsa`, `/var/lib/alsa/asound.state`, `/usr/lib/os-release`, the `cron.*` dirs, `/root` dotfiles, the `/mnt/mod` contents, and the original file modes in /etc (the extract normalised them to 0700 and uid 1016; `rc.local`'s executable bit is therefore unknown). The `default.target` link target is not shown either; it is inferred to be graphical.target (see §1).
+
+---
+
+### 1. Boot sequence
+
+#### 1a. Enabled units (`/etc/systemd/system/*.wants`) [D]
+
+| Target | Enabled units |
+|---|---|
+| sysinit.target | `apparmor.service`, `systemd-pstore.service` |
+| sockets.target | `uuidd.socket` |
+| network-online.target | `NetworkManager-wait-online.service` |
+| multi-user.target | `NetworkManager`, `wpa_supplicant`, `systemd-resolved`, `networkd-dispatcher`, `rsyslog`, `cron`, `dmesg`, `e2scrub_reap`, `remote-fs.target`  *Security findings held privately (Dale).* |
+| getty.target | `getty@tty1.service` (no autologin drop-in exists). A `serial-getty@ttyS0` is also created automatically by systemd-getty-generator from `console=ttyS0` [I] |
+| timers.target | `dpkg-db-backup`, `e2scrub_all`, `fstrim`, `logrotate`, `man-db`, `motd-news` |
+| Aliases | `syslog.service`→rsyslog, `dbus-fi.w1.wpa_supplicant1`→wpa_supplicant, `dbus-org.freedesktop.nm-dispatcher`→NM-dispatcher, `dbus-org.freedesktop.resolve1`→resolved |
+| Masked | `sudo.service` → `/dev/null` (stock Ubuntu) |
+| `/etc/systemd/system/rc-local.service` | A local copy of the unit, dated 13-Jun-2024: `ConditionFileIsExecutable=/etc/rc.local`, `After=network.target`, `Type=forking`, `ExecStart=/etc/rc.local start`, `RemainAfterExit=yes`, `TimeoutSec=0`, `[Install] WantedBy=multi-user.target`. It has **no wants link**, so it runs only through systemd-rc-local-generator, if `rc.local` is executable |
+| **Not enabled** | `bluetooth` (started by `loadapp.sh`), `hostapd` (started by `setHostapd.sh`), `systemd-timesyncd` (so nothing syncs time over the network), `systemd-networkd`, `ModemManager`, `snapd*`, `upower`, `apt-daily*` |
+| User units (desktop leftovers, unused because there is no user session) | `tracker-extract-3`, `tracker-miner-fs-3`, IBus GNOME, `session-migration`, `gpg-agent*` and `dirmngr` sockets |
+
+#### 1b. SysV links (`/etc/rc?.d`) [D]
+
+| Runlevel | Links |
+|---|---|
+| rcS | S01 `alsa-utils`, `apparmor`, `kmod`, `procps`, `udev`, `x11-common` |
+| rc2, rc3 | S01 `cron`, `dbus`, `uuidd`; K01 `hostapd`; **K50 `launcher`** |
+| rc5 | S01 `cron`, `dbus`, `uuidd`; K01 `hostapd`; **S50 `launcher`** |
+| rc0, rc6 | K01 `alsa-utils`, `hostapd`, `udev`, `uuidd`; K50 `launcher` |
+| rc1 | K01 `alsa-utils`, `hostapd`, `uuidd`; K50 `launcher` |
+| rc4 | directory not present |
+
+Every script except `launcher.sh` has a native unit, so systemd ignores its rc links. `launcher.sh` has **no LSB header** and **no native unit**, so systemd-sysv-generator creates `launcher.service`. Runlevel 5 maps to graphical.target, so it is pulled in only by graphical.target, and the shipped launcher works only if `default.target` is graphical.target (the Ubuntu default) [I]. Without LSB headers the generator gives it no ordering beyond the default dependencies, so its start can race NetworkManager and `rc.local` [I].
+
+#### 1c. Start order (where determinable)
+
+| # | Stage | What runs | User | Restart policy | Evidence |
+|---|---|---|---|---|---|
+| 0 | Kernel cmdline | `root=/dev/mmcblk0p5 rootwait quiet splash init=/init cma=64M selinux=0 console=ttyS0,115200 loglevel=4 gpt=1` (the mmc variant `setargs_mmc`) | — | — | [D] `/home/claude/re/env.txt` (outside the W3.6 inputs; context only) |
+| 1 | PID 1 | `/init` → link, length 10; `/usr/sbin/init` → link, length 20; together consistent with `/sbin/init` → `/lib/systemd/systemd` | root | — | [D]/[I] |
+| 2 | sysinit | udev (no local rules), `systemd-modules-load` (`modules-load.d/modules.conf` → `../modules` → `rtl_btlpm`), apparmor, pstore, alsa-restore | root | per unit | [D] |
+| 3 | multi-user | units in §1a; `rc-local.service` (after network.target) → the two `insmod`s | root | rc-local: oneshot-like, forking, RemainAfterExit | [D] |
+| 4 | graphical | generated `launcher.service` → `launcher.sh start` | root, no HOME set (scripts use `/.config`) | Generated SysV unit: Type=forking, RemainAfterExit=yes, KillMode=process [I]; no restart. `loadapp.sh` is backgrounded with `{ … }&`, so it survives the unit's start process | [D]/[I] |
+| 5 | `launcher.sh start` | (a) runs `resize2fs /dev/mmcblk0p6` on **every boot**, even with the partition unmounted: it checks for `/etc/vendor_resize.cfg`, but the line that would create that flag is commented out; (b) prints "Starting deeplay_launcher"; (c) `mount -t ext4 -o rw,noatime,nodiratime /dev/mmcblk0p6 /mnt/vendor`; (d) backgrounds `/mnt/vendor/bin/brightCtrl.bin` and `/mnt/vendor/bin/cexpert` if they exist (neither is in the supplied `appfs/bin`); (e) backgrounds `/mnt/vendor/ctrl/loadapp.sh` | root | — | [D] |
+| 6 | `loadapp.sh` | resize p5 → mount data → mount Roms → appfs.img overlay → retroarch cfg → charge-mode branch or radio enable → RTC → optional key modules → `mmc_new.sh add` → `/mnt/mod/ctrl/autostart` → debug hold → launcher loop (§2) | root | its own `while` loop | [D] |
+| 7 | Launcher loop | `while [ -f /mnt/vendor/ctrl/dmenu_ln ]`: runs `dmenu_ln`; leaves the loop when `/tmp/stopAPP.ini` exists | root | the loop restarts it forever | [D] |
+| 8 | `dmenu_ln` | Picks `/mnt/vendor/bin/dmenu.bin`; replaced by `/mnt/mmc/dmenu.bin` if present, by `muos{1,2}.bin` if `/mnt/vendor/muos{1,2}.ini` exists, or by `bin/video/vp.dge` if `/tmp/vpRun.ini` exists. Writes the LED cfgs. When the binary exits 0 and `/tmp/.next` exists, runs `sh /tmp/.next`; a non-zero exit sleeps 30 s. `debug.ini` on `/mnt/data` or `/mnt/sdcard` sends output to `/dev/console` | root | via the loop | [D] |
+| 9 | Shutdown (`launcher.sh stop`, K50 in rc0/rc6) | `killall retroarch`, `rtk_hciattach`, `loadapp.sh`; SIGUSR1 to `dmenu.bin` and `muos.bin`; SIGINT to `charg.dge` and `ndsCtrl.dge`; `sync` | root | — | [D] |
+| — | `hwclock.sh` | Exits at once under systemd; its stop action would write system time to rtc0 | — | — | [D] |
+| — | cron | `/etc/crontab` is stock (hourly :17, daily 06:25, weekly Sun 06:47, monthly 1st 06:52) | root | — | [D] |
+| — | profile | `/etc/profile` adds `LD_LIBRARY_PATH=/usr/lib32:/usr/lib:/mnt/vendor/lib`. `profile.d` holds only stock files: `01-locale-fix.sh`, `apps-bin-path.sh` (snap), `gawk`, `vte`, `im-config_wayland.sh`. No autostart | — | — | [D] |
+
+### 2. Stock-specific scripts: what they change and when
+
+All of these run as root. "Caller" comes from `strings` of the appfs binaries [D].
+
+| Script | Caller / when | Writes or changes | Notes |
+|---|---|---|---|
+| `launcher.sh` | boot (graphical.target) | `resize2fs /dev/mmcblk0p6` on every boot; mounts p6 at `/mnt/vendor`; starts `brightCtrl.bin`, `cexpert`, `loadapp.sh` | The flag `/etc/vendor_resize.cfg` is checked but never created |
+| `loadapp.sh` `RESIZE_ROOT_CMD` | boot | If `/etc/allen_resize.cfg` is missing: touches it, then `resize2fs /dev/mmcblk0p5` (online grow of the root fs) | Writes a flag file into **/etc** |
+| `loadapp.sh` `FORMAT_DATA_CMD` | boot | If `/dev/mmcblk0p7` exists: creates `/mnt/data`; no blkid TYPE → **`mkfs.ext4`**; mounts ext4 `rw,noatime,nodiratime`; if it is still not in `/proc/mounts` → **mkfs.ext4 again** and mounts | Destructive on mount failure |
+| `loadapp.sh` `FORMAT_ROMS_CMD` | boot | Device is `/dev/mmcblk0p1`, or `/dev/mmcblk0p8` if p8 exists. No TYPE → **`mkfs.vfat`**; mount vfat `rw,utf8,dmask=000,fmask=000,noatime,nodiratime` at `/mnt/mmc`; mount failure → **mkfs.vfat** and mount | Destructive on mount failure |
+| `loadapp.sh` | boot | If `/mnt/mmc/appfs.img` exists → loop-mounts it on `/mnt/vendor` (on top of p6) | Root code taken from the FAT partition |
+| `loadapp.sh` `check_retroarch_cfg` | boot | Creates `/.config/retroarch/` and copies `/mnt/vendor/deep/retro/retroarch.cfg` there if missing | — |
+| `loadapp.sh` (`check_swap_device`, disabled) | — | Would `mkswap`+`swapon /dev/mmcblk0p7`, which conflicts with p7 being `/mnt/data` | Dead code |
+| `loadapp.sh` charge branch | `axp2202-battery/boot_mode` = 1 | `rfkill block bluetooth` + stop + **mask** `bluetooth.service`; `rfkill block wifi` + stop + **mask** `NetworkManager.service`; runs `charg.dge`, then `sleep 5; poweroff` | Masks persist until the next normal boot |
+| `loadapp.sh` normal branch | every normal boot | `unmask` + `restart` NetworkManager, `rfkill unblock wifi`; `unmask` + `restart` bluetooth, `rfkill unblock bluetooth` | This is the only thing that starts bluetooth |
+| `loadapp.sh` RTC | boot | If `/sys/class/rtc/rtc0/date` is empty: `date -s <today>`, `hwclock -w` | — |
+| `loadapp.sh` key modules | boot | If `/mnt/mmc/gpio_keys_polled.ko` exists: `insmod` `gpio_keys_gpadc.ko` and `gpio_keys_polled.ko` from `/mnt/mmc` | Kernel modules loaded from FAT |
+| `loadapp.sh` | boot | `/mnt/vendor/ctrl/mmc_new.sh add`, then `/mnt/mod/ctrl/autostart` if present | Third-party "mod" hook |
+| `loadapp.sh` debug hold | boot | While `/mnt/data/xudebug.ini` exists: sleep 30 s in a loop (the launcher never starts) | — |
+| `dmenu_ln` | each launcher start | `/mnt/mod/ctrl/configs/led_exit.cfg`, then `led_launch.cfg` → `/sys/class/power_supply/axp2202-battery/work_led` | AXP vendor sysfs |
+| `mmc_new.sh add/remove` | `loadapp.sh`; dmenu (`... add`); comment says `cexpert` calls it | Second card (`mmcblk1p1` › `mmcblk1` › `mmcblk2p1` › `mmcblk2`); lock `/tmp/.mmc_mount`; by blkid type: vfat / `/bin/ntfs-3g` / exfat, `uid=1000,gid=1000,dmask=000,fmask=000,noatime,utf8` at `/mnt/sdcard`; remove → `umount -l` | `ntfs-3g` is not in the rootfs listing |
+| `mmc.sh add/remove` | dmenu (`mmc.sh remove`); also reads udev-style `$ACTION`, but no rule in `/etc/udev/rules.d` calls it (`/lib/udev/rules.d` not supplied) | vfat, falling back to exfat, `rw,utf8,noatime` at `/mnt/sdcard`; remove → `umount -l` | Hot-plug is probably polled by dmenu or cexpert [I] |
+| `udisk.sh add/remove` | no caller found in /etc or the supplied binaries | `sd[ab]1`/`sd[ab]` → vfat, falling back to exfat, at `/mnt/udisk` | — |
+| `pwr_new.sh [arg]` | dmenu.bin, charg.dge | Delegates to `/mnt/mod/ctrl/pwr_new.sh` if present; else lock `/tmp/.power_key` (mode 777), `mem` → `/sys/power/state`, remove the lock after 0.3 s | logind ignores the power key (§7) |
+| `cpu_setting.sh {full,powersave,user,*}` | dmenu.bin, charg.dge | cpu0 `scaling_governor`: `performance` / `powersave` / `userspace` + `scaling_setspeed`=792000 / default `interactive`. DDR DVFS through `/sys/kernel/debug/sunxi_gpu/write` is commented out | OPPs in a comment: 480–1512 MHz; DDR 648@960 mV … 420@900 mV |
+| `moto.sh start/stop` | not referenced | `pwmchip0` `pwm2`: period 20 ms (50 Hz), duty 12 ms (60 %), polarity normal | The binaries use `axp2202-battery/moto` instead |
+| `forceOS.sh rest/shutdwn` | not found | `sync; sleep 1; reboot` or `poweroff` (commented: AXP reg writes `0x270a`/`0x2709`) | — |
+| `ntpd.sh` | not found | `ntpdate cn.pool.ntp.org` | `ntpdate` absent; timesyncd not enabled |
+| `setSSH.sh` | dmenu.bin | `systemctl restart ssh` | — |
+| `setBluetooth.sh init/enable/all/restart` | dmenu.bin | Lock `/tmp/.init_bt`; `rtk_hciattach -n -s 115200 ttyS1 rtk_h5 &`; `hciconfig hci0 up`, `lm master`, `auth`; `restart` = stop/start `bluetooth` | — |
+| `setHostapd.sh enable/disable/ssid/password/channel` | dmenu.bin | disable: `kill -9` hostapd, `nmcli networking off`. enable: `ifconfig wlan0 192.168.1.1 up`, `hostapd -B /etc/hostapd/hostapd.conf`. The other actions `sed -i` the ssid, passphrase or channel line in that file | DHCP for clients: held privately (Dale). The `ssid` pattern also matches `ignore_broadcast_ssid` |
+| `setMusic.sh stop` | not found | `kill -9` mplayer (absent) | — |
+| `setNDS.sh run/savedir/stop/recover` | dmenu.bin; ndsCtrl.dge | Runs `/mnt/mmc/ndsCtrl.dge` (FAT override), or `/mnt/mod/ctrl/ndscheat` + the vendor `ndsCtrl.dge`; then `drastic`. Re-links `savestates`/`backup` under `/mnt/vendor/deep/drastic` to `/mnt/{mmc,sdcard}/save_nds/*`; `recover` copies `drastic-back.cfg` → `drastic.cfg` | Writes into p6 |
+| `setPSP.sh language/recover` | dmenu.bin | `sed` of `Language` in `deep/ppsspp/PSP/SYSTEM/ppsspp.ini`; copies `BACK/*` → `SYSTEM` | — |
+| `setRA.sh run/rest/language/snd_card/volume/easy/adv` | dmenu.bin | `/.config/retroarch/retroarch.cfg` (copy and `sed` of `user_language`, `audio_device`, `audio_volume`, menu toggles); `rest` copies `ANBERNIC-keys.cfg` into `autoconfig/udev`; `language` also calls `/mnt/mod/ctrl/sw` | — |
+| `setFlycast.sh <rom>` | dmenu.bin | HOME = `/mnt/{sdcard,mmc}/save_flycast`; seeds `emu.cfg` from `/emuelec/flycast`; starts `portsCtrl.dge` (FAT override first); `AUDIODEV=hw:2,0` when `axp2202-battery/display_id`=1 | **Bug**: that branch runs the undefined `$YA_BIN` |
+| `setSaturn.sh HLE/BIOS <rom>` | dmenu.bin | `/emuelec/saturn/yabasanshiro -r 3 -i <rom> [-b …/saturn_bios.bin]`; `AUDIODEV=hw:2,0` when `display_id`=1 | — |
+
+Other hardware writes seen only in `dmenu.bin` strings (the launcher is out of scope) [D]: `echo 0x1801 > /sys/class/axp/axp_reg`, `echo 3 > /proc/sys/vm/drop_caches`, `hwclock -lw [-f /dev/rtc0|/dev/rtc1]`, `reboot efex` (FEL), and `axp2202-battery/{brightness,moto,os_sleep,workled_sleep,led_test,spk_state,otg_id,hallkey,nds_pwrkey,nds_esckey,openbor_volume}`.
+
+### 3. Mounts
+
+| Source | Mount point | FS / options | By |
+|---|---|---|---|
+| `/dev/mmcblk0p5` | `/` | ext4; `fstab` is only the "UNCONFIGURED FSTAB" comment, so there is no remount option | kernel `root=` [D] |
+| `/dev/mmcblk0p6` (appfs) | `/mnt/vendor` | ext4 `rw,noatime,nodiratime`; resize2fs attempted every boot before the mount | `launcher.sh` [D] |
+| `/mnt/mmc/appfs.img` (loop) | `/mnt/vendor` (on top of p6) | default | `loadapp.sh` [D] |
+| `/dev/mmcblk0p7` | `/mnt/data` | ext4 `rw,noatime,nodiratime`; mkfs.ext4 if missing | `loadapp.sh` [D] |
+| `/dev/mmcblk0p1`, or `p8` if present | `/mnt/mmc` (Roms) | vfat `rw,utf8,dmask=000,fmask=000,noatime,nodiratime`; mkfs.vfat if missing | `loadapp.sh` [D] |
+| `mmcblk1p1`/`mmcblk1`/`mmcblk2p1`/`mmcblk2` | `/mnt/sdcard` | vfat / ntfs-3g / exfat, `uid=1000,gid=1000,dmask=000,fmask=000` | `mmc_new.sh` (`mmc.sh`: vfat→exfat) [D] |
+| `sd[ab]1`/`sd[ab]` | `/mnt/udisk` | vfat→exfat | `udisk.sh` [D] |
+| — | `/mnt/mod` | plain directory on rootfs (uid 1000) | [D] |
+| swap | none | — | [D] |
+
+No UUIDs or labels are used anywhere; everything goes by the fixed `/dev/mmcblkXpN` name [D].
+
+### 4. Kernel modules and firmware
+
+| Item | Value | Evidence |
+|---|---|---|
+| Kernel | 4.9.170 | [D] |
+| Wi-Fi | `rc.local`: `insmod /lib/modules/4.9.170/kernel/drivers/net/wireless/rtl8821cs/8821cs.ko`, no parameters | [D] |
+| GPU | `rc.local`: `insmod /lib/modules/mali_kbase.ko` | [D] |
+| Boot-loaded | `modules-load.d/modules.conf` → `../modules` → `rtl_btlpm` | [D] |
+| Optional | `gpio_keys_gpadc.ko`, `gpio_keys_polled.ko` from `/mnt/mmc` | [D] |
+| `modprobe.d` | Only stock Ubuntu files: `blacklist.conf`, `blacklist-ath_pci`, `blacklist-firewire`, `blacklist-framebuffer`, `blacklist-rare-network` (`net-pf-*` off), `iwlwifi.conf` (remove hook). **No `options` lines, nothing for any sunxi, Realtek or mali module** | [D] |
+| initramfs-tools | `MODULES=most`, `COMPRESS=zstd`, `RUNSIZE=10%`, empty `modules` | [D] |
+| Firmware paths | None named in /etc or the scripts; BT patch loading is inside `rtk_hciattach` (path not verified) | [I] |
+| BT transport | `rtk_hciattach -n -s 115200 ttyS1 rtk_h5` | [D] |
+
+### 5. Network, SSH, time, hostname
+
+| Area | Fact | Evidence |
+|---|---|---|
+| Hostname | `ANBERNIC`; `/etc/hosts` has no `127.0.1.1` line | [D] |
+| NetworkManager | `plugins=ifupdown,keyfile`, `[ifupdown] managed=false`, `wifi.scan-rand-mac-address=no`; conf.d `wifi.powersave = 3` (enabled); `system-connections/` **empty** (no Wi-Fi credentials shipped); `dispatcher.d/01-ifupdown` stock; `dnsmasq.d` and `dnsmasq-shared.d` empty. dmenu drives it through `nmcli` | [D] |
+| `/etc/network` | Only the stock `if-*.d` hooks (wpasupplicant, hostapd, wireless-tools, ethtool); no `interfaces` file in the extract | [D] |
+| wpa_supplicant | Unit enabled (D-Bus backend for NM); `/etc/wpa_supplicant` holds only stock ifupdown helper scripts, no `.conf` | [D] |
+| Bluetooth | `main.conf`: only `[Policy] AutoEnable=true` set; `input.conf` and `network.conf` all defaults. Service not enabled; `loadapp.sh` starts it. BlueZ tools and `bluealsa` rebuilt in June 2024 | [D] |
+| DNS | `systemd-resolved` enabled, `resolved.conf` all defaults; `resolv.conf` → stub | [D] |
+| Time | `timesyncd.conf` defaults, but **timesyncd is not enabled**; `ntpdate` absent; time comes from the RTC (`loadapp`) and dmenu `date -s`/`hwclock -lw` | [D] |
+| networkd | `networkd-dispatcher` enabled (`--run-startup-triggers`) although `systemd-networkd` is not; `/etc/systemd/network` empty | [D] |
+| Locale | `/etc/default/locale`: `LANG=zh_CN.UTF-8`, `LANGUAGE=zh_CN:zh`, but `locale.gen` generates nothing (`01-locale-fix.sh` falls back to C.UTF-8 in login shells); `/etc/default/im-config` prefers fcitx5 for zh | [D] |
+
+### 6. Users, groups, sudo, autologin
+
+| Account | uid:gid | Shell | Home |
+|---|---|---|---|
+| root | 0:0 | `/bin/bash` | `/root` (dir mode 0777) |
+| sync | 4:65534 | `/bin/sync` | /bin |
+| daemon, bin, sys, games, man, lp, mail, news, uucp, proxy, www-data, backup, list, irc, gnats, nobody, _apt, messagebus, systemd-network/-resolve/-timesync, syslog, dnsmasq, sshd, uuidd, usbmux | system | `nologin` | various |
+
+- There is no uid ≥ 1000 account, but `/emuelec`, `/roms` and `/mnt/*` are owned by uid 1000 and the sdcard mounts use uid/gid 1000, so a user was probably removed at build time [I]. `/home` is empty. `/etc/default/useradd` `SHELL=/bin/sh` [D].
+- `sudoers` is stock; `sudoers.d` holds only the README; `sudo.service` is masked (stock). [D].
+- `/etc/security/*` is all stock defaults (`capability.conf` `none *`; `limits.d` and `namespace.d` empty; `opasswd` empty) [D].
+- Autologin: **none** (no getty drop-ins). Console logins: `getty@tty1` plus the generated serial getty on `ttyS0` [I]. **The launcher runs as root from `launcher.service`**, not from a login session [D/I].
+
+### 7. udev, input, power key, sleep
+
+| Item | Finding |
+|---|---|
+| `/etc/udev/rules.d` | **Empty.** `udev.conf` holds only defaults, `hwdb.d` is empty. `/lib/udev/rules.d` is not in the inputs, so package rules can't be checked; no stock-specific rule exists in /etc. The `$ACTION` handling in `mmc.sh`/`udisk.sh` is therefore unused or only reachable from rules under /lib [D]/[I] |
+| Input devices | Apps open `/dev/input/event0`, `/dev/input/event1` and scan `/dev/input/*` and `/sys/class/input`; pad map `/mnt/data/dmenu/localpad.map`; RetroArch `autoconfig/udev/ANBERNIC-keys.cfg` [D] |
+| `logind.conf` | Only `HandlePowerKey=ignore` is set. Everything else is the systemd 249 default: `HandleLidSwitch=suspend`, `HandleSuspendKey=suspend`, `IdleAction=ignore`. Whether the AXP hall sensor appears as an input `SW_LID` (which would make logind suspend too) is unknown [D]/[I] |
+| `sleep.conf` | All defaults (`[Sleep]` only), so `systemctl suspend` uses `mem`/`deep` defaults [D] |
+| Power key path | dmenu or charg.dge → `pwr_new.sh` → `echo mem > /sys/power/state`; lid sleep through `axp2202-battery/hallkey` ("hall to sleep" string) [D] |
+| journald | `Storage=none`, `SystemMaxUse=64M`, `ForwardToSyslog=no`: no journal is kept. rsyslog is enabled but gets only kernel messages (imklog) [I]. `dmesg.service` writes `/var/log/dmesg` [D] |
+
+### 8. Audio, display, environment
+
+| Item | Value |
+|---|---|
+| `asound.conf` `pcm.!default` | `type hooks` over `hw:audiocodec`; `ctl_elems` with `preserve true`, `lock true`: `LINEOUT Switch`=1, `SPK Switch`=1, `OutputL Mixer DACL Switch`=1, `OutputR Mixer DACR Switch`=1, `digital volume`=63 |
+| `pcm.playback_hp` | Same without `SPK Switch` |
+| `pcm.playback_hdmi` | `type hw`, `card ahubhdmi` |
+| Cards | `audiocodec`, `ahubhdmi`; the HDMI path uses `AUDIODEV=hw:2,0` (card 2 [I]); jack state from `/sys/module/snd_soc_sunxi_component_jack/parameters/jack_state` |
+| ALSA state | `alsa-utils` (rcS S01) and `alsa-restore` are present; the state file is not in the inputs |
+| Display | No X server or display manager; apps use `/dev/disp`, `/dev/fb0`, `/dev/ion`; HDMI state from `extcon/hdmi/state` or `switch/hdmi/state`; `axp2202-battery/display_id`. `x11-common` (rcS) is a leftover |
+| `vdpau_wrapper.cfg` | `enable_flash_uv_swap=1`, `disable_flash_pq_bg_color=1` (stock libvdpau) |
+| `/etc/environment` | Stock PATH **plus `/mnt/vendor/bin`** |
+| `/etc/profile` | Appends `export LD_LIBRARY_PATH=/usr/lib32:/usr/lib:/mnt/vendor/lib` |
+| Userland ABI | Appfs binaries are ELF32 ARM EABI5 hard-float (`ld-linux-armhf.so.3`) on an arm64 rootfs |
+
+### 9. Security-relevant facts (stated, not judged)
+
+*Security findings held privately (Dale).*
+
+### 10. Version and build identification
+
+| Source | Value |
+|---|---|
+| `/etc/os-release` | link → `../usr/lib/os-release` (target not supplied) |
+| `/etc/lsb-release` | `DISTRIB_ID=Ubuntu`, `DISTRIB_RELEASE=22.04`, `DISTRIB_CODENAME=jammy`, `DISTRIB_DESCRIPTION="Ubuntu 22.04 LTS"` |
+| `issue`, `issue.net` | `Ubuntu 22.04 LTS` |
+| `debian_version` | `bookworm/sid` |
+| `appfs/oem/board.ini` | `RG34xxSP` |
+| `appfs/oem/version.ini` | `20260526` |
+| `appfs/oem/language.ini` | `2` |
+| File dates | rootfs base 2022-04/05; vendor additions 2024-04…2024-12; `launcher.sh` and `charg.dge` 2025-12-05; `dmenu.bin` 2026-05-26 |
+| Kernel | 4.9.170 |
+| "deeplay_launcher" | the stock launcher's name (from the `launcher.sh` message) |
+
+---
+
+### Optional device checks (stock unit, read-only; run as root over the serial console)
+
+```sh
+systemctl get-default; systemctl status launcher.service; systemctl cat launcher.service
+systemctl list-units --type=service --state=running
+ls /lib/udev/rules.d | grep -viE '^[0-9]{2}-(systemd|udev|dm|lvm)'; udevadm monitor -k -u   # then insert a card
+cat /proc/bus/input/devices | grep -A4 -iE 'lid|hall|power|gpio'   # is there an SW_LID that logind would act on?
+findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS; lsblk -o NAME,SIZE,FSTYPE,LABEL
+lsmod; cat /proc/cmdline; cat /proc/asound/cards
+ls -l /etc/rc.local /mnt/vendor/bin/brightCtrl.bin /mnt/vendor/bin/cexpert; ls /mnt/mod/ctrl
+cat /usr/lib/os-release
+```
+
+### What a replacement firmware or installer must keep, stop or watch for
+
+| Item | Action | Why |
+|---|---|---|
+| `loadapp.sh` format-on-mount-fail (p7 → mkfs.ext4, p1/p8 → mkfs.vfat) | **Watch**: never let stock boot see a card with the Redux layout on those partition numbers; a dual-boot layout must keep p7 ext4 and p1/p8 FAT, or stock will wipe them | §2 |
+| `launcher.sh` resize2fs on p6 at every boot, `loadapp.sh` resize on p5 (flag `/etc/allen_resize.cfg`) | Watch: they grow p6 and p5 to fill their partitions | §2 |
+| `systemctl mask/unmask` + restart of NetworkManager and bluetooth every boot | Stop in Redux: enable services declaratively | §2 |
+| Charge-only boot (`boot_mode`=1 → `charg.dge` → poweroff) | Keep the behaviour; on mainline the boot reason must come from the AXP717 power-on status, not the vendor sysfs | §2 |
+| Power key: `HandlePowerKey=ignore` + userspace `mem` | Keep a single owner. If Redux hands it to logind, also decide `HandleLidSwitch` (default suspend) | §7 |
+| `cpu_setting.sh` (`interactive` governor) | Replace with `schedutil` on mainline | §2 |
+| rc.local `insmod`s (4.9.170 paths), `rtl_btlpm` in `/etc/modules`, `rtk_hciattach ttyS1 rtk_h5 115200` | Stop; use in-tree rtw88 SDIO, panfrost and serdev `btrtl` from the DT, with `modules-load.d` for the remainder. Keep the UART facts | §4 |
+| Mount points `/mnt/{mmc,sdcard,data,vendor,udisk}`, uid/gid 1000, save dirs `save_nds`/`save_flycast` | Keep the paths if stock ROM and save layouts should carry over | §3 |
+| ALSA control names (`LINEOUT Switch`, `SPK Switch`, `Output[LR] Mixer DAC[LR] Switch`, `digital volume`) | Watch: these are vendor names; mainline needs a new UCM or asound.conf | §8 |
+| `/etc/environment` and `/etc/profile` pointing at `/mnt/vendor` | Stop on Redux | §8 |
+| journald `Storage=none` | Stop: keep at least a volatile journal for debugging | private |
+| `default.target` = graphical + SysV `launcher.sh` without LSB headers | Replace with a native unit with explicit ordering (After=local-fs, NetworkManager as needed) and a Restart policy | §1b |
