@@ -133,6 +133,11 @@ and stops at the first failure. Last full run: see the newest Kernel Research en
 - Every claim says whether it was checked on hardware. "Desk only" means it was not.
 - `main` is protected by a ruleset (2026-11-14): no force-push, no deleting `main`. Fix mistakes
   with a new commit or a revert PR, never by rewriting history.
+- **Brevity (Dale, 2026-11-14):** reports lead with the result, at most 5 lines, no recap or list of steps; on
+  wake-ups stay silent for "subscribed" and "CI green", speak only on failure, review comment or merge; messages
+  between chats at most 3 sentences, detail in a linked file; handoffs and notes give current state, open items,
+  next step, linking rather than copying. Clarity beats brevity for anything new, risky or hard to undo: one clear
+  sentence of what, where, done-when.
 
 ## Related
 - Redux firmware (stock-based CFW; source of the stock device tree used here):
