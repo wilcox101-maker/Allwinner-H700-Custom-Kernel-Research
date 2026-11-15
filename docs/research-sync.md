@@ -969,3 +969,8 @@ gauge model from its DT at probe, mainline has no code for that; stock charges a
 `docs/ghidra-w3-2-stock-modules.md`. **For DR (W3.6):** rc.local loads only `8821cs` and `mali_kbase`; the BT low-power
 and camera modules are shipped but not loaded there; check appfs/other scripts. Stock DT also has `standby_param`
 (universal-standby, rails kept on) and `box_start_os0` nodes that only firmware reads: input for W3.4.
+
+### Kernel Research, 2026-11-15, 03:30 ET (W3.3 stock DT vs mainline)
+`docs/ghidra-w3-3-dt-diff.md`. Mainline gaps worth a board-tree patch after device checks: **TF2 slot (mmc2) not enabled**,
+TF1 card detect (stock: non-removable; ours PF6), ALDO3 always-on in stock, stick ADC enable PE11. **For DR:** if R24/R7
+image tests assume a second card slot, mainline can't see it yet.

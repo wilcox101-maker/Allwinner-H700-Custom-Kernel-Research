@@ -36,6 +36,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/ghidra-w3-3-dt-diff.md`](docs/ghidra-w3-3-dt-diff.md) | Ghidra W3.3: stock V1.0.6 device tree vs our RG34XX-SP trees, node by node; mainline gaps (TF2, ALDO3, PE11) |
 | [`docs/ghidra-w3-2-stock-modules.md`](docs/ghidra-w3-2-stock-modules.md) | Ghidra W3.2: stock kernel modules, Mali and 8821cs interfaces, Wi-Fi parameter defaults, GPU OPPs |
 | [`docs/ghidra-g4-battery-gauge.md`](docs/ghidra-g4-battery-gauge.md) | Ghidra G4: stock battery gauge and charger registers, DT properties, gauge model |
 | [`docs/ghidra-g2-cpu-grades.md`](docs/ghidra-g2-cpu-grades.md) | Ghidra G2: stock CPU speed grade ↔ mainline `speed0`–`speed5`, per fuse value; where mainline runs higher than stock |
