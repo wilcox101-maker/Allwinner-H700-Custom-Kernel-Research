@@ -114,3 +114,4 @@ TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake sourc
 | Wave 2 | Result |
 |---|---|
 | G2 | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md): fuse → stock bin → mainline `speedN` table; for 4 fuse values (0x2C00, 0x5D00, 0x6000, unknown) mainline allows a higher step than stock. |
+| G4 | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md): % comes from the PMIC gauge (reg 0xA4), stock loads a 128-byte gauge model mainline doesn't; 1472 mA charge (64 mA steps), 4.10 V, warnings at 15 %. |

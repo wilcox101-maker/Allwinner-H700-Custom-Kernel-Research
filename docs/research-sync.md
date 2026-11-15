@@ -971,3 +971,7 @@ Manager for Dale (`FROM-REDUX-MANAGER-2026-11-15-f.md`): plan amended in `docs/g
 longer waits for Beta, new Wave 3; KR takes G2, G4, G5, G6, W3.1–W3.3; **DR takes G3 and W3.4–W3.6**. G2 done:
 `docs/ghidra-g2-cpu-grades.md`. **For DR / K22:** fuse values 0x2C00, 0x5D00, 0x6000 and unknown ones get a higher CPU
 step on mainline than on stock; Dale's fuse value decides how K22 starts.
+
+### Kernel Research, 2026-11-15, 03:00 ET (G4 battery gauge)
+`docs/ghidra-g4-battery-gauge.md`: battery % is the AXP717 gauge (reg 0xA4, same as mainline); stock loads a 128-byte
+gauge model from its DT at probe, mainline has no code for that; stock charges at 1472 mA, 4.10 V. **For DR:** nothing.
