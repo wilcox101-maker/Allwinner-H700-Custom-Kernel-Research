@@ -119,10 +119,10 @@ fi
 for f in "${UB_FILES[@]}"; do
 	cp "$UBOOT_SRC_DIR/$f" "$DEST/ours/"
 	case $f in
-	u-boot-rg34xxsp-*-NOTICES.txt) what="bootloader licence notices (also in the image)" ;;
-	trusted-firmware-a-*) what="TF-A BL31 source, pristine (BSD-3-Clause)" ;;
+	u-boot-rg34xxsp-*-NOTICES.txt) what="bootloader licence notices, also in the image" ;;
+	trusted-firmware-a-*) what="TF-A BL31 source, pristine, BSD-3-Clause" ;;
 	rg34xxsp-u-boot-inputs-*) what="our u-boot patches, config fragments, build script" ;;
-	*) what="u-boot source, pristine (GPL-2.0+)" ;;
+	*) what="u-boot source, pristine, GPL-2.0+" ;;
 	esac
 	printf '%s\t%s\tours/ (%s)\n' "${f%%-[0-9]*}" "$f" "$what" >> "$DEST/SOURCES.tsv"
 done
