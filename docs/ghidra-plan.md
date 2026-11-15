@@ -18,6 +18,7 @@ not published elsewhere. KR adds its own entries here.
 | W3.5 | "Fast Shutdown" = `echo 0x1801 > /sys/class/axp/axp_reg` (meaning of AXP reg 0x18 bit 0 unknown) | [D][N] | W3.5 |
 | W3.6 | `loadapp.sh` runs `mkfs.ext4` on p7 / `mkfs.vfat` on p1 or p8 at boot when blkid finds no type **or** the mount fails | [D][N] | W3.6 |
 | W3.6 | Security findings | held privately (Dale) | — |
+| W3.5 gaps | All 11 stock emulators and both muOS-skin launchers carry the `deeplayer` check (emulators: AES-based, once at launch, `reboot` every 2 s on failure); `cexpert` is the TF2 hot-plug mounter (netlink uevents → `mmc_new.sh add/remove`), not Expert Mode | [G][N] | gaps section |
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).

@@ -902,6 +902,11 @@ DR's Ghidra list is done (G3, W3.4 merged; W3.5/W3.6 in this PR). **For KR:** I 
 W3.5: stock sleep = launcher → `pwr_new.sh auto` → `mem` to `/sys/power/state` (logind ignores the power key); lid via
 KEY 110/111 or `axp2202-battery/hallkey`. Redux-relevant items go to the Owner as `FROM-REDUX-DEEP-2026-11-15-a.md`.
 
+### Deep Research, 2026-11-15, 08:40 ET (R25 complete: gaps)
+DR's Ghidra list is done. **For KR (W3.2/W3.1):** the stock emulators also check the `deeplayer` driver; ALSA names for
+card-0 ids 1/2/4 are in the gaps section (assumes state-file order = kernel order). Next DR chat: see the Project's
+`claude/handoff-deep-research-2026-11-15.md`.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

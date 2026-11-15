@@ -928,3 +928,267 @@ cat /usr/lib/os-release
 | `/etc/environment` and `/etc/profile` pointing at `/mnt/vendor` | Stop on Redux | §8 |
 | journald `Storage=none` | Stop: keep at least a volatile journal for debugging | private |
 | `default.target` = graphical + SysV `launcher.sh` without LSB headers | Replace with a native unit with explicit ordering (After=local-fs, NetworkManager as needed) and a Restart policy | §1b |
+
+---
+
+## W3.5/W3.6 gaps: Expert-name helper `cexpert`, muOS skins, emulators, launcher.sh, ALSA, udev
+
+*Drafted by a DR worker agent from extracts dumped 2026-11-15; DR re-checked the `deeplayer` string in every binary and `cexpert`'s uevent strings. No tools installed by the worker.*
+
+
+**Summary (5 lines)**
+1. `cexpert` is **not** an "Expert Mode" or CPU tool. It is an 8 KB netlink uevent listener: on a udev block event that carries `ID_FS_TYPE` it runs `/mnt/vendor/ctrl/mmc_new.sh add` or `… remove`, so it is the stock TF2 (second card) hot-plug mounter. It touches no cpufreq, governor, voltage or sysfs path.
+2. `muos1.bin`/`muos2.bin` are re-skinned builds of `dmenu.bin` ("muOS-style" themes, resources in `/mnt/vendor/res3` and `res4`). Every hardware path, ioctl constant table, the sleep/brightness/volume logic and the `deeplayer` check are identical to dmenu. They differ only in theme/UI, a "Return to old style" item that adds or removes `/mnt/vendor/muos{1,2}.ini`, and (muos2 only) a UI-state file `/tmp/mnos.ini`.
+3. **All 11 stock emulators** (fc, gba ×2, gbc, md, ngp, sfc, sms, pce, wswan, pcsx) carry their own AES-based `deeplayer` check (`checkEncryption`, run once at start). On failure they run `reboot` every 2 s forever. The media and other apps (vp, ap, reader, dinguxCommander, green, xplayerdemo2) and cexpert do not have it.
+4. `vbanext.dge` ships with DWARF macro info that exposes the vendor's platform header. It names every key-mask bit (A/B/X/Y/L1/R1/L2/R2/L3/R3/START/SELECT/MENU/VOL±), lid codes 110/111, `BATTERY_FULL_VAL 4500`, and Actions-Semi leftovers. `asound.state` names the card-0 controls the launchers address by number: id1 `digital volume` 0–63, id2 `lineout volume` 0–31, id4 `SPK Switch`.
+*Security findings held privately (Dale).*
+
+Tags: **[G]** = from disassembly (addresses are ELF virtual addresses), **[D]** = from strings, config or script text, **[I]** = inference. No code, scripts or configs are reproduced. No keys, passwords or hashes are copied. `stock-gaps/keep.txt` (a 43-line list of the extracted paths) was present but is not an analysis input.
+
+---
+
+### 0. Inputs (SHA-256, first 16 hex digits)
+
+| File | SHA-256 | Type / build |
+|---|---|---|
+| bin/cexpert | c2b07ab424581440… | ELF32 armhf, **not stripped**, source `cexpert.c`, Linaro GCC 4.9-2014.08; NEEDED libc only |
+| bin/muos1.bin | 9dbdedf93f0076b8… | ELF32 armhf, stripped; same NEEDED list as dmenu.bin |
+| bin/muos2.bin | 37cd7573467bbb76… | same |
+| bin/tinymixer / tinyplay | d13a1efda1bf21a6… / 25b378c257e83f78… | ELF32 armhf, not stripped; tinyalsa `tinymix` and `tinyplay` |
+| bin/evtest | 787145811e184fe5… | **ELF64 aarch64**, GCC 12.2.0; evtest 1.33 |
+| bin/fbtest3 | 38d838520dde785e… | ELF32 armhf, not stripped; sunxi disp2/ION layer test (defaults "lcd 640x480x16", "hdmi 1280x720x16") |
+| d_game/* (11 binaries) | see §C | ELF32 armhf, built 24-Mar-2025, Linaro GCC 4.9.2 (except as noted) |
+| d_video/vp.dge, d_music/ap.dge | 3b92469f8bfc083a… / fffd3ddcc00fd25c… | ELF32 armhf, stripped, 5-Dec-2025, same SDL1.2 code base as dmenu |
+| d_video/xplayerdemo2 | 1ecfd6c25876f9d8… | ELF32 armhf with DWARF, GCC 7.5; libcedarx demo |
+| d_pdf/green (+ libcairo, launch.sh) | bac892763bcfd47d… | ELF32 armhf PIE, poppler-glib PDF viewer |
+| d_ebook/reader_{mmc,sdcard}.dge | 5e0e66f914d8cc67… / a209963622fbfdaa… | ELF32 armhf PIE C++, GCC 7 |
+| d_fileM/dinguxCommand_{en,zh}.dge | 28c2742df4ea6bfd… / 594741d2a48aca02… | ELF32 armhf PIE C++ |
+| sys/_etc_init.d_launcher.sh | 0fa2fda8da2b18c7… | bash |
+| sys/_var_lib_alsa_asound.state | 8844df6e0c626c60… | alsactl state |
+| sys/udev-rules-list.txt | 250296ad4a2fcde7… | debugfs-style directory listing |
+
+---
+
+### A. cexpert (high priority)
+
+**Bottom line:** cexpert is the stock **block-device hot-plug watcher** (probably "card expert"). It has **no** CPU frequency, governor, boost, voltage, menu or key handling. Its only imports are `socket, bind, recv, getpid, memset, strcmp, strstr, system, puts, printf, strerror, close` [D].
+
+| Aspect | Finding | Tag |
+|---|---|---|
+| Started by | `/etc/init.d/launcher.sh start` → `/mnt/vendor/bin/cexpert &` (if present), as root, before `loadapp.sh` | [D] |
+| Socket | `socket(AF_NETLINK=16, SOCK_RAW=3, NETLINK_KOBJECT_UEVENT=15)`; `bind` with `nl_family=16`, `nl_pid=getpid()`, **`nl_groups=0xFFFFFFFF`** (all groups, so kernel group 1 and udev group 2) | [G] main 0x10624–0x106de |
+| Receive | Blocking `recv` into a 1 MiB stack buffer (0x100000). It prints "receive overflow!" and skips the message if the length is ≥1 MiB, and "state < 0" on error. The loop runs forever with no timeout | [G] 0x1073a–0x107aa |
+| Parsing | Walks the message as NUL-separated tokens. It sets four flags: token **equals** `ACTION=add`; token **equals** `ACTION=remove`; token **contains** `SUBSYSTEM=block`; token **contains** `ID_FS_TYPE` | [G] 0x10822–0x1090e |
+| Action | Only if both the `SUBSYSTEM=block` and `ID_FS_TYPE` flags are set: add → `system("/mnt/vendor/ctrl/mmc_new.sh  add")`; otherwise remove → `system("/mnt/vendor/ctrl/mmc_new.sh  remove")`. It then prints a banner line | [G] 0x10910–0x10976 |
+| Effective trigger | Kernel uevents never carry `ID_FS_TYPE`; only **udev's re-broadcast** (after blkid in `60-persistent-storage.rules`) does. So cexpert depends on systemd-udevd running and reacts once per block device or partition that has a recognised filesystem. That includes mmcblk1/2 partitions and also USB disks and loop devices; it does not check which device it was | [I] from [G] logic + standard udev behaviour |
+| What runs | `mmc_new.sh` ignores which device fired: `add` mounts the first of mmcblk1p1/mmcblk1/mmcblk2p1/mmcblk2 on `/mnt/sdcard` (lock `/tmp/.mmc_mount`, per W3.6). `remove` does `umount -l /mnt/sdcard`. **A USB stick removal would therefore also lazily unmount the TF2 card** | [I] (script behaviour from W3.6) |
+| Overlap | dmenu also polls card state and calls `mmc_new.sh add` / `mmc.sh remove` (W3.5); the lock file serialises the two | [D] |
+| Stop | `launcher.sh stop` does not kill cexpert | [D] |
+
+So the W3.6 note that "hot-plug is probably polled by dmenu or cexpert" resolves to: **cexpert is event-driven (netlink); dmenu also polls.** No udev rule calls `mmc*.sh` or `udisk.sh` (see §F).
+
+---
+
+### B. muos1.bin / muos2.bin
+
+| Item | dmenu.bin | muos1.bin | muos2.bin | Tag |
+|---|---|---|---|---|
+| What it is | stock launcher | Alternative "muOS-style" skin of the same launcher | Second alternative skin (different layout: top bar, type-left list, setting pages, background sets for apk/game/retro) | [D] |
+| Chosen by | default | `dmenu_ln` when `/mnt/vendor/muos1.ini` exists | `dmenu_ln` when `/mnt/vendor/muos2.ini` exists | [D] (W3.6) |
+| Theme root | `/mnt/vendor/res1` (+`res2`), with `lcd/` and `hdmi/` image variants | `/mnt/vendor/res3/{boot/logo.png, desktop_res/{bottom,title}, theme}`; no `lcd/`/`hdmi/` variants | `/mnt/vendor/res4/` (+`desktop_res/misc`, `sound`); `%sbackgrouds/{apk,game,retro}/…` | [D] |
+| Style switching | creates `muos*.ini` (W3.5) | menu action: if `muos1.ini` exists → `remove()` it, then creates `muos2.ini`; "Return to old style" → removes both (→ dmenu next loop) | mirror image: removes `muos2.ini` and creates `muos1.ini`, or removes both. The settings-reset path (`/mnt/mmc/dmenu.del`) also removes `muos2.ini` | [G] muos1 0x2840c–0x28452; muos2 0x2a1e0–0x2a226, 0x12332 |
+| Extra state | — | — | `/tmp/mnos.ini` (keys `saved_ui_type`, `saved_retro_step`, `saved_retro_selemu`, `saved_retro_emu_dir`, `saved_desktop_focus`, `saved_retro_selcard`, `saved_apk_selmodule`); written before launches, read at start | [G] muos2 0x12428, 0x26cd8, fn 0x2bb10/0x2bba8 |
+| Hardware strings (60 checked: `/dev/disp`, `/dev/fb0`, `/dev/ion`, event0, `ANBERNIC-keys`, all 14 `axp2202-battery/*` attributes, `axp_reg 0x1801`, `switch/hdmi`, `jack_state`, `pwr_new.sh`, `cpu_setting.sh`, `rtcwake`, `reboot efex`, nmcli, bluetoothctl, moonlight, `hw:2,0`, the `/tmp/*.ini` flags …) | — | **identical counts to dmenu** | **identical** | [D] |
+| Constant tables | brightness `5…255`, Q14 gain table, idle table `60000…600000`, 19-entry default keymap | all four present (at file offsets 0x21c38 / 0x2d324 / 0x27160 / 0x2e418) | all four present (0x244fc / 0x3041c / 0x29d48 / 0x31518) | [D] byte search |
+| `deeplayer` anti-clone | yes | **yes** (`debug_reg`, "deeplay encryption fail") | **yes** | [D] |
+| Firmware string | `V1.0.6`, "Allwinner H700 Linux 4.9.170" | same | same | [D] |
+
+**Differences vs the W3.5 path table:** none at the hardware level. Only the resource roots (`res3`, `res4`), the ini toggles and `/tmp/mnos.ini` are new. ioctl immediates were not re-traced one by one; the same strings and constant tables make a shared code base very likely [I].
+
+Note: `launcher.sh stop` sends SIGUSR1 to `muos.bin`, but the processes are named `muos1.bin`/`muos2.bin`. With a muOS skin active, the launcher therefore gets no SIGUSR1 at shutdown [D]/[I].
+
+---
+
+### C. Applications and emulators (*.dge and friends)
+
+#### C.1 Shared vendor platform layer in the emulators ("umido" layer) [G]+[D]
+
+Function names come from symbol tables (gba_emu, md, ngp, sfc, sms, wswan, pcsx). Behaviour was traced in `gba_emu.dge`. The stripped binaries (fc, gbc, pce) carry the same strings.
+
+| Behaviour | Detail | Evidence |
+|---|---|---|
+| Input | Raw evdev, not SDL events: keypad found by `EVIOCGNAME`==`ANBERNIC-keys` (falls back to `/dev/input/event1`), power/lid from `/dev/input/event0`; remap from `/mnt/data/dmenu/localpad.map`; external pads through `/sys/class/input`, RetroArch `autoconfig/udev` + `joydefCFG` | strings, `read_adc2key_thread`, `My_JoysOpen` |
+| Key-mask names | From vbanext DWARF macros: UP 1<<0, DOWN 1<<1, LEFT 1<<2, RIGHT 1<<3, **A 1<<4, B 1<<5, Y 1<<6, X 1<<7, START 1<<8, SELECT 1<<9, L1 1<<10, R1 1<<11, L2 1<<12, R2 1<<13, VOLUME_UP 1<<14, VOLUME_DOWN 1<<15, MENU 1<<16, L3 1<<17, R3 1<<18** | [D] vbanext macro table |
+| → applied to the W3.5 default keymap | 304→A, 305→B, 306 (BTN_C)→**Y**, 307 (BTN_NORTH)→**X**, 311 (BTN_TR)→START, 310 (BTN_TL)→SELECT, 308 (BTN_WEST)→**L1**, 309 (BTN_Z)→**R1**, 314→L2, 315→R2, 313 (BTN_TR2)→**L3**, 316 (BTN_MODE)→**R3**, 312 (BTN_TL2)→MENU, 115/114→VOL+/VOL−. This **corrects W3.5's guesses for 0x400/0x800 (L1/R1 swapped) and fills in 0x20000/0x40000 (L3/R3)**. It is the vendor's logical naming; the physical buttons are still unverified | [D]+[I] |
+| Other macros | `HALL_PRESS_CODE 110`, `HALL_RELEASE_CODE 111`, `POWER_INPUT /dev/input/event0`, `ADCKEY_INPUT /dev/input/event1`, `BRIGHT_MAX_VAL 7`, `VOLUME_MAX_VAL 10`, `SOFT_VOLUME_SHIFT_BIT 14`, `BATTERY_FULL_VAL 4500`, `DRAW_BAT_DELAY 1000`, `LCD 720×480`, `HDMI 1280×720`, `H700_HDMI_STATE /sys/class/extcon/hdmi/state`, `ENCRYP_DEV …/deeplayer/debug_reg`, `EXT_RTC_DEVICE /sys/class/rtc/rtc1`, `TF_DEV_NAME /dev/mmcblk1`, `SHUTDOWN_FILE /tmp/shutdown.ini`, `KEY_PLAYER_CFG /tmp/pair.ini`. Actions-Semi leftovers (unused on H700 [I]): `BACKLIGHT_DEV /sys/class/backlight/act_pwm_backlight/brightness`, `DSP_DEVICE /dev/snd/actsnd` | [D] |
+| Volume | VOL± (no MENU): level 0–10 → `volume_set` → **`tiny_set_softvolume`** (software gain in the emulator's own tinyalsa output, not the hardware mixer). Level stored in `axp2202-battery/openbor_volume` | [G] `umido_read_VolumeKey` 0x105c60, `volume_set` 0xff90c |
+| Brightness | MENU+VOL±: level 0–7 → `/dev/disp` ioctl **0x102** (skipped while an HDMI flag is set); level stored in `axp2202-battery/brightness`; there is also an in-game menu item "Backlight brightness" | [G] `set_brightness` 0xff7e8 |
+| Mixer at start | card 0: id1 ← 63 (`digital volume`), ids 3, 5, 8 ← 1 (`LINEOUT Switch`, `OutputL Mixer DACL Switch`, `OutputR Mixer DACR Switch`); id4 (`SPK Switch`) ← 0 on headphone/HDMI, else 1, from `jack_state`. **id2 (`lineout volume`) is not touched** (it relies on dmenu having set 31) | [G] 0xfefe8–0xff040, 0xff9e4–0xffab8; names from §E |
+| HDMI | `/sys/class/extcon/hdmi/state` (dmenu uses `switch/hdmi`); output switched via `/dev/disp` like dmenu; `rtcwake` strings present | [D] |
+| Sleep | Power-key release ≥100 ms → `enter_sleep_state` → `/mnt/vendor/ctrl/pwr_new.sh auto`; lid KEY 110 press/111 release handled the same way as in dmenu. **No idle-timer or `hallkey` polling** in the emulators (no "timer to sleep"/"hall to sleep" strings) | [G] 0x10b7a8–0x10b824, 0x10b5dc |
+| Power-off | Power held >2000 ms → writes `1` to `/tmp/shutdown.ini` and leaves the game; the launcher then powers off (W3.5 §2.4). The emulators never call `poweroff` themselves | [G] `check_shutdown` 0x113b7c–0x113d70 |
+| Low battery | USB offline and voltage ≤3420 mV for >20 one-second polls → `/tmp/shutdown.ini`=`2` | [G] `check_bat_low` 0x111f30, `check_shutdown` 0x113cb0 |
+| Rumble | `axp2202-battery/moto` ← `90`/`0` | [G] `set_moto_onoff` 0xff8ac |
+| TF2 | `/mnt/vendor/ctrl/mmc_new.sh add` / `mmc.sh remove` strings present | [D] |
+| ION/disp | Allwinner `CdcIon*` + disp2 HWC helper. "this kernel version we no support" is the ION legacy/new ABI probe (`CdcIonIsLegacy`, `uname`), **not** a firmware lock | [D]+[I] |
+| Zip ROMs | Extracts to `/tmp/allen_unzip`, cleared with `rm %s/*` (gba, vbanext, ngp, pce, wswan) | [D] |
+| **deeplayer check** | `checkEncryption` → tiny-AES (`KeyExpansion`, `Cipher`, …) + `deeplay_aes_compute/parity`. It seeds `rand` from `time`, writes a challenge to `/sys/class/deeplayer/deeplayer/debug_reg`, reads the reply back and compares 16 values. **On mismatch it loops forever: `system("reboot")`, print "deeplay encryption fail,jk=%d", `sleep(2)`.** If the node can't be opened it prints "can't open deivce" and continues to the compare with a zeroed buffer, so on a kernel without the driver it is expected to hit the reboot loop [I]. One call site per binary (gba 0x105dfc in init, md 0x1a164, pcsx 0xa7d80, sfc 0x96910), so it runs once per launch. Key and transform deliberately not reproduced | [G] gba 0x110420–0x11074c |
+
+#### C.2 Per-binary table
+
+"dl" = contains the `deeplayer/debug_reg` check. "UL" = the umido platform layer from C.1.
+
+| Binary | What it is (version strings) | dl | Notable hardware paths (beyond the UL set) | Input | Power / sleep / brightness / volume | External commands | Tag |
+|---|---|---|---|---|---|---|---|
+| game/fc/fc_emu.dge | NES: **FCEUX 2.2.3-interim svn**, built 14:20:07 Mar 24 2025 | **yes** | `/dev/vsgame` (opened, "open /dev/vsgame fail" if missing; purpose not determined) | UL | UL | `pwr_new.sh auto`, `reboot` (dl loop), `mkdir -p` | [D] |
+| game/gba/gba_emu.dge | GBA: **gpSP** (requires a GBA BIOS); `game_config.txt` = gpSP per-game database (comment header + settings) | **yes** | `/proc/warm` + `/sbin/insmod %s verbose=1` (gpSP's legacy "warm" cache module loader; no module shipped [I]) | UL | UL | same + `insmod` | [D]/[G] |
+| game/gba/vbanext.dge | GBA: **VBA-Next** (build tree `…/rg34xxsp/game/vba-next-portable`), with full DWARF incl. macros; saves `/mnt/data/.vbanext` | **yes** | macro leftovers above; `EVIOCGRAB` appears only as a header macro | UL | UL | same | [D] |
+| game/gbc/gbcgb_emu.dge | GB/GBC: **Gambatte SDL** (`/.gambatte/…` dirs) | **yes** | — | UL | UL | same | [D] |
+| game/md/md_emu.dge | MD/Genesis: **PicoDrive 1.93** (build r0, Mar 24 2025 14:28:44) | **yes** | — | UL | UL | same | [D] |
+| game/ngpc/ngp.dge | NGP/NGPC: Mednafen NeoPop-derived core (`MDFNNGPC*`, `NGP_*SaveState`) | **yes** | — | UL | UL | same | [D] |
+| game/sfc/sfc_emu.dge | SNES: **PocketSNES** (snes9x 1.x base; `pocketsnes/snes9x/*.cpp`) | **yes** | — | UL | UL | same | [D] |
+| game/sms/smsgg_emu.dge | SMS/GG: SMS Plus SDL port (`sdlsms_init`, `sms_init`) | **yes** | — | UL | UL | same | [D] |
+| game/temper/pce.dge | PC Engine: **Temper** (`temper.cfg`) | **yes** | — | UL | UL | same | [D] |
+| game/wswan/swanemu.dge | WonderSwan: **Oswan** ("Starting Oswan", Mednafen-derived parts) | **yes** | — | UL | UL | same | [D] |
+| game/pcsx_rearmed/pcsx | PS1: **PCSX-ReARMed r23** (build Mar 24 2025 14:33:17); `skin/` = stock pcsx skin readme + colours | **yes** | — | UL | UL | same | [D] |
+| video/vp.dge | Video browser/launcher, dmenu code base (5-Dec-2025) | no | `switch/hdmi`, `hallkey`, `nds_esckey`, `nds_pwrkey`, `workled_sleep`, `/tmp/{.next,vpRun.ini,videodir.cfg,videoplace.cfg}`; roots `/mnt/{mmc,sdcard}/Video` | raw evdev like dmenu | dmenu-equivalent: power/lid/**idle timer** sleep (`pwr_new.sh auto`), 2 s hold → goodbye splash + `poweroff`, low-battery splash; `cpu_setting.sh full/user/deflt` | writes `/tmp/.next` (+`chmod 777`) to run `./FFplay.sh "<file>" [hdmi]` or `xplayerdemo2`; sets `/tmp/vpRun.ini` so `dmenu_ln` returns to vp.dge | [D]/[G] 0x1b32e |
+| video/FFplay.sh | Wrapper: runs `./ffplay -fs -autoexit -vf scale=640:-2` with SDL_NOMOUSE=1, 2 channels; adds `AUDIODEV=hw:2,0` when arg 2 is `hdmi`; `sync` after | — | — | — | — | `ffplay` (not in extract; `/usr/bin/ffplay` exists in the rootfs listing, 19-May-2022) | [D] |
+| video/xplayerdemo2 | Allwinner **libcedarx** demo player ("Hello xplayerdemo2"), built in an **`rg35xxsp`** tree; RPATH points to build-host paths | no | uses libVE/libcedarc (hardware decoder) + libasound; device nodes are inside the libs (not visible here) | none of its own (vp.dge handles UI) [I] | none | — | [D] |
+| music/ap.dge | Music player front-end, dmenu code base (5-Dec-2025) | no | `/mnt/data/music/ap_attr.ini`, `/mnt/{mmc,sdcard}/Music`, fifo **`/tmp/mp_cmd`** | raw evdev | as vp.dge (incl. idle-timer sleep, poweroff, low battery); `cpu_setting.sh full/deflt` | drives **`/mnt/vendor/bin/music/mplayer2`** in slave mode (`-ac mad`, optional 10-band `-af equalizer`, `-vo null`, `-input file=/tmp/mp_cmd`); `setMusic.sh stop`. mplayer2 is **not in the extract** | [D]/[G] 0x1d1f6 |
+| ebook/reader_mmc.dge / reader_sdcard.dge | EPUB/TXT reader; state dir `.pixel_reader_store` suggests the open-source "Pixel Reader" [I]; the two builds differ only in root (`/mnt/mmc/Ebook/` vs `/mnt/sdcard/Ebook/`) | no | `hallkey`, `voltage_now`, `axp2202-usb/online`, `/tmp/shutdown.ini`, `oem/language.ini` | SDL events + joystick, plus raw event0/event1 thread | power/lid sleep (`pwr_new.sh`, "hall to sleep"); `/tmp/shutdown.ini` on power hold [I]; no brightness/volume code | `pwr_new.sh` | [D] |
+| fileM/dinguxCommand_{en,zh}.dge | DinguxCommander file manager (icons from GNOME "Humanity" theme, GPL per README) | no | `/dev/disp` (brightness 0x102 + LCD/HDMI switch helpers), `axp2202-battery/brightness`, `/dev/mmcblk0p6` (string present; use not traced), `/mnt/mmc/Roms` | SDL events + joystick, raw event0/1 | brightness restore; power-hold → `/tmp/shutdown.ini` [I]; **no sleep handling** | `popen`/`execl` (file operations) | [D] |
+| pdf/green (+launch.sh, bundled libcairo 1.15.10) | "green" PDF viewer (poppler-glib + SDL1.2, GPLv3) | no | `/dev/disp`, `/dev/ion`, `extcon/hdmi/state`, `jack_state`, `axp2202-battery/brightness`, `axp2202-usb/online` | SDL events + raw evdev | `set_brightness`, `brightness_dim`, `check_shutdown` (power hold → `/tmp/shutdown.ini`); no sleep | launch.sh writes **`3` → `axp2202-battery/nds_esckey`** (disables the in-game ctrl daemons, same as dmenu does for video), then runs `green` with `LD_PRELOAD` of the bundled libcairo | [D] |
+
+#### C.3 Tools and data
+
+| Item | What it is | Notes | Tag |
+|---|---|---|---|
+| tinymixer / tinyplay | tinyalsa `tinymix` (`/dev/snd/controlC%u`) and `tinyplay` (WAV) | used by vendor scripts / factory test [I] | [D] |
+| evtest | evtest 1.33, **aarch64** (the only 64-bit item here), supports `--grab` / `--query` | shipped 0777 in `/usr/bin` too (W3.6) | [D] |
+| fbtest3 | Allwinner disp2/ION layer test; reads `extcon/hdmi/state`; defaults "640x480x16" LCD / "1280x720x16" HDMI; reads `/vendor/etc/cedarc.conf` log level | the 640×480 default suggests it is reused from another model [I] | [D] |
+| arcade-oem.csv | UTF-8 CSV, header row with 4 columns (game zip name, Chinese name, English name, type); **419 data rows**, all with 3 columns (type empty) | name map | [D] |
+| arcade-plus.csv | UTF-8 CSV, **no header**, **21 124 rows**: romname (no `.zip`), Chinese name, English/MAME description, empty 4th column (4 rows have 3 columns) | used by dmenu for arcade names (W3.5) | [D] |
+
+#### C.4 Which binaries contain the `deeplayer` check
+
+| Contains it | Does not |
+|---|---|
+| dmenu.bin (W3.5), **muos1.bin, muos2.bin**, **fc_emu, gba_emu, vbanext, gbcgb_emu, md_emu, ngp, sfc_emu, smsgg_emu, pce, swanemu, pcsx** | cexpert, vp.dge, ap.dge, xplayerdemo2, reader_*.dge, dinguxCommand_*.dge, green, tinymixer, tinyplay, evtest, fbtest3 |
+
+---
+
+### D. `/etc/init.d/launcher.sh` (behaviour only)
+
+| Phase | Behaviour | Tag |
+|---|---|---|
+| Header | No LSB header; a commented-out sourcing of `/etc/profile` | [D] |
+| Every invocation (before `case`) | If `/etc/vendor_resize.cfg` is absent (always, since the line that would create it is commented out) → `resize2fs /dev/mmcblk0p6`. This runs on start **and on stop** | [D] |
+| `start` | Prints "Starting deeplay_launcher"; mounts `/dev/mmcblk0p6` ext4 `rw,noatime,nodiratime` on `/mnt/vendor`; if present, backgrounds `/mnt/vendor/bin/brightCtrl.bin` (not in any extract, so its role is undetermined) and `/mnt/vendor/bin/cexpert` (§A); backgrounds `/mnt/vendor/ctrl/loadapp.sh` in a subshell | [D] |
+| `stop` / `restart` | `killall` retroarch, rtk_hciattach, loadapp.sh; SIGUSR1 to `dmenu.bin` and to `muos.bin` (wrong name, §B); SIGINT to `charg.dge` and `ndsCtrl.dge`; prints "stop deeplay_launcher"; `sync`. It does **not** stop cexpert, brightCtrl.bin, portsCtrl.dge, vp/ap or emulators, and **`restart` does not start again** | [D] |
+| Other | Usage message, exit 1 for unknown args | [D] |
+
+Consistent with W3.6 §1c; the new points are the resize running on `stop` too, `restart` = stop only, the `muos.bin` mismatch, and cexpert's role.
+
+---
+
+### E. ALSA `/var/lib/alsa/asound.state` (mechanically extracted) [D]
+
+"tinymix id" = 0-based element index, as used by the stock `tinymixer_set_value(card, id, …)` calls. It assumes the kernel's element order equals the state-file order (alsactl stores by numid). That assumption is [I]; check with `tinymix -D 0`.
+
+| Card | ctl (state #) | tinymix id [I] | Name | Type | Value | Range / items |
+|---|---|---|---|---|---|---|
+| audiocodec | 1 | 0 | tx hub mode | ENUMERATED | Off | Off, On |
+| audiocodec | 2 | **1** | **digital volume** | INTEGER | 63 | 0–63 (dbmin −9999999, dbmax 4121460, dbvalue 4121460 — implausible TLV, as stored) |
+| audiocodec | 3 | **2** | **lineout volume** | INTEGER | 31 | 0–31 (dbmin −9999999, dbmax 150, dbvalue 150) |
+| audiocodec | 4 | **3** | LINEOUT Switch | BOOLEAN | true | — |
+| audiocodec | 5 | **4** | **SPK Switch** | BOOLEAN | true | — |
+| audiocodec | 6 | **5** | OutputL Mixer DACL Switch | BOOLEAN | true | — |
+| audiocodec | 7 | 6 | OutputL Mixer DACR Switch | BOOLEAN | false | — |
+| audiocodec | 8 | 7 | OutputR Mixer DACL Switch | BOOLEAN | false | — |
+| audiocodec | 9 | **8** | OutputR Mixer DACR Switch | BOOLEAN | true | — |
+| ahubdam | 1 | 0 | APBIF0 Src Select | ENUMERATED | NONE | NONE, APBIF_TXDIF0, APBIF_TXDIF1, APBIF_TXDIF2, I2S0_TXDIF, I2S1_TXDIF, I2S2_TXDIF, I2S3_TXDIF, DAM0_TXDIF, DAM1_TXDIF (same 10 items for all ahubdam controls) |
+| ahubdam | 2 | 1 | APBIF1 Src Select | ENUMERATED | **I2S1_TXDIF** | as above |
+| ahubdam | 3 | 2 | APBIF2 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 4 | 3 | I2S0 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 5 | 4 | I2S1 Src Select | ENUMERATED | **APBIF_TXDIF1** | as above |
+| ahubdam | 6 | 5 | I2S2 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 7 | 6 | I2S3 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 8 | 7 | DAM0C0 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 9 | 8 | DAM0C1 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 10 | 9 | DAM0C2 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 11 | 10 | DAM1C0 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 12 | 11 | DAM1C1 Src Select | ENUMERATED | NONE | as above |
+| ahubdam | 13 | 12 | DAM1C2 Src Select | ENUMERATED | NONE | as above |
+| ahubhdmi | 1 | 0 | loopback debug | BOOLEAN | false | — |
+| ahubhdmi | 2 | 1 | audio data format | ENUMERATED | PCM | NULL, PCM, AC3, MPEG1, MP3, MPEG2, AAC, DTS, ATRAC, ONE_BIT_AUDIO, DOLBY_DIGITAL_PLUS, DTS_HD, MAT, DST, WMAPRO |
+
+Every control has `iface MIXER` and `access 'read write'`, count 1. Three cards: `audiocodec`, `ahubdam`, `ahubhdmi`. If card order matches the file, `ahubhdmi` is card 2, which fits `AUDIODEV=hw:2,0` [I]. The ahub routing (APBIF1 ← I2S1 TX, I2S1 ← APBIF TX1) is the HDMI audio path in the BSP AHUB driver [I].
+
+**This resolves the W3.5 "not determined" item for card-0 ids:** id1 = `digital volume` (launcher sets 63), id2 = `lineout volume` (the in-game daemons' 0–31 volume), id3 = `LINEOUT Switch`, id4 = `SPK Switch` (the headphone mute, as W3.5 guessed), id5 = `OutputL Mixer DACL Switch`, id8 = `OutputR Mixer DACR Switch` [D]+[I].
+
+---
+
+### F. `/lib/udev/rules.d` (76 files, names only)
+
+| Group | Files | Origin (Ubuntu 22.04) |
+|---|---|---|
+| udev | 40-vm-hotadd, 50-firmware, 50-udev-default, 60-autosuspend, 60-block, 60-cdrom_id, 60-drm, 60-evdev, 60-fido-id, 60-input-id, 60-persistent-alsa, 60-persistent-input, 60-persistent-storage, 60-persistent-storage-tape, 60-persistent-v4l, 60-sensor, 60-serial, 61-persistent-storage-android, 64-btrfs, 70-joystick, 70-memory, 70-mouse, 70-power-switch, 70-touchpad, 71-power-switch-proliant, 73-special-net-names, 75-net-description, 75-probe_mtd, 78-graphics-card, 78-sound-card, 80-debian-compat, 80-drivers, 80-net-setup-link, 81-net-dhcp | Confirmed against the jammy `udev` 249.11-0ubuntu3 file list ([aptpeek](https://aptpeek.dev/ubuntu/jammy/main/armhf/udev/249.11-0ubuntu3)) |
+| systemd | 70-uaccess, 71-seat, 73-seat-late, 99-systemd | `systemd` package [I, standard] |
+| dmsetup | 55-dm, 60-persistent-storage-dm, 95-dm-notify | [I, standard] |
+| ModemManager | 77-mm-* (23 files), 80-mm-candidate | [I, standard] |
+| NetworkManager | 84-nm-drivers, 85-nm-unmanaged, 90-nm-thunderbolt | [I, standard] |
+| Others | 39-usbmuxd (usbmuxd), 40-usb_modeswitch (usb-modeswitch-data), 66-snapd-autoimport (snapd), 90-alsa-restore (alsa-utils), 90-console-setup (console-setup), 95-upower-hid / 95-upower-wup (upower), 96-e2scrub (e2fsprogs) | [I, standard] |
+
+**No file name is non-standard.** No vendor rule (sunxi, mmc, anbernic, joystick remap) exists, which confirms that card hot-plug is cexpert's job (§A). **What can't be judged:** only names were supplied, so modified *contents* of any of these 76 files can't be ruled out (`debsums`/`dpkg --verify` on a unit would settle it). Origins marked [I] were not checked against a package list.
+
+---
+
+### G. ufw
+
+*Security findings held privately (Dale).*
+
+---
+
+### H. New findings (conservative; [N] = I believe no public source exists. Based on one quick web search for the deeplayer path that found nothing relevant, not an exhaustive search)
+
+1. **[N]** `cexpert` is a netlink-uevent block hot-plug daemon (udev `ID_FS_TYPE` + `SUBSYSTEM=block` → `mmc_new.sh add/remove`), not an "Expert Mode" or CPU tool. Any filesystem-bearing block device, including USB or loop devices, triggers a TF2 mount/unmount.
+2. **[N]** The `deeplayer` anti-clone check is also inside **every stock emulator** (AES-based `checkEncryption`, once per launch, endless 2-second reboot loop on failure), and in muos1/muos2. The media apps, reader, file manager and PDF viewer don't have it.
+3. **[N]** `vbanext.dge` leaks the vendor platform header through DWARF macros: logical names of every key-mask bit (this corrects W3.5's L1/R1 guess and adds L3/R3), lid codes 110/111, `BATTERY_FULL_VAL 4500`, `/tmp/pair.ini`, and Actions-Semi leftovers (`act_pwm_backlight`, `/dev/snd/actsnd`).
+4. **[N]** The stock emulators handle VOL± themselves as **software gain** (0–10, Q14) and leave `lineout volume` (id2) untouched; MENU+VOL± uses `/dev/disp` 0x102; power hold and low battery hand off to the launcher through `/tmp/shutdown.ini`.
+5. **[N]** muos1/muos2 are dmenu re-skins (res3/res4) with identical hardware logic. Style switching goes through `/mnt/vendor/muos{1,2}.ini`; muos2 adds `/tmp/mnos.ini` UI state. `launcher.sh stop` signals the non-existent `muos.bin`.
+6. **[N]** `ap.dge` is a front-end for `/mnt/vendor/bin/music/mplayer2` in slave mode through the fifo `/tmp/mp_cmd`; `xplayerdemo2` is the libcedarx demo built from an RG35XXSP tree; the PDF viewer `green` sets `nds_esckey`=3 from its launch script.
+7. Not new, but resolved here: card-0 tinymix ids 1/2/3/4/5/8 = digital volume / lineout volume / LINEOUT Switch / SPK Switch / OutputL DACL / OutputR DACR (control names are public in the BSP; the id mapping is from §E).
+
+---
+
+### Optional device checks (stock unit; read-only unless noted)
+
+```sh
+pgrep -a cexpert; pgrep -a brightCtrl; ls -l /mnt/vendor/bin/{cexpert,brightCtrl.bin}
+udevadm monitor --udev --property --subsystem-match=block   # insert/remove TF2 and a USB stick; confirm ID_FS_TYPE events
+ls /mnt/vendor/muos*.ini /mnt/vendor/res3 /mnt/vendor/res4 2>&1; cat /tmp/mnos.ini 2>/dev/null
+cat /proc/asound/cards; tinymix -D 0                        # confirm id1=digital volume, id2=lineout volume, id4=SPK Switch
+ls -l /sys/class/deeplayer/deeplayer/ 2>&1                  # do not write to it
+ls -l /mnt/vendor/bin/music/mplayer2 /mnt/vendor/bin/video/ffplay /usr/bin/ffplay 2>&1
+evtest   # on ANBERNIC-keys: map each physical button to its code; compare with the C.1 logical names
+dpkg -S /lib/udev/rules.d/*.rules | sort; debsums -c udev systemd 2>/dev/null   # package ownership and modified files
+cat /sys/class/extcon/hdmi/state /sys/class/switch/hdmi/state 2>&1   # both HDMI paths used by different binaries
+```
+
+### Keep / stop for a replacement firmware (Redux)
+
+| Item | Keep / stop | Why |
+|---|---|---|
+| TF2 hot-plug auto-mount | **Keep the function, replace the mechanism**: a udev rule + systemd mount unit (or udisks), keyed on the specific device (mmcblk1/2), not on "any block device with a filesystem" | cexpert runs root shell commands for every block event and unmounts TF2 when a USB stick is removed |
+| Stock emulators / muos / dmenu on a Redux kernel | **Stop**: don't ship or run them on a kernel without the vendor `deeplayer` driver | Endless reboot loop (C.1, C.4) |
+| vp/ap/reader/dinguxCommander/green | Reusable only on the BSP stack (they need `/dev/disp`, ION, `axp2202-*` vendor attributes); otherwise replace them | no deeplayer, but BSP-bound [I] |
+| Mixer defaults (BSP kernel) | **Keep**: `digital volume` 63, `lineout volume` as the user volume (0–31), `SPK Switch` driven by jack state, LINEOUT and the DACL→L / DACR→R switches on, ahubdam APBIF1↔I2S1 routing and ahubhdmi format PCM for HDMI audio | §E, C.1 |
+| One volume mechanism | **Stop** mixing software gain (emulators, launcher) with hardware `lineout volume` (ctrl daemons) | stock levels drift between apps |
+| Key naming | **Keep** the logical mapping in C.1 as the starting point for a Redux keymap; verify physically with evtest | vendor naming, not device-verified |
+| `/tmp/shutdown.ini` hand-off, `nds_esckey` gating | **Stop**: use a proper power-key service (logind or a daemon) and a userspace state file instead of vendor sysfs attributes as IPC | fragile, root-only |
+| launcher.sh resize on every invocation, `restart` = stop only, `muos.bin` typo | **Stop** (don't copy) | §D |
+| udev rules | Nothing vendor-specific to carry over | §F |
+
+### Tool installs
+
+None. Only the preinstalled python3, strings, file, readelf, arm-linux-gnueabi-objdump and `/home/claude/re-tools/annot.py` were used, plus two helper scripts in `/tmp/gwscripts/` (a feature matrix and an ARM movw/movt resolver; scratch files, not deliverables).
