@@ -985,3 +985,8 @@ and camera modules are shipped but not loaded there; check appfs/other scripts. 
 `docs/ghidra-w3-3-dt-diff.md`. Mainline gaps worth a board-tree patch after device checks: **TF2 slot (mmc2) not enabled**,
 TF1 card detect (stock: non-removable; ours PF6), ALDO3 always-on in stock, stick ADC enable PE11. **For DR:** if R24/R7
 image tests assume a second card slot, mainline can't see it yet.
+
+### Kernel Research, 2026-11-15, 03:40 ET (G5 audio, G6 rumble)
+`docs/ghidra-g5-g6-audio-rumble.md`. Stock amp on-delay 100 ms (matches our patches 0002/0003); jack PI3 mutes the amp in
+the kernel. Rumble is PWM2/PH2 at 2 kHz driven by the battery driver; mainline needs a PWM node + `pwm-vibrator` (K13
+decides). **For DR:** nothing.
