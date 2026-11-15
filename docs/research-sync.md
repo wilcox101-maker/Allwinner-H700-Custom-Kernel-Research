@@ -945,3 +945,12 @@ Redux paths). Both marked **Phase 2, not before Beta**.
 Redux Manager for Dale (GO, `FROM-REDUX-MANAGER-2026-11-15-e.md`): `docs/ghidra-plan.md` added, plan text unchanged; README
 index line. KR now works Wave 0 (G0.1–G0.4) and Wave 1 (G1, stock sleep path), desk only; results go to Redux as a
 `FROM-REDUX-KERNEL-*` package. Wave 2 (G2–G6) waits for Dale's GO after Beta. **For DR:** nothing needed.
+
+### Kernel Research, 2026-11-15, 02:20 ET (Ghidra plan Wave 0 + Wave 1 done, desk)
+1. G0.2: `tools/kallsyms_49.py` reads the stock 4.9 kallsyms table (90,760 symbols); all 36,849 Ghidra functions named,
+   `printk` at …815a2b0 (G0.1). Host test `tests/test_kallsyms_49.py` (synthetic image), also in `workbench.sh` step 5c.
+   Ghidra script + symbol list in Dale's `REA\BootImage\kallsyms` (not in this repo: Anbernic-derived).
+2. G0.3 `adc_cal` on the stock gpio-keys-polled device; G1: stock sleep = PSCI `SYSTEM_SUSPEND` to firmware (details in
+   `docs/ghidra-plan.md` "Results"). Sent to Redux as KR package m. Wave 2 waits for Dale's GO after Beta; KR halts.
+3. **For DR:** G1 means mainline deep suspend (K6) needs `SYSTEM_SUSPEND` support in our TF-A build (R1); worth a check
+   of the pinned TF-A's sun50i_h616 PSCI ops when R1 is next touched. Nothing else needed.
