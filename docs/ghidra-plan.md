@@ -8,21 +8,29 @@ Status: **Wave 0 and Wave 1 done 2026-11-15** (desk; results sent to Redux as KR
 Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); never in this repo.
 
 ## New findings
-Findings tagged **[N]** (no public source we know of; Dale, 2026-11-15 02:46). Repo only; not published elsewhere.
-Tags in the result docs: [G] static analysis, [D] DT/strings/source, [V] device-verified, plus [N] where new.
-| Item | Finding | Doc |
-|---|---|---|
-| G0.3 | Stick recentre file `adc_cal` (+ `amux_debug`) on the stock `gpio-keys-polled` device, which carries the joypad code | Redux `stock-kernel-ghidra.md` |
-| G0 | Stock `rg34xxsp_v1` panel entry is the `fog_fj035fhd05_v1` driver (last of 17 built-in panels) | Redux `stock-kernel-ghidra.md` |
-| G0 | `axp2202-battery/brightness` is a 0–100 storage slot only; the lid sends `KEY_DELETE`/`KEY_INSERT`, not `SW_LID` | Redux `stock-kernel-ghidra.md` |
-| G1 | `axp2202-battery/os_sleep` turns power-key and lid wake off; lid wake is armed only when the power-key device may wake | Redux `stock-kernel-ghidra.md` |
-| G2 | For fuse 0x2C00, 0x5D00, 0x6000 and unknown values, mainline allows a higher CPU step than stock | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md) |
-| G4 | Stock loads a 128-byte gauge model (DT `battery-model`) via 0xA1/0xA2; charges at 1472 mA (64 mA steps); warning register 0x1B; gauge sanity reset (> 60 % but < 3.5 V); DT OCV table unused by the kernel | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md) |
-| G5 | Headphones turn the speaker amp off inside the kernel; state in `axp2202-battery/spk_state` | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
-| G6 | Rumble = PWM2/PH2 at 2 kHz, driven by the battery driver (`moto` file, `FF_RUMBLE` on the joypad, < 37 % → 0) | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
-| W3.1 | Vendor battery-device files `moto`, `hallkey`, `spk_state`, `otg_id`, `display_id`, `boot_mode`, LED controls, `openbor_volume`, `nds_*` | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
-| W3.1 | Stock DT X/Y labels (PA3 "x" = 306, PA2 "y" = 307) are the reverse of Redux's remap table | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
-| W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
+Findings with no public source we know of, tagged **[N]** in the result docs (Dale, 2026-11-15 02:46). Repo only;
+not published elsewhere. KR adds its own entries here.
+
+| Item | Finding | Tag | Where |
+|---|---|---|---|
+| G3 | Stock u-boot hands the panel choice to the kernel **only** as cmdline `lcd_type=boe\|old` (env_set → builder 0x4A005734); no kernel-DT edit, not stored in env | [G][N] | `stock-re-boot-and-userspace.md` G3 |
+| W3.4 | Stock BL31 `v1.0(debug):5a77824` offers PSCI 1.0 incl. `SYSTEM_SUSPEND`; no SCP firmware; standby runs in BL31 and `arisc_set_wakeup_source` is emulated as a local GIC-IRQ bitmap | [G][N] | W3.4 |
+| W3.5 | `dmenu.bin` runs a challenge–response with a vendor `deeplayer` kernel driver every 500 ms and loops `reboot` on failure: the stock launcher can't run on a kernel without it | [G][N] | W3.5 |
+| W3.5 | "Fast Shutdown" = `echo 0x1801 > /sys/class/axp/axp_reg` (meaning of AXP reg 0x18 bit 0 unknown) | [D][N] | W3.5 |
+| W3.6 | `loadapp.sh` runs `mkfs.ext4` on p7 / `mkfs.vfat` on p1 or p8 at boot when blkid finds no type **or** the mount fails | [D][N] | W3.6 |
+| W3.6 | Security findings | held privately (Dale) | — |
+| W3.5 gaps | All 11 stock emulators and both muOS-skin launchers carry the `deeplayer` check (emulators: AES-based, once at launch, `reboot` every 2 s on failure); `cexpert` is the TF2 hot-plug mounter (netlink uevents → `mmc_new.sh add/remove`), not Expert Mode | [G][N] | gaps section |
+| G0.3 | Stick recentre file `adc_cal` (+ `amux_debug`) on the stock `gpio-keys-polled` device, which carries the joypad code | [G][D][N] | Redux `stock-kernel-ghidra.md` |
+| G0 | Stock `rg34xxsp_v1` panel entry is the `fog_fj035fhd05_v1` driver (last of 17 built-in panels) | [G][N] | Redux `stock-kernel-ghidra.md` |
+| G0 | `axp2202-battery/brightness` is a 0–100 storage slot only; the lid sends `KEY_DELETE`/`KEY_INSERT`, not `SW_LID` | [G][N] | Redux `stock-kernel-ghidra.md` |
+| G1 | `axp2202-battery/os_sleep` turns power-key and lid wake off; lid wake is armed only when the power-key device may wake | [G][N] | Redux `stock-kernel-ghidra.md` |
+| G2 | For fuse 0x2C00, 0x5D00, 0x6000 and unknown values, mainline allows a higher CPU step than stock | [G][D][N] | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md) |
+| G4 | Stock loads a 128-byte gauge model (DT `battery-model`) via 0xA1/0xA2; charges at 1472 mA (64 mA steps); warning register 0x1B; gauge sanity reset (> 60 % but < 3.5 V); DT OCV table unused by the kernel | [G][D][N] | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md) |
+| G5 | Headphones turn the speaker amp off inside the kernel; state in `axp2202-battery/spk_state` | [G][N] | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
+| G6 | Rumble = PWM2/PH2 at 2 kHz, driven by the battery driver (`moto` file, `FF_RUMBLE` on the joypad, < 37 % → 0) | [G][D][N] | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
+| W3.1 | Vendor battery-device files `moto`, `hallkey`, `spk_state`, `otg_id`, `display_id`, `boot_mode`, LED controls, `openbor_volume`, `nds_*` | [G][N] | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
+| W3.1 | Stock DT X/Y labels (PA3 "x" = 306, PA2 "y" = 307) are the reverse of Redux's remap table | [G][N] | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
+| W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock | [D][N] | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).
