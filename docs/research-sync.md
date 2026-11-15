@@ -964,3 +964,8 @@ step on mainline than on stock; Dale's fuse value decides how K22 starts.
 ### Kernel Research, 2026-11-15, 03:00 ET (G4 battery gauge)
 `docs/ghidra-g4-battery-gauge.md`: battery % is the AXP717 gauge (reg 0xA4, same as mainline); stock loads a 128-byte
 gauge model from its DT at probe, mainline has no code for that; stock charges at 1472 mA, 4.10 V. **For DR:** nothing.
+
+### Kernel Research, 2026-11-15, 03:15 ET (W3.2 stock modules)
+`docs/ghidra-w3-2-stock-modules.md`. **For DR (W3.6):** rc.local loads only `8821cs` and `mali_kbase`; the BT low-power
+and camera modules are shipped but not loaded there; check appfs/other scripts. Stock DT also has `standby_param`
+(universal-standby, rails kept on) and `box_start_os0` nodes that only firmware reads: input for W3.4.
