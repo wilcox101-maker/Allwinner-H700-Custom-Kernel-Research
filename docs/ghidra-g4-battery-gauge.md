@@ -3,7 +3,8 @@
 Kernel Research chat, desk only. Stock V1.0.6 kernel `4.9.170 #9` (names from kallsyms) and its DT. The PMIC is
 the X-Powers AXP717 (stock driver name `axp2202`; mainline register names from `include/linux/mfd/axp20x.h`,
 torvalds/linux master, read 2026-11-15). Tags: **[G]** static analysis of the stock kernel, **[D]** device
-tree / strings / mainline source, **[V]** none yet. Register numbers and values only; no code reproduced.
+tree / strings / mainline source, **[V]** none yet. Register names checked against the AXP717 datasheet V1.2
+(X-Powers; copy at server7.whycan.com, read 2026-11-15). Register numbers and values only; no code reproduced.
 
 ## Answer
 - **Battery % is the PMIC's own fuel gauge**, not a kernel OCV table or coulomb counting in software [G]: the
@@ -20,8 +21,9 @@ tree / strings / mainline source, **[V]** none yet. Register numbers and values 
   (Q5).
 - **Charge voltage 4.10 V** [G]: DT `pmu_init_chgvol = 4100` → `0x64` field 1 (thresholds below), the same cap
   as our mainline tree.
-- **Low-battery warnings** [G][N]: register `0x1B` = (level1 − 5) in the high nibble, level2 in the low nibble;
-  DT level1 = 15 %, level2 = 0 (off) → `0xA0`.
+- **Low-battery thresholds** [G][N]: register `0x1B` (datasheet: "Gauge low battery warning threshold") = warning
+  level (5–20 %, written as level − 5) in the high nibble and **shutdown** level (0–15 %) in the low nibble; DT
+  level1 = 15 % warning, level2 = 0 % shutdown → `0xA0`.
 - **Gauge sanity fix at probe** [G][N]: if the gauge reports > 60 % but the battery voltage (`0xC4/0xC5`, 14-bit)
   is below 3500 mV, the driver resets the gauge MCU and sets `0x0C = 0x81`; while bit 7 of `0x0C` is set,
   the reported % comes from `0x0C`'s low 7 bits instead of `0xA4` (`axp2202_get_soc`).
@@ -30,20 +32,20 @@ tree / strings / mainline source, **[V]** none yet. Register numbers and values 
 ## Data table 1: registers the stock driver uses
 | Reg | Mainline name | Stock use [G] |
 |---|---|---|
-| 0x0C | (not named) | Gauge override/flag: bit 7 set → % from bits 6:0; written 0x81/0 at probe |
-| 0x19 | `AXP717_MODULE_EN_CONTROL_2` | bit 1 updated by the power monitor (depends on % and the charge-voltage setting) |
-| 0x1B | (not named) | Low-battery warning levels (see above) |
+| 0x0C | (not in the datasheet) [N] | Gauge override/flag: bit 7 set → % from bits 6:0; written 0x81/0 at probe |
+| 0x19 | `AXP717_MODULE_EN_CONTROL_2` | bit 1 = **battery charge enable** (datasheet); the power monitor sets or clears it depending on % and the charge-voltage setting |
+| 0x1B | (datasheet: low battery warning threshold) | Warning level − 5 (bits 7:4), shutdown level (bits 3:0) |
 | 0x50 | `AXP717_TS_PIN_CFG` | TS pin / temperature sense enable (bit 4) |
 | 0x54–0x57 | (not named) | TS thresholds: charge LTF/HTF, shutdown LTF/HTF (from DT) |
 | 0x58, 0x59, 0x5A, 0x5B | (not named) | JEITA enable, current fall, cool, warm (from DT) |
-| 0x61 | (not named; precharge) | bits 3:0 = 2 |
+| 0x61 | (datasheet: Iprechg) | Precharge current, 64 mA × N: stock 2 = 128 mA |
 | 0x62 | `AXP717_ICC_CHG_SET` | Charge current, `mA >> 6`, max 0xC00 mA |
-| 0x63 | `AXP717_ITERM_CHG_SET` | Termination current, `mA >> 6` (default 128 mA → 2) |
+| 0x63 | `AXP717_ITERM_CHG_SET` | Termination current, 64 mA × N (bits 3:0; default 128 mA → 2) |
 | 0x64 | `AXP717_CV_CHG_SET` | Charge voltage field (table 2) |
-| 0x70 | (not named) | Low 3 bits set from a DT option when enabled |
-| 0xA1, 0xA2 | (not named) | Gauge model data port and control (bit 0 write mode, bit 4 model valid) |
+| 0x70 | (datasheet: CHGLED setting) | Charge-LED function (bits 2:0) from the DT `pmu_chgled_*` options |
+| 0xA1, 0xA2 | (datasheet: battery parameter; fuel gauge control) | Model data port; `0xA2` bit 0 = BROM writer enable, bit 4 = use SRAM (the loaded model) instead of ROM |
 | 0xA4 | `AXP717_BATT_PERCENT_DATA` | Battery % |
-| 0xB0, 0xB2 | (not named) | Power monitor: writes 0xB0 = 0x2E, reads two bytes at 0xB2 when model valid |
+| 0xB0, 0xB2 | (not in the datasheet) [N] | Power monitor: writes 0xB0 = 0x2E, reads two bytes at 0xB2 when the SRAM model is active |
 | 0xC4–0xC5 | `AXP717_BATT_V_H/L` | Battery voltage (mV, 14 bit) |
 
 ## Data table 2: charge voltage field (`0x64` bits 2:0) [G]

@@ -1012,3 +1012,9 @@ Dale (02:46): findings with no public source we know of are tagged **[N]**; runn
 W3.1/G1/W3.3 gap-closing (see `ghidra-plan.md` "Follow-ups"). Install (standing approval 03:03): capstone 5.0.9 (PyPI) in
 the venv `/home/claude/cap` of this chat's cloud workspace. **For DR (W3.5):** `openbor_volume` is the shared volume slot of
 the stock emulators; `hallkey` is read by `dmenu.bin`, `charg.dge`, `muos1/2.bin`.
+
+### Kernel Research, 2026-11-15, 05:00 ET (follow-ups 2)
+G4 registers checked against the AXP717 datasheet V1.2: 0x1B low nibble is the **shutdown** threshold (stock 0 %), 0x19 bit 1
+is charge enable, 0x70 charge LED, 0xA2 bit 4 SRAM model; 0x0C, 0xB0, 0xB2 are undocumented. G5 jack polarity: PI3 high =
+headphones in. Redux map corrected (KR package q: no SCP firmware per DR W3.4, Wi-Fi not a wake source, [N] tags).
+KR's handoff list is done except two device checks.
