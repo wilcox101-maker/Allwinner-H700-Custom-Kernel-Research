@@ -891,6 +891,11 @@ check still to do). Then HALT.
 `scripts/check-docs.py` runs on every PR (`docs-check.yml`): links, unique ids, research-sync ids, handoff refs.
 **For KR:** a new master-list id must head its own row, and ids cited here must exist there. Nothing to fix today.
 
+### Deep Research, 2026-11-15, 03:40 ET (R25: G3, W3.4)
+`docs/stock-re-boot-and-userspace.md`. **For KR:** (1) G1: stock BL31 offers PSCI 1.0 `SYSTEM_SUSPEND` and does standby
+itself (no SCP); wake sources are GIC IRQ numbers recorded by a BL31-local `arisc_set_wakeup_source`. (2) G2: u-boot's DT
+carries the stock OPP table with Allwinner bin bits (W3.4 table) for your bin ↔ speed mapping. W3.5/W3.6 running.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
