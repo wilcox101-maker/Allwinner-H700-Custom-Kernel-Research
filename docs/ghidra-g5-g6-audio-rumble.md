@@ -13,7 +13,7 @@ tree / strings / mainline source, **[V]** none yet. Names, addresses, constants 
   (`pa-pin-max = 1`). Enable = **wait 100 ms (`pa-pin-msleep-0`), then drive the pin**; disable = drive the inverse
   level at once, no wait. Same pin as mainline (`allwinner,pa-gpios = PI5`); mainline has no delay (our patches
   0002/0003 add `allwinner,pa-delay-ms = 100`).
-- **Headphones mute the speaker in the kernel** [G]: the jack work calls `allen_spk_ctrl`, which turns the amp
+- **Headphones mute the speaker in the kernel** [G][N]: the jack work calls `allen_spk_ctrl`, which turns the amp
   pin off while the detect pin reads "plugged" and on when unplugged; state in `allen_spk_state`, readable as
   `/sys/class/power_supply/axp2202-battery/spk_state` (0444). Line out itself always plays (the board routes
   speaker and jack from the same LINEOUT through a 74HC4052 mux, per mainline's comment).
@@ -22,7 +22,7 @@ tree / strings / mainline source, **[V]** none yet. Names, addresses, constants 
 - **Mixer** [G]: the stock card `audiocodec` exposes `digital volume` (0–63, inverted, reg 0x00 bit 12,
   −1.16 dB steps) and `lineout volume` (0–31, reg 0x310, 0 = mute, 1 = −43.5 dB … 31 = +1.5 dB, 1.5 dB steps;
   DT default 31), plus DAPM mixer switches and the pin switches `LINEOUT` and `SPK`.
-- **Rumble (G6)** [G][D]: the motor is driven by **PWM channel 2 on PH2** (DT pin group `pwm2@0`, function
+- **Rumble (G6)** [G][D][N]: the motor is driven by **PWM channel 2 on PH2** (DT pin group `pwm2@0`, function
   `pwm2`), **period 500,000 ns (2 kHz)**, duty = level % of the period. The PWM is requested by the **battery
   driver**, not a motor driver. Two ways in: the joypad input device (`ANBERNIC-keys`) advertises
   **`EV_FF`/`FF_RUMBLE`** (memless): strong magnitude × 100 / 32768 → %, values below 37 % become 0; and sysfs

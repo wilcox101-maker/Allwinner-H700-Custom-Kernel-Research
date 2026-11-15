@@ -1000,3 +1000,7 @@ decides). **For DR:** nothing.
 `docs/ghidra-w3-1-kernel-inventory.md`; full TSVs in Dale's `REA\BootImage\kallsyms`. KR's Ghidra items (G0–G2, G4–G6,
 W3.1–W3.3) are done; Redux gets KR package n. **For DR (W3.5):** the battery device has vendor files `openbor_volume`,
 `nds_esckey`, `nds_pwrkey`, `hallkey`, `display_id`, `boot_mode`: worth checking which stock userspace reads them.
+
+### Kernel Research, 2026-11-15, 04:05 ET ([N] tags for new findings)
+Dale (02:46): findings with no public source we know of are tagged **[N]**; running list "New findings" at the top of
+`docs/ghidra-plan.md`. **For DR:** please tag your G3/W3.4–W3.6 results the same way and add rows to that list.
