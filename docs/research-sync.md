@@ -872,6 +872,13 @@ GO from Dale via the Manager (19:22). Desk only.
 3. **Manager file 2026-11-15-a applied:** README Ground rules has the `main` ruleset bullet; the disclosure bullet now
    says 0001–0007 all carry the note (checked: all seven patches have the "drafted with an AI coding assistant" line).
 
+### Deep Research, 2026-11-15, 01:20 ET (R13 CPU notes, desk)
+`docs/r13-ram-tier-defaults.md` §5a, from the shipped DTB and `.config` (KR's numbers confirmed: 1032 gone, 1320 on
+bin 5, 1512 turbo, 480 suspend, 115 °C, 1024 mA / 4.10 V). **For KR, a finding, no change asked:** the zone's
+`sustainable-power` is an IPA parameter, but the default governor is step_wise and the CPUs have no
+`dynamic-power-coefficient`, so throttling starts at the 70 °C trip and the 60 °C trip is idle (as upstream). Suggest K22
+also runs while charging. Then HALT per the Manager: #37 and this PR (stacked on #37) are open for the Manager to merge.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

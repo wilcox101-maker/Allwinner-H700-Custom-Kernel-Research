@@ -73,6 +73,46 @@ Reading it:
 - **Retracted:** an earlier run with a first version of the harness (the hog ran inside the reporting service itself, log `r13/results/boot-r13-512-v1harness-kernelonly.log`) showed the kernel-only guest printing nothing for over 10 minutes after the first OOM kill; I first reported that as a hang. With the hogs in their own transient units it didn't happen again, so it is **not** evidence about the kernel OOM killer; the cause wasn't traced.
 - Single emulated runs on Ubuntu's generic kernel: indicative only.
 
+## 5a. CPU, thermal and charging defaults across the tiers (DR, 2026-11-15; desk only)
+Decisions Q1, Q2, Q5 (Dale, 2026-11-14) and KR's R11 cooling map, read back from the DTB that ships in our kernel
+package (`linux-image-7.4.0-rc2-rg34xxsp`, `sun50i-h700-anbernic-rg34xx-sp-redux.dtb`, decompiled) and the package's
+`.config`. **Nothing here ran on an H700.**
+
+**Tiers don't change any of it.** The CPU table is chosen per chip by its speed-bin fuse (patch 0001), not by RAM;
+the thermal zone and charger limits are the same on every board. A 512 MB unit gets exactly the table and trips a 2 GB
+unit with the same speed bin gets.
+
+| OPP | Speed bins | Voltage | Note |
+|---|---|---|---|
+| 480 MHz | all | 900 mV | `opp-suspend` (ROCKNIX 0210) |
+| 600 / 792 MHz | 1, 4 | 900 (792: 940 on bin 4) | |
+| 720 / 936 MHz | 720: 0, 2, 3, 5; 936: 0, 2, 3 | 900 mV | |
+| 1008 MHz | all | 900–1020 mV by bin | 1032 MHz removed (ROCKNIX 0200) |
+| 1104 MHz | 0, 2, 3, 5 | 950–1000 mV | |
+| 1200 MHz | all | 1020–1100 mV | |
+| 1320 MHz | 0, 2, 3, 4, 5 | 1100 mV | bin 5 added (0200) |
+| 1416 MHz | 0, 2, 3, 5 | 1100 mV | below stock's 1.15–1.16 V: K22 stress test before use (Q2) |
+| 1512 MHz | 1, 3, 5 | 1100 / 1100 / 1160 mV | `turbo-mode`: a boost frequency, **off at boot** |
+
+- **Boost (1512 MHz):** cpufreq-dt registers software boost (`cpufreq_boost_set_sw`); OPPs marked `turbo-mode` are
+  boost frequencies and boost starts disabled. Only Redux's Expert Mode should write
+  `/sys/devices/system/cpu/cpufreq/boost`. Nothing in the image (overlay, tmpfiles, sysctl) sets it, and a sysfs write
+  doesn't survive a reboot, so every boot starts without boost. Keep it that way: if Expert Mode ever needs to persist,
+  it re-applies the setting after login, not from an image default.
+- **Governor:** `schedutil` (`CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y`). No per-tier change.
+- **Thermal (R11 cooling map + Q1):** one CPU zone, polling 1 s (0.5 s while throttling). Trips: 60 °C passive,
+  **70 °C passive with the cooling map** (all four CPUs, full range), **115 °C critical** (stock's value, Q1; upstream
+  is 110 °C). The zone carries `sustainable-power = 1000` (an IPA parameter), but the kernel's default governor is
+  **step_wise** (`CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE=y`), and the CPU nodes have no `dynamic-power-coefficient`, so
+  the power allocator couldn't model the CPUs anyway. In practice: **throttling starts at 70 °C, one step at a time; the
+  60 °C trip does nothing.** That is upstream's behaviour too; it is fine for v0.x. Revisit only if K22 shows
+  oscillation or late throttling (options: a power model per CPU, or a lower target trip).
+- **Charging (Q5):** `constant-charge-current-max-microamp = 1024000` (1024 mA) and
+  `voltage-max-design-microvolt = 4100000` (4.10 V, stock's cap) in the battery node, until K14.
+- **For K22 (stress test):** run it also **while charging** at 1024 mA (both heat sources at once), log
+  `thermal_zone*/temp` and `cpufreq/scaling_cur_freq`, and confirm (a) throttling begins near 70 °C, (b) the unit
+  never reaches 115 °C, (c) 1416 MHz is stable at 1.10 V on Dale's bin; boost on and off.
+
 ## 6. Files
 | Path | Purpose |
 |---|---|
