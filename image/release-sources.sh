@@ -50,12 +50,12 @@ case $NAME in *-uboot*)
 	[ -n "$DRAM" ] || die "$NAME: no DRAM type after -uboot- (images from image/build-image.sh are …-uboot-lpddr4|lpddr3)"
 	(cd "$UBOOT_SRC_DIR" && sha256sum --quiet -c SHA256SUMS) || die "$UBOOT_SRC_DIR: SHA256SUMS does not match"
 	for pat in "u-boot-[0-9]*.tar.xz" "trusted-firmware-a-*.tar.xz" "rg34xxsp-u-boot-inputs-*.tar.xz" "u-boot-rg34xxsp-*-NOTICES.txt"; do
-		f=$(cd "$UBOOT_SRC_DIR" && ls $pat 2>/dev/null | head -1)
+		f=$(cd "$UBOOT_SRC_DIR" && ls $pat 2>/dev/null | head -1 || true)
 		[ -n "$f" ] && grep -q "  $f\$" "$UBOOT_SRC_DIR/SHA256SUMS" || die "$UBOOT_SRC_DIR: missing $pat (build-uboot.sh --sources)"
 		UB_FILES+=("$f")
 	done
 	# the sources must be those of the binary actually in the image: compare the bytes at 8 KiB
-	BIN=$(cd "$UBOOT_SRC_DIR" && ls u-boot-rg34xxsp-$DRAM-*.bin 2>/dev/null | head -1)
+	BIN=$(cd "$UBOOT_SRC_DIR" && ls u-boot-rg34xxsp-$DRAM-*.bin 2>/dev/null | head -1 || true)
 	[ -n "$BIN" ] || die "$UBOOT_SRC_DIR: no u-boot-rg34xxsp-$DRAM-*.bin"
 	IMG=$OUTDIR/$NAME.img
 	if [ -f "$IMG" ]; then
