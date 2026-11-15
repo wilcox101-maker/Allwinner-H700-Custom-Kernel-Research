@@ -954,3 +954,9 @@ index line. KR now works Wave 0 (G0.1–G0.4) and Wave 1 (G1, stock sleep path),
    `docs/ghidra-plan.md` "Results"). Sent to Redux as KR package m. Wave 2 waits for Dale's GO after Beta; KR halts.
 3. **For DR:** G1 means mainline deep suspend (K6) needs `SYSTEM_SUSPEND` support in our TF-A build (R1); worth a check
    of the pinned TF-A's sun50i_h616 PSCI ops when R1 is next touched. Nothing else needed.
+
+### Kernel Research, 2026-11-15, 02:50 ET (Ghidra plan amended; G2 CPU grades)
+Manager for Dale (`FROM-REDUX-MANAGER-2026-11-15-f.md`): plan amended in `docs/ghidra-plan.md` (text unchanged): Wave 2 no
+longer waits for Beta, new Wave 3; KR takes G2, G4, G5, G6, W3.1–W3.3; **DR takes G3 and W3.4–W3.6**. G2 done:
+`docs/ghidra-g2-cpu-grades.md`. **For DR / K22:** fuse values 0x2C00, 0x5D00, 0x6000 and unknown ones get a higher CPU
+step on mainline than on stock; Dale's fuse value decides how K22 starts.

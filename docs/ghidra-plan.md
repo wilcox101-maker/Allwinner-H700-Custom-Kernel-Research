@@ -2,8 +2,8 @@
 
 Landed by the Kernel Research chat from the Redux Manager's `FROM-REDUX-MANAGER-2026-11-15-e.md`
 (Dale, 2026-11-15 01:54: "Roll out Ghidra testing plan and document."). Plan text unchanged below.
-Status: **Wave 0 and Wave 1 done 2026-11-15** (desk; results sent to Redux as KR package m, see "Results" at the end);
-Wave 2 waits for Dale's GO after Beta.
+Status: **Wave 0 and Wave 1 done 2026-11-15** (desk; results sent to Redux as KR package m, see "Results" at the end).
+**Amended 02:31** (below): Wave 2 no longer waits for Beta, new Wave 3, items split between KR and DR.
 Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); never in this repo.
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
@@ -51,6 +51,40 @@ G0.1 → G0.2 (DECIDE if it fails) → G0.3 → G0.4 → G1 → package to Redux
 Wave 2 starts only on Dale's GO after Beta, one item per PR, each followed by its package.
 The weekly audit checks the tags: a [V] without a hw-result note is an S1 finding.
 
+## Amendment 2026-11-15 02:31: full scope (`FROM-REDUX-MANAGER-2026-11-15-f.md`, text unchanged)
+**Manager advice, not a command.** Dale, 02:31: "Skip LZO. Leverage reverse engineering to find all the data
+possible." So: no LZO support; Wave 2 is no longer held for Beta (it is desk research, nothing ships in Redux
+until Beta); a new Wave 3 covers the rest of the stock firmware. Split between KR and DR to run in parallel.
+
+
+### Ground rules (unchanged, plus one)
+Desk only; stock files read, never written, never committed; record names, addresses, constants, tables
+and behaviour, **never decompiled code**; tag [G]/[D]/[V]; each item ends with optional device checks.
+**New:** for every item, also list the data that can be pulled mechanically (tables, enums, attribute
+names, ioctl numbers) as a table in the doc: that is the "all the data" part.
+
+### Who does what
+| Chat | Items (in order) |
+|---|---|
+| **KR** (kernel and modules) | G0.1–G0.4 (G0.2 with `vmlinux-to-elf`, no LZO) → G1 sleep → G2 CPU grades → G4 battery gauge → G5 audio → G6 rumble → W3.1 → W3.2 → W3.3 |
+| **DR** (boot chain and userspace) | G3 u-boot panel select → W3.4 → W3.5 → W3.6 |
+
+### Wave 3: everything else in the stock firmware
+| Id | Target | Data to extract | Feeds |
+|---|---|---|---|
+| W3.1 | Kernel, after kallsyms naming | **Inventory tables:** every sysfs attribute (driver, path, R/W, range check), every `/dev/disp` ioctl (number, name, arguments), module parameters, input key codes per driver | Redux features (display, input), mainline gaps |
+| W3.2 | Kernel modules in the stock rootfs (`mali_kbase.ko`, `8821cs.ko`, others in `/lib/modules`) | GPU DVFS table and voltages; Wi-Fi module parameters (power save, country); any board-specific module | Mainline GPU/Wi-Fi, Redux battery life |
+| W3.3 | Stock DT, full | Every node the stock kernel uses vs the mainline SP tree: pins, regulators, clocks, thermal trips, GPU OPPs (a diff table) | Mainline DT patches |
+| W3.4 | Boot package (TOC at 16,400 KiB): u-boot, **ATF bl31, SCP (AR100) firmware** | ATF version and PSCI functions offered; SCP suspend/standby flow and wake sources; u-boot env, bootcmd, DT fix-ups | G1 (real suspend), mainline boot chain |
+| W3.5 | Stock launcher `dmenu.bin` and the shell scripts it uses (`pwr_new.sh` etc.) | Hotkey map, sleep/lid/power-key policy, brightness and volume steps, battery % shown, files and sysfs paths it touches | Redux parity checks (F4/F5), Redux sleep behaviour |
+| W3.6 | Other stock userspace daemons and `/etc` config | Services started at boot, what each one writes (to find anything Redux must keep or stop) | Redux installer and safety |
+
+### Checkpoints
+- KR still stops and asks (DECIDE) before installing anything else.
+- One item per PR; each PR's doc section is the record; results that change Redux go to the Owner as a
+  `FROM-REDUX-KERNEL-*` (KR) or `FROM-REDUX-DEEP-*` (DR) package. Redux code changes wait for Beta.
+- Each chat HALTs when its list is done, or earlier if its chat gets long (SWAP rule: ~25 PRs or entries).
+
 ## Results (Kernel Research, 2026-11-15)
 Full text: Redux `docs/kernel-research/stock-kernel-ghidra.md` via KR package m (`FROM-REDUX-KERNEL-2026-11-15-m.md`).
 | Id | Result |
@@ -63,3 +97,7 @@ Full text: Redux `docs/kernel-research/stock-kernel-ghidra.md` via KR package m 
 
 For mainline (deep suspend, K6): stock relies on firmware `SYSTEM_SUSPEND`; deep `mem` on mainline needs it too, from our
 TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake source in the board tree.
+
+| Wave 2 | Result |
+|---|---|
+| G2 | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md): fuse → stock bin → mainline `speedN` table; for 4 fuse values (0x2C00, 0x5D00, 0x6000, unknown) mainline allows a higher step than stock. |
