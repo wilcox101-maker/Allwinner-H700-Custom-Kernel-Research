@@ -30,6 +30,12 @@ TEXTS = {   # licence id -> file under u-boot's Licenses/
     "MIT": "mit.txt", "X11": "x11.txt", "bzip2-1.0.6": "bzip2-1.0.6.txt", "eCos-2.0": "eCos-2.0.txt",
     "IBM-pibs": "ibm-pibs.txt",
 }
+# Licence texts u-boot does not ship, kept in this repo (tools/licences/, provenance in its README.md).
+REPO_TEXTS = {"Unicode-DFS-2016": "Unicode-DFS-2016.txt"}
+REPO_TEXT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "licences")
+# Ids already reviewed whose text is unavailable; still warned about, with what was decided.
+KNOWN_FLAGS = {"Intel": "lib/binman.c + include/binman.h: Google copyright under u-boot's own 'Intel' tag "
+                        "(no text in u-boot); upstream report drafted, docs/upstream-drafts/u-boot-binman-spdx.md"}
 # Licences whose full text is the notice in each file's header (reproduced verbatim by section()).
 KNOWN_HEADER_ONLY = {"BSD-2-Clause-FreeBSD", "LZMA-SDK-9.22"}
 
@@ -197,16 +203,20 @@ def main():
                     "Apache License 2.0: /usr/share/common-licenses/Apache-2.0 in the image, or",
                     "https://www.apache.org/licenses/LICENSE-2.0. These files are under Apache-2.0 WITH",
                     "LLVM-exception, which lifts the notice requirements for object code embedded by a compiler.", ""]
+        elif lic in REPO_TEXTS:
+            out += ["-" * 78, lic + " (text from this repo, tools/licences/%s; source: SPDX license-list-data)" % REPO_TEXTS[lic],
+                    "-" * 78, open(os.path.join(REPO_TEXT_DIR, REPO_TEXTS[lic]), encoding="utf-8").read().rstrip(), ""]
         elif lic in KNOWN_HEADER_ONLY:
             out += ["-" * 78, lic + ": its text is the files' own header notice, reproduced above.", ""]
         else:
             unknown.append(lic)
-            out += ["-" * 78, lic + ": UNKNOWN LICENCE ID, no text found; header notices reproduced above.",
-                    "  Needs human review before publishing.", ""]
+            out += ["-" * 78, lic + ": UNKNOWN LICENCE ID, no text found; header notices reproduced above."]
+            out += (["  Reviewed: " + KNOWN_FLAGS[lic]] if lic in KNOWN_FLAGS else ["  Needs human review before publishing."]) + [""]
     for lic in unknown:
-        print("WARNING: licence id %r has no known text (see NOTICES); review before publishing" % lic,
-              file=sys.stderr)
-    sys.stdout.write("\n".join(out) + "\n")
+        why = KNOWN_FLAGS.get(lic)
+        print("WARNING: licence id %r has no known text (see NOTICES); %s" %
+              (lic, "known flag: " + why if why else "review before publishing"), file=sys.stderr)
+    sys.stdout.buffer.write(("\n".join(out) + "\n").encode("utf-8"))
 
 
 if __name__ == "__main__":

@@ -879,6 +879,14 @@ bin 5, 1512 turbo, 480 suspend, 115 °C, 1024 mA / 4.10 V). **For KR, a finding,
 `dynamic-power-coefficient`, so throttling starts at the 70 °C trip and the 60 °C trip is idle (as upstream). Suggest K22
 also runs while charging. Then HALT per the Manager: #37 and this PR (stacked on #37) are open for the Manager to merge.
 
+### Deep Research, 2026-11-15, 02:30 ET (Q9 applied; binman report drafted)
+Dale's decision 21:07 via the Manager: **Q9 = A**. Unicode-DFS-2016 text (SPDX license-list-data, byte-identical at
+v3.29.0) in `tools/licences/`, appended to the bootloader notices; `CONFIG_EFI_UNICODE_CAPITALIZATION` unchanged, no
+binary change. **For KR:** `build-uboot.sh` now packs `tools/licences/` into the inputs tarball (one-word change). binman:
+its `Intel` tag dates from the file's addition (v2020.04) and is unchanged in v2026.10; still flagged, the warning names
+the review; upstream report drafted for Dale (`docs/upstream-drafts/u-boot-binman-spdx.md`, not sent; lore duplicate
+check still to do). Then HALT.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

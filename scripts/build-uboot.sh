@@ -163,7 +163,7 @@ if [ "$SOURCES" = 1 ]; then
 	git -C "$WORK/tf-a" archive --format=tar --prefix="trusted-firmware-a-${TFA_TAG#v}/" "$TFA_SHA" |
 		xz -T0 -9 >"$OUT/trusted-firmware-a-${TFA_TAG#v}.tar.xz"
 	git -C "$REPO" archive --format=tar --prefix="rg34xxsp-u-boot-inputs-$V/" HEAD \
-		patches/u-boot config/u-boot scripts/build-uboot.sh tools/bootloader_notices.py | xz -9 >"$OUT/rg34xxsp-u-boot-inputs-$V.tar.xz"
+		patches/u-boot config/u-boot scripts/build-uboot.sh tools/bootloader_notices.py tools/licences | xz -9 >"$OUT/rg34xxsp-u-boot-inputs-$V.tar.xz"
 	(cd "$OUT" && sha256sum ./*.tar.xz | sed 's| \./| |' >>SHA256SUMS)
 	ls -la "$OUT"/*.tar.xz | awk '{print "  " $5 "  " $9}'
 fi

@@ -56,6 +56,8 @@ Items 1, 2 and 3 and the blob/stock-file part of 4 are now automated (2 for the 
   `CONFIG_EFI_UNICODE_CAPITALIZATION=y`, a defconfig default). **Before a public image:** either add the
   Unicode-DFS-2016 text to the notices and ask upstream about binman's tag, or have KR turn the option off (that
   changes the R1 binary and needs a new FEL check). Decision for Dale; not blocking desk work.
+  **Decided (Dale, 2026-11-14 21:07, Q9): A** — the Unicode-DFS-2016 text now ships in the notices
+  (`tools/licences/`), no binary change. binman stays flagged; upstream report drafted (`docs/upstream-drafts/u-boot-binman-spdx.md`).
 - `image/build-image.sh` refuses a `UBOOT_BIN` without the notices next to it and installs them as
   `/usr/share/doc/reduxos-bootloader/NOTICES.txt`; `image/check-boot-layout.py` check 8 confirms it (33 checks now).
 - `image/release-sources.sh` takes `UBOOT_SRC_DIR=<build-uboot.sh --sources output>` (the old single-file `UBOOT_SRC`
