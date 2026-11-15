@@ -31,6 +31,7 @@ not published elsewhere. KR adds its own entries here.
 | W3.1 | Vendor battery-device files `moto`, `hallkey`, `spk_state`, `otg_id`, `display_id`, `boot_mode`, LED controls, `openbor_volume`, `nds_*` | [G][N] | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
 | W3.1 | Stock DT X/Y labels (PA3 "x" = 306, PA2 "y" = 307) are the reverse of Redux's remap table | [G][N] | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
 | W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock | [D][N] | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
+| W3.1 | `boot_mode` = 1 after `bootreason=charger`; `display_id` set by the `/dev/disp` output switch; `openbor_volume` is the shared volume slot read by nearly every stock emulator | [G][N] | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).
@@ -119,7 +120,7 @@ Full text: Redux `docs/kernel-research/stock-kernel-ghidra.md` via KR package m 
 | G0.2 | `tools/kallsyms_49.py` (stdlib): 90,760 symbols; **36,849 of 36,849** functions named (36,271 exact, 578 split pieces); 17/17 spot checks reference their own `__func__`; 480 earlier guessed names corrected. Why attempt 1 failed: 256-byte padding between tables and `relative_base` = 0 in a relocatable Image. Cross-checked with `vmlinux-to-elf` 1.4.0 (Dale's decision, 2026-11-15 02:22): identical list, 0 differences; its ELF is a new file in Dale's `REA\BootImage\kallsyms`. |
 | G0.3 | `adc_cal` (0644) + `amux_debug` on the stock `gpio-keys-polled` device (`/soc@03000000/gpio_keys`) [G][D]. |
 | G0.4 | Backlight row and open questions 13/14 updated (in the package). |
-| G1 | Real suspend-to-RAM: `mem` → PSCI `SYSTEM_SUSPEND` to BL31 + `arisc`, registered only if firmware supports it; no `mem_sleep` in 4.9; wake: power key, lid (when power-key wake is on), RTC, `time_to_wakeup_ms`; `os_sleep` switch turns power-key/lid wake off [G][D]. Device checks listed in the package. |
+| G1 | Real suspend-to-RAM: `mem` → PSCI `SYSTEM_SUSPEND` to BL31 (DR W3.4: no SCP firmware; BL31 runs standby and emulates the `arisc` wake-source calls), registered only if firmware supports it; no `mem_sleep` in 4.9; wake: power key, lid (when power-key wake is on), RTC, `time_to_wakeup_ms`; `os_sleep` switch turns power-key/lid wake off [G][D]. Device checks listed in the package. |
 
 For mainline (deep suspend, K6): stock relies on firmware `SYSTEM_SUSPEND`; deep `mem` on mainline needs it too, from our
 TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake source in the board tree.
@@ -132,3 +133,4 @@ TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake sourc
 | W3.3 | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md): stock DT vs our trees, 12 tables; gaps: TF2 slot (mmc2: cd PE22, power PE4, ALDO1) missing, TF1 card detect, ALDO3 always-on, stick ADC enable PE11. |
 | G5, G6 | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md): jack PI3 (200 ms debounce, mutes the speaker amp), amp PI5 with 100 ms on-delay; mixer controls; rumble = PWM2 on PH2 at 2 kHz, driven by the battery driver (`axp2202-battery/moto`, FF_RUMBLE on ANBERNIC-keys). |
 | W3.1 | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md): 1,135 sysfs attributes (139 vendor, with paths and write limits), 49 `/dev/disp` commands (names mostly inferred), 286 module parameters, 19 DT keys, char/misc devices. |
+| Follow-ups | W3.1: `disp_sys_store` is a stub, `display_id`/`boot_mode` sources (`bootreason=charger`), stock apps that read the vendor battery files (`openbor_volume` = shared volume); G1: `os_sleep` is 0 after boot, Wi-Fi is not a wake source (no WoWLAN in `8821cs`, no host-wake pin); W3.3/G2/G4: upstream files identical at pin and master. |

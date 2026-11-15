@@ -382,3 +382,24 @@ No vendor `/proc` entries found (callers of `proc_create_data` are all upstream:
 2. `ls /sys/class/disp/disp/attr/ /sys/class/hdmi/hdmi/attr/` (confirms the two "likely" folders).
 3. `cat /sys/class/sunxi_info/sys_info`; `ls /sys/power/sunxi_debug/`.
 4. `evtest` on `ANBERNIC-keys`: press the printed X and Y and note the codes (306/307).
+
+## Follow-ups (2026-11-15, gap-closing)
+Static analysis with kallsyms names plus a capstone scan for ADRP-based references (capstone 5.0.9, own venv).
+- `disp_sys_store` is an **8-byte stub**: it accepts any write and does nothing [G]. `key_info_store` copies at most
+  **31 characters** into `key_name` (`strncpy`) [G].
+- `display_id` shows `allen_display_hdmi`; the only writer is inside `disp_ioctl` (the output-switch path): 0 when
+  the call's argument is 1, otherwise 1 [G][N]. Most likely "1 = HDMI is the active output"; which command number it
+  is was not isolated. `boot_mode` shows `allen_boot_type`, set at boot by the `bootreason=` kernel argument:
+  **1 when `bootreason=charger`** (charge-only boot), else 0 [G][N]; the USB power driver reads it too.
+- `/dev/disp` command names: the kernel has **no `DISP_*` strings**, so the names in table 3 can't be checked
+  against the binary; they stay inferred from the BSP header (only 0x102 is confirmed by its call path).
+- Who reads the vendor battery files in stock userspace [G][N] (byte match in the V1.0.6 `5.appfs.img`, mapped to files
+  with `debugfs icheck/ncheck`, 4 KiB block granularity):
+  | File | Stock programs that contain the name |
+  |---|---|
+  | `openbor_volume` | Nearly every emulator (`fba*`, `fc`, `gba`, `gbc`, `md`, `ngpc`, `pcsx`, `sfc`, `sms`, `pce`, `wswan`, `xmame`), `ffplay`, OpenBOR, PPSSPP, RetroArch: it is the **shared volume level** the stock apps use |
+  | `nds_pwrkey` | PPSSPP, RetroArch (all three builds) |
+  | `nds_esckey` | `ndsCtrl.dge`, `portsCtrl.dge`, `/bin/pdf/launch.sh` |
+  | `hallkey` | `dmenu.bin`, `charg.dge`, `muos1/2.bin`, e-book reader, music and video players |
+  | `spk_state` | Several emulators, `muos1.bin`, video player |
+  | `boot_mode` | `/ctrl/loadapp.sh`, a RetroArch core |

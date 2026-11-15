@@ -125,3 +125,10 @@ All under `/sys/class/power_supply/axp2202-battery/`: `work_led`, `lowpwr_led`, 
 1. Stock: plug and unplug headphones; `cat /sys/class/power_supply/axp2202-battery/spk_state` each time.
 2. Stock: `amixer -c 0 scontrols` (expect `digital volume`, `lineout volume`, mixer and pin switches).
 3. Stock (K13): `echo 60 > /sys/class/power_supply/axp2202-battery/moto`, then `echo 0`; does the unit vibrate?
+
+## Follow-up (2026-11-15)
+- Jack polarity [G]: the detect work reads PI3 and inverts it only if bit 0 of the GPIO's DT flags is set
+  (`of_get_named_gpio_flags` on `hp-det-gpio`); the stock spec ends in `… 0x0`, so with the sunxi 4.9 translation
+  that cell gives no invert: **PI3 high = headphones in, speaker amp off**. Device check: `cat …/spk_state` with
+  and without headphones.
+- ALSA jack name: not found as a string; left to the device check (`amixer -c 0 controls | grep -i jack`).
