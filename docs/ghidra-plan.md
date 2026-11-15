@@ -22,7 +22,8 @@ Tags in the result docs: [G] static analysis, [D] DT/strings/source, [V] device-
 | G6 | Rumble = PWM2/PH2 at 2 kHz, driven by the battery driver (`moto` file, `FF_RUMBLE` on the joypad, < 37 % → 0) | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
 | W3.1 | Vendor battery-device files `moto`, `hallkey`, `spk_state`, `otg_id`, `display_id`, `boot_mode`, LED controls, `openbor_volume`, `nds_*` | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
 | W3.1 | Stock DT X/Y labels (PA3 "x" = 306, PA2 "y" = 307) are the reverse of Redux's remap table | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
-| W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
+| W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock |
+| W3.1 | `boot_mode` = 1 after `bootreason=charger`; `display_id` set by the `/dev/disp` output switch; `openbor_volume` is the shared volume slot read by nearly every stock emulator | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).
@@ -124,3 +125,4 @@ TF-A build (R1; not checked yet), and the lid wake becomes a `SW_LID` wake sourc
 | W3.3 | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md): stock DT vs our trees, 12 tables; gaps: TF2 slot (mmc2: cd PE22, power PE4, ALDO1) missing, TF1 card detect, ALDO3 always-on, stick ADC enable PE11. |
 | G5, G6 | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md): jack PI3 (200 ms debounce, mutes the speaker amp), amp PI5 with 100 ms on-delay; mixer controls; rumble = PWM2 on PH2 at 2 kHz, driven by the battery driver (`axp2202-battery/moto`, FF_RUMBLE on ANBERNIC-keys). |
 | W3.1 | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md): 1,135 sysfs attributes (139 vendor, with paths and write limits), 49 `/dev/disp` commands (names mostly inferred), 286 module parameters, 19 DT keys, char/misc devices. |
+| Follow-ups | W3.1: `disp_sys_store` is a stub, `display_id`/`boot_mode` sources (`bootreason=charger`), stock apps that read the vendor battery files (`openbor_volume` = shared volume); G1: `os_sleep` is 0 after boot, Wi-Fi is not a wake source (no WoWLAN in `8821cs`, no host-wake pin); W3.3/G2/G4: upstream files identical at pin and master. |

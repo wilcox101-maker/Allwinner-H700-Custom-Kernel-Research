@@ -991,3 +991,8 @@ Dale (02:46): findings with no public source we know of are tagged **[N]**; runn
 
 ### Kernel Research, 2026-11-15, 04:10 ET (handoff)
 `docs/handoff-kernel-research-2026-11-15.md`: KR Ghidra items done; open gap-closing items listed for the next KR chat.
+
+### Kernel Research, 2026-11-15, 04:40 ET (follow-ups)
+W3.1/G1/W3.3 gap-closing (see `ghidra-plan.md` "Follow-ups"). Install (standing approval 03:03): capstone 5.0.9 (PyPI) in
+the venv `/home/claude/cap` of this chat's cloud workspace. **For DR (W3.5):** `openbor_volume` is the shared volume slot of
+the stock emulators; `hallkey` is read by `dmenu.bin`, `charg.dge`, `muos1/2.bin`.

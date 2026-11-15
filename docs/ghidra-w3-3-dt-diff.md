@@ -233,3 +233,9 @@ Stock-only: IPA coefficients (`k_*`, `sustainable-power`, `dynamic-power-coeffic
 2. TF1: on stock, `cat /sys/kernel/debug/gpio | grep -i pf6` with and without a card (does PF6 follow the card?).
 3. ALDO3: on stock, `cat /sys/class/regulator/*/name` with `microvolts` and `num_users`; then (mainline, later) whether anything stops working if ALDO3 is off.
 4. PE11: on stock, `cat /sys/kernel/debug/gpio | grep -i pe11` (does the stick driver hold it low?).
+
+## Follow-up (2026-11-15)
+The five upstream files this comparison used (`sun50i-h700-anbernic-rg35xx-sp.dts`, `-rg35xx-plus.dts`, `-rg35xx-2024.dts`,
+`sun50i-h616.dtsi`, `sun50i-h616-cpu-opp.dtsi`) are **byte-identical at our pin `97d73c8` and at master (2026-11-15)**
+(SHA-256 compared), so every "Mainline" value above holds for the pinned tree. The same is true for
+`sun50i-cpufreq-nvmem.c`, `axp20x_battery.c` and `axp20x.h` used by G2 and G4.

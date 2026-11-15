@@ -14,6 +14,7 @@ installs) to it via `redux-work\Claude Files`, not to Dale.
   `rc.local`, 8821cs parameters). Nothing stock is in any repo.
 
 ## Open items (Dale 03:00: keep going until complete): gap-closing on finished items, desk only
+**Update 04:40:** items 2 (except the `disp`/`hdmi` attr folders), 5 and 6 are done (`ghidra-plan.md` "Follow-ups"); left: 1, 3, 4 and the attr folders.
 1. Redux map (package n's `stock-kernel-ghidra.md`): add [N] tags, matching the plan's list, next time it is sent.
 2. W3.1: write limits of `disp_sys_store` and `key_info_store` (didn't decompile); who reads `openbor_volume`,
    `nds_esckey`, `nds_pwrkey` (stock userspace: coordinate with DR W3.5); where `display_id` comes from; check
