@@ -128,9 +128,11 @@ and stops at the first failure. Last full run: see the newest Kernel Research en
 - **Never drive an unidentified panel**, and never undervolt relative to stock.
 - **Kernel submission rules:** a tool never adds `Signed-off-by`; the human submitter reviews the
   patch and adds it, and the changelog says how a tool helped
-  (`Documentation/process/coding-assistants.rst`). Patch 0006 carries that note; 0001–0005 still
-  need it before any submission.
+  (`Documentation/process/coding-assistants.rst`). Patches 0001–0007 all carry that note (0001–0005
+  since #34).
 - Every claim says whether it was checked on hardware. "Desk only" means it was not.
+- `main` is protected by a ruleset (2026-11-14): no force-push, no deleting `main`. Fix mistakes
+  with a new commit or a revert PR, never by rewriting history.
 
 ## Related
 - Redux firmware (stock-based CFW; source of the stock device tree used here):

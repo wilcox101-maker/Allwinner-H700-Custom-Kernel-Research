@@ -16,6 +16,9 @@ stays K3 → K4 (FEL) → first spare-card boot.
   the bytes at 8 KiB still equal the binary and the gaps are still empty.
 - **R8 `mmc 0:1` is right** for a card in slot 1 (TF1); see §4. Caveat: u-boot sees only slot 1.
 
+> **2026-11-15 update (R9):** the checker has an 8th section, the bootloader licence notices in the root fs
+> (33 checks). See `docs/r9-licensing-redistribution.md` §3a.
+
 ## 2. What was built (2026-11-14)
 | Input | Value |
 |---|---|

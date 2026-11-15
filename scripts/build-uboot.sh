@@ -9,6 +9,8 @@
 #      patches/u-boot/*.patch, then make with BL31; checks every fragment line holds
 #   4. checks the binary: eGON SPL header and checksum, size within the card gap (8 KiB .. 1 MiB), the PE6 and R8
 #      code present; writes u-boot-rg34xxsp-<dram>-<uboot ver>.bin, its .config and SHA256SUMS to $OUT
+#   5. writes u-boot-rg34xxsp-<ver>-NOTICES.txt: the licence notices of every file compiled into the
+#      binaries (tools/bootloader_notices.py); it must ship with any image that carries them (R9)
 #
 # Usage:  scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources] [--jobs N]
 #   --sources  also write the corresponding source (GPL/BSD, task R9): pristine u-boot and TF-A
@@ -145,6 +147,14 @@ PY
 		"$name" "$size" "$MAX_BYTES"
 done
 
+log "4b. Licence notices for the binaries (R9: BSD/ISC/… notices must travel with the binary)"
+python3 -I "$REPO/tools/bootloader_notices.py" --uboot-src "$WORK/u-boot" \
+	$(for d in "${DRAMS[@]}"; do printf -- '--uboot-build %s ' "$WORK/u-boot-build-$d"; done) \
+	--tfa-src "$WORK/tf-a" --tfa-build "$WORK/tf-a/build/sun50i_h616/release" \
+	>"$OUT/u-boot-rg34xxsp-${UBOOT_TAG#v}-NOTICES.txt" || fail "licence notices"
+(cd "$OUT" && sha256sum "u-boot-rg34xxsp-${UBOOT_TAG#v}-NOTICES.txt" >>SHA256SUMS)
+echo "  u-boot-rg34xxsp-${UBOOT_TAG#v}-NOTICES.txt ($(wc -l <"$OUT/u-boot-rg34xxsp-${UBOOT_TAG#v}-NOTICES.txt") lines)"
+
 if [ "$SOURCES" = 1 ]; then
 	log "5. Corresponding source"
 	V=${UBOOT_TAG#v}
@@ -153,7 +163,7 @@ if [ "$SOURCES" = 1 ]; then
 	git -C "$WORK/tf-a" archive --format=tar --prefix="trusted-firmware-a-${TFA_TAG#v}/" "$TFA_SHA" |
 		xz -T0 -9 >"$OUT/trusted-firmware-a-${TFA_TAG#v}.tar.xz"
 	git -C "$REPO" archive --format=tar --prefix="rg34xxsp-u-boot-inputs-$V/" HEAD \
-		patches/u-boot config/u-boot scripts/build-uboot.sh | xz -9 >"$OUT/rg34xxsp-u-boot-inputs-$V.tar.xz"
+		patches/u-boot config/u-boot scripts/build-uboot.sh tools/bootloader_notices.py | xz -9 >"$OUT/rg34xxsp-u-boot-inputs-$V.tar.xz"
 	(cd "$OUT" && sha256sum ./*.tar.xz | sed 's| \./| |' >>SHA256SUMS)
 	ls -la "$OUT"/*.tar.xz | awk '{print "  " $5 "  " $9}'
 fi

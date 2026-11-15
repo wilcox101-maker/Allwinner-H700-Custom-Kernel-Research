@@ -11,8 +11,8 @@ Nearly everything we ship is either Ubuntu's own unmodified packages or our own 
 | Ubuntu packages in the image (~189, R7 manifest) | Each package's own licence (`/usr/share/doc/*/copyright`, kept in the image by the R7 `path-include`), plus **Canonical's IP Rights Policy** for the aggregate | Unmodified binaries from noble/-updates/-security | GPL'd packages: offer their source. Keep `copyright` files (done). Trademarks: see §2 | **Done (2026-11-14):** `image/release-sources.sh` collects every source package for the image (§3) |
 | `linux-firmware-realtek` (rtw88, rtl_bt) | "Redistributable. See LICENCE.rtlwifi_firmware.txt" (upstream WHENCE, R4) | Unmodified Ubuntu package (files under `/lib/firmware`) | Keep the licence file; no source exists | OK. **Never** embed these into the kernel (`EXTRA_FIRMWARE`, which ROCKNIX does); KR's config doesn't |
 | Our kernel package | GPL-2.0 (Linux) + our patches (GPL-2.0) | `linux-image-<ver>-rg34xxsp` | Publish complete corresponding source: pinned upstream commit + `patches/linux/` + `config/` + `scripts/build-kernel.sh` (all in this repo); add a source tarball or `deb-src` to the release/repo | Partly: repo has it all; release step to add |
-| u-boot (+ our PE6 and R8 bits) | GPL-2.0+ | SPL+u-boot at 8 KiB (future images) | Source: u-boot tag + patches + defconfig/fragment, published with each image | Future (R1) |
-| TF-A BL31 | BSD-3-Clause | inside the u-boot binary | Keep BSD notice in the release notes/source bundle | Future |
+| u-boot (+ our PE6 and R8 bits) | GPL-2.0+ (a few files under other terms, see §3a) | SPL+u-boot at 8 KiB of `…-uboot-<dram>.img` | Source: pristine u-boot tarball + our inputs tarball, in the bundle; notices in the image | **Done (R24/R9, 2026-11-15)** |
+| TF-A BL31 | BSD-3-Clause (+ BSD-2, ISC, Apache-2.0 WITH LLVM-exception parts) | inside the u-boot binary | Notices **with the binary**: `/usr/share/doc/reduxos-bootloader/NOTICES.txt` in the image and in the bundle; pristine TF-A tarball in the bundle | **Done (2026-11-15)** |
 | ROCKNIX TF-A suspend patch (`001-allwinner-h616-psci-system-suspend.patch`, Kailash R S) | **No licence or SPDX statement in the patch** (header: `From:`/`Subject:` only); ROCKNIX repo has no top-level `LICENSE`/`COPYING` at `4fc79d7` | Not yet (suspend work, KR §7) | **Ask** the author for a licence (BSD-3-Clause to match TF-A is the natural choice) before carrying it; until then reference only | Blocked: ask |
 | `h700-suspend-stub` (MagnominusGit) | **GPL-2.0-or-later** (its README; `COPYING` = GPL-2) | Would be embedded in BL31 | GPL source for the stub and its build; the combined `bl31.bin` must come with source (KR's note) | OK if source published |
 | Panel init sequences | ROCKNIX `extra-firmware/panels/*.panel`: **no licence found**; content is Anbernic's sequences (our PE6 work proved they are stock-derived) | Not shipped (repo policy since R5) | Don't redistribute ROCKNIX's blobs. Express the two sequences in GPL-2.0 kernel code or DT (as upstream `panel-newvision-nv3052c.c` does for other vendors' NV3052C panels) as part of R19, or extract them on the user's device from the user's own stock image with `tools/extract_rg34xxsp_panels.py` | **Decided (Q8 a, 2026-11-14):** GPL-2.0 tables in the NV3052C driver (R19, KR) |
@@ -34,13 +34,40 @@ Options for Dale (**Q7**):
 Until Q7 is decided, keep images private (no public downloads).
 
 ## 3. Release checklist (in the image build since 2026-11-14)
-Items 1 and 3 and the blob/stock-file part of 4 are now automated; 2 is automated for the kernel and takes a u-boot tarball once R1 builds one; 5 is written by hand per release.
+Items 1, 2 and 3 and the blob/stock-file part of 4 are now automated (2 for the bootloader since 2026-11-15, §3a); 5 is written by hand per release.
 
 - `image/build-image.sh` writes `<image>.sources.tsv` (source package + version, from the image's dpkg database) and runs `image/check-licences.sh` on the rootfs; a failure stops the build. The check: every installed package keeps its `copyright` file; every file under `/usr/lib/firmware` belongs to a package (no hand-dropped blobs); no `*.panel` files; no stock boot0/`boot_package`/`.fex` files in `/boot` or the firmware tree. Tested both ways on the R8 image: passes (192 packages, 156 firmware files); a copy with a missing copyright file, a stray blob, a `.panel` file and a `boot0_sdcard.bin` fails on all four.
-- `image/release-sources.sh <image>.sources.tsv` writes `<image>.sources/`: `ubuntu/` (`.dsc` + tarballs for every source package, exact versions; from the archive, or from Launchpad's librarian when the archive has superseded the version, checked against the `.dsc` SHA-256 sums), `ours/` (this repo at HEAD as a tarball, pristine Linux at `LINUX_SHA`, the u-boot tarball when the image carries u-boot; it refuses a dirty repo), `SOURCES.tsv`, `README.txt` (rebuild steps, "not affiliated" line) and `SHA256SUMS`. It exits non-zero if any package is missing, so a release can't go out without its source.
+- `image/release-sources.sh <image>.sources.tsv` writes `<image>.sources/`: `ubuntu/` (`.dsc` + tarballs for every source package, exact versions; from the archive, or from Launchpad's librarian when the archive has superseded the version, checked against the `.dsc` SHA-256 sums), `ours/` (this repo at HEAD as a tarball, pristine Linux at `LINUX_SHA`, for u-boot images the bootloader set of §3a; it refuses a dirty repo), `SOURCES.tsv`, `README.txt` (rebuild steps, "not affiliated" line) and `SHA256SUMS`. It exits non-zero if any package is missing, so a release can't go out without its source.
 - Measured on the R8 image (our kernel, 192 binary packages from **123** Ubuntu source packages): all 123 fetched from ports.ubuntu.com in 7.5 min; bundle **809 MB** (Ubuntu 648 MB, of which LLVM is 217 MB and GCC 93 MB; Linux tarball 161 MB; repo 0.2 MB). Launchpad fallback checked with two superseded versions (`base-files 13ubuntu10.1`, `llvm-toolchain-20 1:20.1.2-0ubuntu1~24.04.2`: the URL path keeps the epoch, the file names drop it); an unknown package is reported MISSING and fails the run. `dpkg-source -x` unpacks the fetched packages.
 - **Private images: retired 2026-11-14** (Q8 a: the panel moved to the NV3052C driver, so no kernel of ours loads `.panel` files; the code is in git history before this change, with Q3 fallback b). As it was: `PANEL_FW=<dir>` makes `build-image.sh` copy the builder's own `panels/*.panel` (from `tools/gen_panel_firmware.py`) into `/usr/lib/firmware/panels`, names the image `…-private`, and runs the check with `PRIVATE=1`, which turns those files (and only those) into warnings. `release-sources.sh` refuses `-private` images, so a stock-derived image can't be bundled for release by mistake. Tested: same panel file fails without `PRIVATE`, warns with it; a `.panel` outside `panels/` still fails; a `-private` name is refused. If Dale picks Q8 (a), the panel data moves into GPL kernel code and this mode is no longer needed for the display.
 - Publishing the bundle next to the image (same release page) meets GPL-2.0 §3(a) without a written offer. If a release ever ships without it, a written offer valid three years is the fallback.
+
+### 3a. Bootloader (u-boot + TF-A), DR 2026-11-15
+- `scripts/build-uboot.sh` now also writes `u-boot-rg34xxsp-<ver>-NOTICES.txt`, generated by
+  `tools/bootloader_notices.py` from the builds' own dependency files (TF-A `*.d`, kbuild `.*.cmd`), so it covers exactly
+  the files compiled into SPL, u-boot and BL31 (headers and device trees included; u-boot host tools excluded). Per
+  file it reads the SPDX tag: u-boot files with a GPL option are covered by the source in the bundle; every other
+  licence gets its files, their copyright lines and the licence text (from u-boot's `Licenses/`), or the files' own
+  header verbatim. TF-A's `docs/license.rst` is included verbatim; dual-licensed libfdt in TF-A is used under
+  BSD-2-Clause, as TF-A states. Deterministic (same SHA-256 across runs). 1563 lines today.
+- **Two tags with no licence text anywhere in u-boot, flagged (the generator warns; not resolved by us):**
+  `lib/binman.c` + `include/binman.h` say `SPDX-License-Identifier: Intel` under a Google copyright (looks like a
+  mistag upstream), and `include/capitalization.h` says `Unicode-DFS-2016` without the text (pulled in by
+  `CONFIG_EFI_UNICODE_CAPITALIZATION=y`, a defconfig default). **Before a public image:** either add the
+  Unicode-DFS-2016 text to the notices and ask upstream about binman's tag, or have KR turn the option off (that
+  changes the R1 binary and needs a new FEL check). Decision for Dale; not blocking desk work.
+- `image/build-image.sh` refuses a `UBOOT_BIN` without the notices next to it and installs them as
+  `/usr/share/doc/reduxos-bootloader/NOTICES.txt`; `image/check-boot-layout.py` check 8 confirms it (33 checks now).
+- `image/release-sources.sh` takes `UBOOT_SRC_DIR=<build-uboot.sh --sources output>` (the old single-file `UBOOT_SRC`
+  is refused). It checks the directory against its `SHA256SUMS`, requires the u-boot, TF-A and our-inputs tarballs and
+  the notices, and **compares the bootloader bytes at 8 KiB of the image with the directory's binary for the image's
+  DRAM type**, so the bundled source is provably that of the shipped binary. All four files go to `ours/`, are listed
+  in `SOURCES.tsv`, and the README says how to rebuild. Failure cases tested (each stops before downloading): no
+  directory, old `UBOOT_SRC`, a missing TF-A tarball, a corrupted tarball, a binary that differs from the image's,
+  no binary for the image's DRAM type.
+- Run on `reduxos-rg34xxsp-noble-20261115-deb-uboot-lpddr4.img` (2026-11-15): bootloader at 8 KiB = `…-lpddr4-2026.10.bin`
+  (`1d0381e1…`); 123/123 Ubuntu source packages from the archive; `ours/` holds the repo, pristine Linux, u-boot
+  (28.6 MB), TF-A (9.6 MB), our inputs and the notices; `SHA256SUMS` verifies; bundle 845 MB (R8 image: 809 MB).
 
 The checklist:
 1. `<image>.manifest.tsv` (done) + `<image>.sources.tar` or a written source offer covering every GPL package in it.

@@ -39,6 +39,8 @@ if [ -n "${UBOOT_BIN:-}" ]; then
 	u-boot-rg34xxsp-lpddr3-*.bin) UBOOT_DRAM=lpddr3 ;;
 	*) echo "UBOOT_BIN must be a u-boot-rg34xxsp-<lpddr4|lpddr3>-<ver>.bin from scripts/build-uboot.sh" >&2; exit 2 ;;
 	esac
+	UBOOT_NOTICES=$(ls "$(dirname "$UBOOT_BIN")"/u-boot-rg34xxsp-*-NOTICES.txt 2>/dev/null | head -1)
+	[ -f "$UBOOT_NOTICES" ] || { echo "no u-boot-rg34xxsp-*-NOTICES.txt next to $UBOOT_BIN (R9: rerun scripts/build-uboot.sh)" >&2; exit 2; }
 	if [ -f "${UBOOT_BIN%.bin}.config" ] &&
 	   ! grep -q "^CONFIG_SUNXI_DRAM_H616_${UBOOT_DRAM^^}=y" "${UBOOT_BIN%.bin}.config"; then
 		echo "$(basename "$UBOOT_BIN"): its .config is not ${UBOOT_DRAM^^}" >&2; exit 2
@@ -96,6 +98,10 @@ cp "$OUT/rootfs/root/manifest.tsv" "$OUT/$NAME.manifest.tsv"
 # Our identity file. /etc/os-release stays as Ubuntu's base-files ships it (unmodified package, R9 §2).
 printf 'NAME="ReduxOS"\nID=reduxos\nBUILD_ID=%s\nIMAGE_ID=%s\nBASE="Ubuntu 24.04 LTS (noble) packages"\nHOME_URL="https://github.com/wilcox101-maker/Allwinner-H700-Custom-Kernel-Research"\nUBOOT=%s\n' \
 	"$STAMP" "$NAME" "$(basename "${UBOOT_BIN:-none}" .bin)" > "$OUT/rootfs/etc/reduxos-release"
+# R9: the bootloader's licence notices (BSD/ISC/… terms require them with the binary)
+if [ -n "$UBOOT_DRAM" ]; then
+	install -D -m 0644 "$UBOOT_NOTICES" "$OUT/rootfs/usr/share/doc/reduxos-bootloader/NOTICES.txt"
+fi
 # R9: source package list for image/release-sources.sh, then the licence checks (fail = no image)
 dpkg-query --admindir="$OUT/rootfs/var/lib/dpkg" -W -f='${source:Package}\t${source:Version}\n' | LC_ALL=C sort -u > "$OUT/$NAME.sources.tsv"
 "$HERE/check-licences.sh" "$OUT/rootfs"

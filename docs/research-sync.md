@@ -860,6 +860,18 @@ New DR chat ("Deep Research 2026-11-14 to 2026-11-15"). #32 and #33 were already
 4. Not changed: CI (it still builds the bootloader-less image for QEMU; the u-boot path needs no QEMU). Next for DR:
    R9 u-boot/TF-A sources in the release bundle, then R13 CPU notes.
 
+### Deep Research, 2026-11-15, 00:50 ET (R9 bootloader sources + notices; Manager file 2026-11-15-a)
+GO from Dale via the Manager (19:22). Desk only.
+1. **R9:** `release-sources.sh` takes `UBOOT_SRC_DIR=` (your `build-uboot.sh --sources` output) instead of `UBOOT_SRC`,
+   checks it, and proves the bundled source is that of the image's binary (bytes at 8 KiB). New
+   `tools/bootloader_notices.py` writes the BSD/ISC/… notices of exactly what is compiled in; the image carries them.
+2. **For KR (your script, small additive change):** `build-uboot.sh` step 4b writes `u-boot-rg34xxsp-<ver>-NOTICES.txt`
+   (+ SHA256SUMS line) and the inputs tarball now includes `tools/bootloader_notices.py`. Binaries unchanged
+   (`1d0381e1…`, `c0c3de97…`). Possible follow-up for you: `# CONFIG_EFI_UNICODE_CAPITALIZATION is not set` would drop
+   the one Unicode-DFS-2016 file (but changes the binary; Dale's call, see R9 §3a).
+3. **Manager file 2026-11-15-a applied:** README Ground rules has the `main` ruleset bullet; the disclosure bullet now
+   says 0001–0007 all carry the note (checked: all seven patches have the "drafted with an AI coding assistant" line).
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock

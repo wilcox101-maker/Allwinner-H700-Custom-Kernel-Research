@@ -7,14 +7,17 @@
 # usage: image/release-sources.sh <OUT>/<NAME>.sources.tsv
 #   The .sources.tsv (source package, version) is written by build-image.sh next to the image.
 #   LINUX_GIT=<git tree that has LINUX_SHA>  default: $REPO/.work/linux (scripts/workbench.sh)
-#   UBOOT_SRC=<u-boot source tarball>        required when the image carries u-boot (NAME has -uboot)
+#   UBOOT_SRC_DIR=<dir>                      required when the image carries u-boot (NAME has -uboot-<dram>):
+#                                            scripts/build-uboot.sh --sources output (u-boot, TF-A and
+#                                            build-input tarballs, NOTICES, the .bin files, SHA256SUMS)
 #   MIRROR=…                                 default https://ports.ubuntu.com/ubuntu-ports
 #   ALLOW_DIRTY=1                            accept uncommitted changes in this repo (test builds only)
 #
 # Writes <OUT>/<NAME>.sources/:
 #   ubuntu/        .dsc + tarballs of every Ubuntu source package the image's binaries come from
 #   ours/          this repo at HEAD (patches, kernel config, DTs, image builder, overlays);
-#                  pristine Linux at the pinned commit; u-boot source if the image has u-boot
+#                  pristine Linux at the pinned commit; for u-boot images: pristine u-boot and TF-A,
+#                  our u-boot inputs, and the bootloader NOTICES (checked against the image's bytes)
 #   SOURCES.tsv    source, version, where each was fetched from
 #   README.txt     what this is and how to rebuild
 #   SHA256SUMS
@@ -38,7 +41,32 @@ die() { printf 'ERROR %s\n' "$*" >&2; exit 1; }
 if [ -n "$(git -C "$REPO" status --porcelain --untracked-files=no)" ] && [ "${ALLOW_DIRTY:-0}" != 1 ]; then
 	die "repo has uncommitted changes; the bundle must match what the image was built from (ALLOW_DIRTY=1 for tests)"
 fi
-case $NAME in *-uboot*) [ -f "${UBOOT_SRC:-}" ] || die "image carries u-boot: set UBOOT_SRC=<u-boot source tarball>" ;; esac
+UB_FILES=()
+case $NAME in *-uboot*)
+	[ -n "${UBOOT_SRC:-}" ] && die "UBOOT_SRC is gone: set UBOOT_SRC_DIR=<scripts/build-uboot.sh --sources output dir>"
+	[ -d "${UBOOT_SRC_DIR:-}" ] || die "image carries u-boot: set UBOOT_SRC_DIR=<scripts/build-uboot.sh --sources output dir>"
+	UBOOT_SRC_DIR=$(readlink -f "$UBOOT_SRC_DIR")
+	DRAM=$(printf '%s' "$NAME" | sed -n 's/.*-uboot-\(lpddr[34]\).*/\1/p')
+	[ -n "$DRAM" ] || die "$NAME: no DRAM type after -uboot- (images from image/build-image.sh are …-uboot-lpddr4|lpddr3)"
+	(cd "$UBOOT_SRC_DIR" && sha256sum --quiet -c SHA256SUMS) || die "$UBOOT_SRC_DIR: SHA256SUMS does not match"
+	for pat in "u-boot-[0-9]*.tar.xz" "trusted-firmware-a-*.tar.xz" "rg34xxsp-u-boot-inputs-*.tar.xz" "u-boot-rg34xxsp-*-NOTICES.txt"; do
+		f=$(cd "$UBOOT_SRC_DIR" && ls $pat 2>/dev/null | head -1 || true)
+		[ -n "$f" ] && grep -q "  $f\$" "$UBOOT_SRC_DIR/SHA256SUMS" || die "$UBOOT_SRC_DIR: missing $pat (build-uboot.sh --sources)"
+		UB_FILES+=("$f")
+	done
+	# the sources must be those of the binary actually in the image: compare the bytes at 8 KiB
+	BIN=$(cd "$UBOOT_SRC_DIR" && ls u-boot-rg34xxsp-$DRAM-*.bin 2>/dev/null | head -1 || true)
+	[ -n "$BIN" ] || die "$UBOOT_SRC_DIR: no u-boot-rg34xxsp-$DRAM-*.bin"
+	IMG=$OUTDIR/$NAME.img
+	if [ -f "$IMG" ]; then
+		cmp -s -n "$(stat -c %s "$UBOOT_SRC_DIR/$BIN")" <(dd if="$IMG" bs=8192 skip=1 status=none) "$UBOOT_SRC_DIR/$BIN" ||
+			die "$IMG: the bootloader at 8 KiB is not $BIN from $UBOOT_SRC_DIR (sources would not correspond)"
+		echo "== bootloader in the image == $BIN ($(sha256sum "$UBOOT_SRC_DIR/$BIN" | cut -c1-16)…)"
+	else
+		echo "== WARNING: $IMG not found; cannot confirm the image's bootloader is $BIN" >&2
+	fi
+	;;
+esac
 
 mkdir -p "$DEST/ubuntu" "$DEST/ours"
 WORK=$(mktemp -d); trap 'rm -rf "$WORK"' EXIT
@@ -88,10 +116,16 @@ if git -C "$LINUX_GIT" cat-file -e "$LINUX_SHA^{commit}" 2>/dev/null; then
 else
 	die "LINUX_GIT=$LINUX_GIT does not contain $LINUX_SHA (run scripts/workbench.sh)"
 fi
-if [ -n "${UBOOT_SRC:-}" ]; then
-	cp "$UBOOT_SRC" "$DEST/ours/"
-	printf 'u-boot\t%s\tours/\n' "$(basename "$UBOOT_SRC")" >> "$DEST/SOURCES.tsv"
-fi
+for f in "${UB_FILES[@]}"; do
+	cp "$UBOOT_SRC_DIR/$f" "$DEST/ours/"
+	case $f in
+	u-boot-rg34xxsp-*-NOTICES.txt) what="bootloader licence notices, also in the image" ;;
+	trusted-firmware-a-*) what="TF-A BL31 source, pristine, BSD-3-Clause" ;;
+	rg34xxsp-u-boot-inputs-*) what="our u-boot patches, config fragments, build script" ;;
+	*) what="u-boot source, pristine, GPL-2.0+" ;;
+	esac
+	printf '%s\t%s\tours/ (%s)\n' "${f%%-[0-9]*}" "$f" "$what" >> "$DEST/SOURCES.tsv"
+done
 
 log "3. README and checksums"
 cat > "$DEST/README.txt" <<EOF
@@ -108,7 +142,13 @@ ours/    h700-research-${HEAD:0:12}.tar.xz: the build repository at commit $HEAD
            Rebuild the kernel package: unpack both, then in the repo run
            WORK=<dir> scripts/workbench.sh and scripts/build-kernel.sh --build
            (workbench.sh fetches the same commit; this tarball is the offline copy).
-$( [ -n "${UBOOT_SRC:-}" ] && echo "         $(basename "$UBOOT_SRC"): u-boot source (with our patches) used for the bootloader.")
+$( [ ${#UB_FILES[@]} -gt 0 ] && printf '%s\n' \
+"         Bootloader (written at 8 KiB of the card: SPL + TF-A BL31 + u-boot, $BIN):" \
+"           ${UB_FILES[0]}: u-boot, pristine; ${UB_FILES[1]}: TF-A, pristine;" \
+"           ${UB_FILES[2]}: our patches, config fragments and scripts/build-uboot.sh." \
+"           Rebuild: unpack the inputs into this repo layout and run scripts/build-uboot.sh" \
+"           (it fetches the same pinned commits; these tarballs are the offline copies)." \
+"           ${UB_FILES[3]}: the licence notices of every file in the binary.")
 SOURCES.tsv  every source package, its version, and where it was fetched from.
 
 Firmware under /usr/lib/firmware comes from Ubuntu's linux-firmware packages; it is distributed
