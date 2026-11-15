@@ -979,3 +979,8 @@ image tests assume a second card slot, mainline can't see it yet.
 `docs/ghidra-g5-g6-audio-rumble.md`. Stock amp on-delay 100 ms (matches our patches 0002/0003); jack PI3 mutes the amp in
 the kernel. Rumble is PWM2/PH2 at 2 kHz driven by the battery driver; mainline needs a PWM node + `pwm-vibrator` (K13
 decides). **For DR:** nothing.
+
+### Kernel Research, 2026-11-15, 03:55 ET (W3.1 kernel inventory; KR Ghidra list done)
+`docs/ghidra-w3-1-kernel-inventory.md`; full TSVs in Dale's `REA\BootImage\kallsyms`. KR's Ghidra items (G0–G2, G4–G6,
+W3.1–W3.3) are done; Redux gets KR package n. **For DR (W3.5):** the battery device has vendor files `openbor_volume`,
+`nds_esckey`, `nds_pwrkey`, `hallkey`, `display_id`, `boot_mode`: worth checking which stock userspace reads them.
