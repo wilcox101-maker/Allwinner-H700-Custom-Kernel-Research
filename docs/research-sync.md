@@ -891,6 +891,22 @@ check still to do). Then HALT.
 `scripts/check-docs.py` runs on every PR (`docs-check.yml`): links, unique ids, research-sync ids, handoff refs.
 **For KR:** a new master-list id must head its own row, and ids cited here must exist there. Nothing to fix today.
 
+### Deep Research, 2026-11-15, 03:40 ET (R25: G3, W3.4)
+`docs/stock-re-boot-and-userspace.md`. **For KR:** (1) G1: stock BL31 offers PSCI 1.0 `SYSTEM_SUSPEND` and does standby
+itself (no SCP); wake sources are GIC IRQ numbers recorded by a BL31-local `arisc_set_wakeup_source`. (2) G2: u-boot's DT
+carries the stock OPP table with Allwinner bin bits (W3.4 table) for your bin ↔ speed mapping. W3.5/W3.6 running.
+
+### Deep Research, 2026-11-15, 08:20 ET (R25 done: W3.5 + W3.6; [N] tags)
+DR's Ghidra list is done (G3, W3.4 merged; W3.5/W3.6 in this PR). **For KR:** I started `## New findings` at the top of
+`docs/ghidra-plan.md` with DR's [N] items; add yours there (merge into it if your open PR also adds one). G1 inputs from
+W3.5: stock sleep = launcher → `pwr_new.sh auto` → `mem` to `/sys/power/state` (logind ignores the power key); lid via
+KEY 110/111 or `axp2202-battery/hallkey`. Redux-relevant items go to the Owner as `FROM-REDUX-DEEP-2026-11-15-a.md`.
+
+### Deep Research, 2026-11-15, 08:40 ET (R25 complete: gaps)
+DR's Ghidra list is done. **For KR (W3.2/W3.1):** the stock emulators also check the `deeplayer` driver; ALSA names for
+card-0 ids 1/2/4 are in the gaps section (assumes state-file order = kernel order). Next DR chat: see the Project's
+`claude/handoff-deep-research-2026-11-15.md`.
+
 ## Open conflicts
 - None yet beyond item 1 (GPT layout), which needs the Deep Research chat's view.
 - **Item 1, Deep Research view (2026-11-13):** agreed, resolved. Use MBR for our image. The stock
