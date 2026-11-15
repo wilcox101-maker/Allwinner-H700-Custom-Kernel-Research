@@ -10,19 +10,19 @@ tree / strings / mainline source, **[V]** none yet. Register numbers and values 
   driver reads register `0xA4` (`AXP717_BATT_PERCENT_DATA`), clamps it to 100 and shows 99 % as 100 % when the
   status is "full". Mainline's `axp20x_battery` reads the same register [D].
 - At probe the stock driver **loads a 128-byte battery model into the gauge** (DT node `axp2202-parameter/
-  battery-model`, property `parameter`; written byte by byte to `0xA1` with a handshake on `0xA2`) [G][D].
+  battery-model`, property `parameter`; written byte by byte to `0xA1` with a handshake on `0xA2`) [G][D][N].
   **Mainline has no code for this** [D]; whether the gauge keeps the model across a mainline boot (it lives in
   the always-powered PMIC) is a device check.
 - The 32 `pmu_bat_para*` values (an OCV curve) and `pmu_battery_rdc` in the stock DT are **not read by the
-  kernel** (no such strings) [G]; if anything uses them it is the bootloader.
-- **Charge current is 1472 mA, not 1500** [G]: the driver writes `mA >> 6` into `0x62` (64 mA steps, rounded
+  kernel** (no such strings) [G][N]; if anything uses them it is the bootloader.
+- **Charge current is 1472 mA, not 1500** [G][N]: the driver writes `mA >> 6` into `0x62` (64 mA steps, rounded
   down), capped at 3072 mA; DT asks for 1500 mA (`0x5DC`) in run, suspend and shutdown. Mainline uses 1024 mA
   (Q5).
 - **Charge voltage 4.10 V** [G]: DT `pmu_init_chgvol = 4100` → `0x64` field 1 (thresholds below), the same cap
   as our mainline tree.
-- **Low-battery warnings** [G]: register `0x1B` = (level1 − 5) in the high nibble, level2 in the low nibble;
+- **Low-battery warnings** [G][N]: register `0x1B` = (level1 − 5) in the high nibble, level2 in the low nibble;
   DT level1 = 15 %, level2 = 0 (off) → `0xA0`.
-- **Gauge sanity fix at probe** [G]: if the gauge reports > 60 % but the battery voltage (`0xC4/0xC5`, 14-bit)
+- **Gauge sanity fix at probe** [G][N]: if the gauge reports > 60 % but the battery voltage (`0xC4/0xC5`, 14-bit)
   is below 3500 mV, the driver resets the gauge MCU and sets `0x0C = 0x81`; while bit 7 of `0x0C` is set,
   the reported % comes from `0x0C`'s low 7 bits instead of `0xA4` (`axp2202_get_soc`).
 - Battery temperature sensing is **off** (`pmu_bat_temp_enable = 0`, `TS_PIN_CFG 0x50` bit 4) [G][D]; JEITA off.

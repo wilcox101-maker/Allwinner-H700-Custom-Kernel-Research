@@ -11,7 +11,7 @@ Tags: **[G]** static analysis of the stock kernel, **[D]** device tree / strings
 - Stock and mainline read the **same 16-bit fuse** (SID + 0x200) but decode it differently [G][D]. Stock uses
   per-chip masks or voltage-name suffixes; mainline maps it to `speed0`–`speed5`.
 - **For 4 of the 12 fuse values below, mainline (with ROCKNIX's table) allows a higher CPU step than stock
-  ever runs on that chip** (`0x2C00`, `0x5D00`, `0x6000`, any unknown value). K22 must treat those units as
+  ever runs on that chip** [G][D][N] (`0x2C00`, `0x5D00`, `0x6000`, any unknown value). K22 must treat those units as
   untested at the top steps; Dale's unit needs its fuse value first (device check 1).
 - Both use the chip revision for some values, from different sources (stock: `sunxi_get_soc_ver`; mainline:
   SMCCC SOC_ID revision). Whether they agree is device task K8.

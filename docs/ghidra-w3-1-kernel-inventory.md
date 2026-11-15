@@ -13,7 +13,7 @@ Full machine-readable lists (all 1,135 attributes, 286 module parameters) are in
   folder and the function that registers them; the rest are upstream 4.9 (counts in table 2).
 - New Anbernic files on the battery device: `moto` (rumble, 0–100 %), `work_led`, `lowpwr_led`, `led_test`,
   `workled_sleep`, `boot_mode`, `otg_id`, `spk_state`, `display_id`, `hallkey`, `openbor_volume`,
-  `nds_esckey`, `nds_pwrkey`, plus the known `brightness` and `os_sleep` [G].
+  `nds_esckey`, `nds_pwrkey`, plus the known `brightness` and `os_sleep` [G][N].
 - **`/dev/disp` takes 49 command numbers** [G]; each call passes four 64-bit arguments (32 bytes copied in). Names
   come from Allwinner's BSP header `sunxi_display2.h` and are **inferred** where the binary has no string;
   `0x102 DISP_LCD_SET_BRIGHTNESS` is confirmed by its call path.
@@ -344,7 +344,7 @@ scsi_mod 8, dm_mod 8, dm_bufio 8, snd_seq 7, atkbd 7, others ≤ 6.
 | L2, R2 | PA11, PA7 | 0x13A (314, `BTN_SELECT`), 0x13B (315, `BTN_START`) |
 | R3 | PE9 | 0x13C (316, `BTN_MODE`) |
 | Vol+ / Vol− | PE1 / PE2 | 0x73 `KEY_VOLUMEUP` / 0x72 `KEY_VOLUMEDOWN` |
-**Note:** the DT labels PA3 "x" (306) and PA2 "y" (307); Redux's stock remap table has 306 = Y and 307 = X.
+**Note [D][N]:** the DT labels PA3 "x" (306) and PA2 "y" (307); Redux's stock remap table has 306 = Y and 307 = X.
 One of the two is a labelling difference (DT name vs printed button); check with `evtest` (device check 4).
 
 The same input device carries the sticks (axes set at run time from the joypad channel records, codes not

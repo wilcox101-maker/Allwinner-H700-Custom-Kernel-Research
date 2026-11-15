@@ -4,7 +4,25 @@ Landed by the Kernel Research chat from the Redux Manager's `FROM-REDUX-MANAGER-
 (Dale, 2026-11-15 01:54: "Roll out Ghidra testing plan and document."). Plan text unchanged below.
 Status: **Wave 0 and Wave 1 done 2026-11-15** (desk; results sent to Redux as KR package m, see "Results" at the end).
 **Amended 02:31** (below): Wave 2 no longer waits for Beta, new Wave 3, items split between KR and DR.
+**KR items all done 2026-11-15 03:55** (G0–G2, G4–G6, W3.1–W3.3; KR packages m and n); DR has G3, W3.4–W3.6.
 Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); never in this repo.
+
+## New findings
+Findings tagged **[N]** (no public source we know of; Dale, 2026-11-15 02:46). Repo only; not published elsewhere.
+Tags in the result docs: [G] static analysis, [D] DT/strings/source, [V] device-verified, plus [N] where new.
+| Item | Finding | Doc |
+|---|---|---|
+| G0.3 | Stick recentre file `adc_cal` (+ `amux_debug`) on the stock `gpio-keys-polled` device, which carries the joypad code | Redux `stock-kernel-ghidra.md` |
+| G0 | Stock `rg34xxsp_v1` panel entry is the `fog_fj035fhd05_v1` driver (last of 17 built-in panels) | Redux `stock-kernel-ghidra.md` |
+| G0 | `axp2202-battery/brightness` is a 0–100 storage slot only; the lid sends `KEY_DELETE`/`KEY_INSERT`, not `SW_LID` | Redux `stock-kernel-ghidra.md` |
+| G1 | `axp2202-battery/os_sleep` turns power-key and lid wake off; lid wake is armed only when the power-key device may wake | Redux `stock-kernel-ghidra.md` |
+| G2 | For fuse 0x2C00, 0x5D00, 0x6000 and unknown values, mainline allows a higher CPU step than stock | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md) |
+| G4 | Stock loads a 128-byte gauge model (DT `battery-model`) via 0xA1/0xA2; charges at 1472 mA (64 mA steps); warning register 0x1B; gauge sanity reset (> 60 % but < 3.5 V); DT OCV table unused by the kernel | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md) |
+| G5 | Headphones turn the speaker amp off inside the kernel; state in `axp2202-battery/spk_state` | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
+| G6 | Rumble = PWM2/PH2 at 2 kHz, driven by the battery driver (`moto` file, `FF_RUMBLE` on the joypad, < 37 % → 0) | [`ghidra-g5-g6-audio-rumble.md`](ghidra-g5-g6-audio-rumble.md) |
+| W3.1 | Vendor battery-device files `moto`, `hallkey`, `spk_state`, `otg_id`, `display_id`, `boot_mode`, LED controls, `openbor_volume`, `nds_*` | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
+| W3.1 | Stock DT X/Y labels (PA3 "x" = 306, PA2 "y" = 307) are the reverse of Redux's remap table | [`ghidra-w3-1-kernel-inventory.md`](ghidra-w3-1-kernel-inventory.md) |
+| W3.3 | ALDO3 always-on in stock; stick ADC enable PE11 driven low in stock | [`ghidra-w3-3-dt-diff.md`](ghidra-w3-3-dt-diff.md) |
 
 Owner: Redux Manager (plan) · Executor: Kernel Research chat · Results: Redux
 `docs/kernel-research/stock-kernel-ghidra.md` (stock behaviour Redux depends on) and this repo (mainline work).
