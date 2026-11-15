@@ -17,6 +17,7 @@ What the Allwinner boot ROM and our u-boot need from the card, checked on the by
   6. /boot (FAT) holds what u-boot will ask for: extlinux.conf and R8's extlinux-fallback.conf with fdtdir, both PE6 DTB names
      under dtb-<ver>/allwinner/ for every kernel the menu lists, a kernel image per entry
   7. fw_env.config in the root fs matches u-boot's CONFIG_ENV_SIZE and file name, no redundant env
+  8. the bootloader's licence notices are in the root fs (/usr/share/doc/reduxos-bootloader/NOTICES.txt, R9)
 Exit 0 only if every check passes. Needs: python3, mtools (mtype/mdir), e2fsprogs (debugfs).
 """
 import os
@@ -193,6 +194,13 @@ def main():
             check(int(f[2], 16) == int(es.group(1), 16), "size %s == CONFIG_ENV_SIZE %s" % (f[2], es.group(1)))
     else:
         print("  info  skipped (needs UBOOT_BIN with its .config)")
+
+    print("8. bootloader licence notices (R9)")
+    if 2 in p:
+        r = subprocess.run(["debugfs", "-R", "cat /usr/share/doc/reduxos-bootloader/NOTICES.txt",
+                            "%s?offset=%d" % (img, p[2]["start"])], capture_output=True, text=True)
+        check("Trusted Firmware-A (BL31)" in r.stdout and "U-Boot (SPL and u-boot proper)" in r.stdout,
+              "/usr/share/doc/reduxos-bootloader/NOTICES.txt present (u-boot + TF-A sections)")
 
     print("RESULT: %s" % ("PASS" if not fails else "FAIL (%d)" % len(fails)))
     return 1 if fails else 0
