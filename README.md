@@ -36,6 +36,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | Doc | Topic |
 |---|---|
 | [`docs/kernel-custom-patches.md`](docs/kernel-custom-patches.md) | Kernel design record: panel selection, never-undervolt CPU OPPs, stock speed-bin decoder, sticks, thermal, GPU rail, deep suspend, audio/battery, verification, R16 board DT |
+| [`docs/ghidra-plan.md`](docs/ghidra-plan.md) | Ghidra plan for the stock V1.0.6 firmware (Manager, 2026-11-15): ground rules, Waves 0–2 (G0.1–G6), tags [G]/[D]/[V] |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
 | [`docs/handoff-kernel-research-2026-11-14.md`](docs/handoff-kernel-research-2026-11-14.md) | Kernel Research handoff (2026-11-14): state, decisions, rules, next tasks, rebuild commands |
 | [`docs/r1-boot-chain.md`](docs/r1-boot-chain.md) | R1: boot chain and card layout; u-boot v2026.10 + TF-A per DRAM type, desk results, recovery |
