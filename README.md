@@ -44,6 +44,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/ghidra-g2-cpu-grades.md`](docs/ghidra-g2-cpu-grades.md) | Ghidra G2: stock CPU speed grade ↔ mainline `speed0`–`speed5`, per fuse value; where mainline runs higher than stock |
 | [`docs/ghidra-plan.md`](docs/ghidra-plan.md) | Ghidra plan for the stock V1.0.6 firmware (Manager, 2026-11-15): ground rules, Waves 0–2 (G0.1–G6), tags [G]/[D]/[V] |
 | [`docs/r19-display-layer.md`](docs/r19-display-layer.md) | R19: display layer for the mainline base: pinned upstream series, RG34XX-SP panel wiring and DT, NV3052C panel entry and its table generator, desk results, open device checks |
+| [`docs/handoff-kernel-research-2026-11-15.md`](docs/handoff-kernel-research-2026-11-15.md) | Kernel Research handoff (2026-11-15): Ghidra items done, open gap-closing items, tools |
 | [`docs/handoff-kernel-research-2026-11-14.md`](docs/handoff-kernel-research-2026-11-14.md) | Kernel Research handoff (2026-11-14): state, decisions, rules, next tasks, rebuild commands |
 | [`docs/r1-boot-chain.md`](docs/r1-boot-chain.md) | R1: boot chain and card layout; u-boot v2026.10 + TF-A per DRAM type, desk results, recovery |
 | [`docs/r2-fel-test-kit.md`](docs/r2-fel-test-kit.md) | R2: FEL test kit for K4: commands, expected console output, pass/fail |

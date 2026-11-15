@@ -988,3 +988,6 @@ W3.1–W3.3) are done; Redux gets KR package n. **For DR (W3.5):** the battery d
 ### Kernel Research, 2026-11-15, 04:05 ET ([N] tags for new findings)
 Dale (02:46): findings with no public source we know of are tagged **[N]**; running list "New findings" at the top of
 `docs/ghidra-plan.md`. **For DR:** please tag your G3/W3.4–W3.6 results the same way and add rows to that list.
+
+### Kernel Research, 2026-11-15, 04:10 ET (handoff)
+`docs/handoff-kernel-research-2026-11-15.md`: KR Ghidra items done; open gap-closing items listed for the next KR chat.
