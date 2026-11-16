@@ -51,6 +51,17 @@ symlink, config file); **code** = the frontend has to change.
 - **K23** *(proposed)*: on our kernel (spare card), list `cat /proc/bus/input/devices`, `/sys/class/thermal/thermal_zone*/type`, `aplay -l`, `amixer -c Codec scontrols`; read `axp20x-battery/current_now` while charging and while discharging and compare with a USB meter (is the ~450 mA offset real?); press the power key and close the lid under `evtest`.
 - Existing: K5 (stick order/sign, I4), K18 (fb0/KMS, D1/D2), K19 (backlight levels, D3), K15 (speaker start-up, A2).
 
+## 4a. Device-verified on stock (Redux #185, 2026-11-16; Redux main `50e843c` notes `2026-11-16-dale-hw-result-185.md` (rows 23, 27, 28), `…-reads-f4.md`, `…-reads-f4-2.md`; stock kernel 4.9.170, Dale's 2 GB unit)
+Read on the stock system, not on our kernel; they fix what the mainline side must replace.
+| Fact [V] | Affects | Mainline consequence |
+|---|---|---|
+| Lid is reported on **event0 `axp2202-pek`**: close = `KEY_INSERT` down (auto-repeat), open = `KEY_INSERT` up plus a short `KEY_DELETE` tap | B4, I1, I6 | Stock's lid comes from the power-key device; on mainline it is `SW_LID` on `gpio-keys-lid` (B4). The frontend needs a separate lid source on mainline (K23) |
+| `scaling_available_frequencies` = `480000 … 1512000` | C1 | Stock tops out at 1512 MHz on this unit; mainline's default table stops at 1416 MHz (1512 MHz boost only, Q2, K22) |
+| `adc_cal` at `/sys/devices/platform/soc/soc@03000000:gpio_keys/adc_cal` | I4 | Stock stick recentre file; mainline `adc-joystick` has none (calibration stays in the frontend) |
+| glibc **2.35**, armhf libc present (`/lib/arm-linux-gnueabihf/libc.so.6`); Redux `redux-vsync.so` and SimpleTerminal are ARM EABI5 32-bit | §3 | Ubuntu 24.04 ships glibc 2.39: 32-bit stock apps need the armhf multiarch libs on a mainline image |
+| RetroArch **1.20.0**; network commands on UDP **55355** (`GET_STATUS`, `SAVE_FILES` works); saves on the cards (`/mnt/mmc/saves_RA`, `/mnt/sdcard/saves_RA`) | §3 | Any mainline image that keeps stock RetroArch keeps the same command port and card save paths |
+| After a stock-menu boot, **EGL is ready only after about 3.5 s of retries** | D1, D2 | Start order on mainline: the frontend must wait for or retry DRM/EGL, not fail on the first try |
+
 ## 5. Recommendation
 Shims cover only fb0 vsync (already works) and permissions/mixer defaults. Everything else differs in
 path, name, number or meaning, so the clean route is **a second platform file in the frontend**

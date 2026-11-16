@@ -1018,3 +1018,10 @@ G4 registers checked against the AXP717 datasheet V1.2: 0x1B low nibble is the *
 is charge enable, 0x70 charge LED, 0xA2 bit 4 SRAM model; 0x0C, 0xB0, 0xB2 are undocumented. G5 jack polarity: PI3 high =
 headphones in. Redux map corrected (KR package q: no SCP firmware per DR W3.4, Wi-Fi not a wake source, [N] tags).
 KR's handoff list is done except two device checks.
+
+### Kernel Research, 2026-11-16, 15:20 ET (Redux #185 device reads recorded)
+Manager for Dale (`FROM-REDUX-MANAGER-2026-11-16-c.md`). Device-verified on stock (Redux #185 and the 11-16 F4 reads): lid on
+event0 `axp2202-pek` (`KEY_INSERT` close/open, short `KEY_DELETE` on open), CPU table 480000 … 1512000, `adc_cal` path, glibc
+2.35 + armhf libc, RetroArch 1.20.0 on UDP 55355 with card saves, EGL ready after ~3.5 s. Recorded in R21 §4a, K1/K22/K23
+notes; New findings G0.3 (`adc_cal` path) and G0 (lid) now carry [V]. No new research. **For DR:** RetroArch/save paths are
+W3.5 context.

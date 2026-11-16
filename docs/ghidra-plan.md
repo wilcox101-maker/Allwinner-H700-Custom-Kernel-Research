@@ -10,6 +10,8 @@ Stock binaries and the Ghidra project stay on DLN-DALEW2 (`REA\BootImage`); neve
 ## New findings
 Findings with no public source we know of, tagged **[N]** in the result docs (Dale, 2026-11-15 02:46). Repo only;
 not published elsewhere. KR adds its own entries here.
+A row tagged **[V]** has been device-verified (Dale hw-result note named in the row); the Manager drafts outside
+contributions only with Dale's yes per item.
 
 | Item | Finding | Tag | Where |
 |---|---|---|---|
@@ -20,9 +22,9 @@ not published elsewhere. KR adds its own entries here.
 | W3.6 | `loadapp.sh` runs `mkfs.ext4` on p7 / `mkfs.vfat` on p1 or p8 at boot when blkid finds no type **or** the mount fails | [D][N] | W3.6 |
 | W3.6 | Security findings | held privately (Dale) | — |
 | W3.5 gaps | All 11 stock emulators and both muOS-skin launchers carry the `deeplayer` check (emulators: AES-based, once at launch, `reboot` every 2 s on failure); `cexpert` is the TF2 hot-plug mounter (netlink uevents → `mmc_new.sh add/remove`), not Expert Mode | [G][N] | gaps section |
-| G0.3 | Stick recentre file `adc_cal` (+ `amux_debug`) on the stock `gpio-keys-polled` device, which carries the joypad code | [G][D][N] | Redux `stock-kernel-ghidra.md` |
+| G0.3 | Stick recentre file `adc_cal` (+ `amux_debug`) on the stock `gpio-keys-polled` device, which carries the joypad code; **path verified**: `/sys/devices/platform/soc/soc@03000000:gpio_keys/adc_cal` | [G][D][N][V] (Redux #185) | Redux `stock-kernel-ghidra.md` |
 | G0 | Stock `rg34xxsp_v1` panel entry is the `fog_fj035fhd05_v1` driver (last of 17 built-in panels) | [G][N] | Redux `stock-kernel-ghidra.md` |
-| G0 | `axp2202-battery/brightness` is a 0–100 storage slot only; the lid sends `KEY_DELETE`/`KEY_INSERT`, not `SW_LID` | [G][N] | Redux `stock-kernel-ghidra.md` |
+| G0 | `axp2202-battery/brightness` is a 0–100 storage slot only; the lid sends `KEY_DELETE`/`KEY_INSERT`, not `SW_LID`; **lid verified**: event0 `axp2202-pek`, close = `KEY_INSERT` down (auto-repeat), open = `KEY_INSERT` up + short `KEY_DELETE` | [G][N]; lid [V] (Redux #185) | Redux `stock-kernel-ghidra.md` |
 | G1 | `axp2202-battery/os_sleep` turns power-key and lid wake off; lid wake is armed only when the power-key device may wake | [G][N] | Redux `stock-kernel-ghidra.md` |
 | G2 | For fuse 0x2C00, 0x5D00, 0x6000 and unknown values, mainline allows a higher CPU step than stock | [G][D][N] | [`ghidra-g2-cpu-grades.md`](ghidra-g2-cpu-grades.md) |
 | G4 | Stock loads a 128-byte gauge model (DT `battery-model`) via 0xA1/0xA2; charges at 1472 mA (64 mA steps); warning register 0x1B; gauge sanity reset (> 60 % but < 3.5 V); DT OCV table unused by the kernel | [G][D][N] | [`ghidra-g4-battery-gauge.md`](ghidra-g4-battery-gauge.md) |
