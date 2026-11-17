@@ -62,6 +62,21 @@ Read on the stock system, not on our kernel; they fix what the mainline side mus
 | RetroArch **1.20.0**; network commands on UDP **55355** (`GET_STATUS`, `SAVE_FILES` works); saves on the cards (`/mnt/mmc/saves_RA`, `/mnt/sdcard/saves_RA`) | §3 | Any mainline image that keeps stock RetroArch keeps the same command port and card save paths |
 | After a stock-menu boot, **EGL is ready only after about 3.5 s of retries** | D1, D2 | Start order on mainline: the frontend must wait for or retry DRM/EGL, not fail on the first try |
 
+**More device reads (Redux 11-16/11-17, Redux main `484d12d` notes `2026-11-16-dale-hw-result-f5-steps-1-2.md`, `2026-11-17-dale-hw-result-7ee31d1.md`, `…-2917a5c.md`, `…-070427e.md`) [V]:**
+| Fact [V] | Affects | Mainline consequence |
+|---|---|---|
+| CPU list is **9 steps** `480000 720000 936000 1008000 1104000 1200000 1320000 1416000 1512000`; governor read `schedutil` during the Redux session; max 1512 → 1416 → 1512 MHz works | C1, C2 | Same sysfs paths on mainline; the frontend reads the chip's own list |
+| CPU hotplug: `cpu1/online` 0 stays 0 (no automatic hotplug); `/sys/devices/system/cpu/hotplug` exists; cpu0 always online | C3 | Same behaviour expected (`HOTPLUG_CPU=y`); the `hotplug` folder is a stock extra |
+| GPU `/sys/class/devfreq/gpu`: governor `simple_ondemand` only; 420, 456, 504, 552, 600, 648 MHz; `cur_freq` 420; `min_freq`/`max_freq` read 0 | — | Matches the stock DT table (W3.2). Panfrost's devfreq node on mainline has a different name |
+| `axp2202-battery` attributes: `boot_mode brightness capacity capacity_alert_min capacity_level charge_counter charge_full constant_charge_current device display_id energy_full_design health hallkey led_test lowpwr_led moto nds_esckey nds_pwrkey openbor_volume os_sleep otg_id power present serial_number spk_state status subsystem temp temp_alert_max temp_alert_min temp_ambient_alert_max temp_ambient_alert_min time_to_empty_now time_to_full_now type uevent voltage_now work_led workled_sleep`; no charge on/off switch | B1, B2 | Mainline `axp20x-battery` has none of the vendor files (LEDs, rumble, lid, `os_sleep`) |
+| `work_led`, `lowpwr_led`, `led_test`, `moto`, `workled_sleep` are **write-only** (read back empty) | B1 | Software can't read LED/rumble state on stock; on mainline these become LED/PWM devices |
+| `work_led` 0 = green power LED **off** (stays off until USB-C is plugged or unplugged), 1 = on; `lowpwr_led` 1 = LED **red**, 0 = green again | — | Board DT for mainline: power LED (green) and low-power LED (red) on the stock GPIOs PI12/PI11 (W3.3); both need `gpio-leds` nodes |
+| `moto` 1 for 2 s rumbles (K13 answered) | — | Rumble motor exists: `pwm-vibrator` on PWM2/PH2 is worth adding |
+| `/sys/class/leds/` is empty; `/sys/class/pwm/` has `pwmchip0` | — | Stock drives the LEDs by GPIO from the battery driver, not the LED class |
+| `constant_charge_current` = 1153 (units not stated) | B1 | See K14; mainline uses 1024 mA (Q5) |
+| Thermal: zone0 is the CPU zone on stock; zone4 is a fixed 30.0 °C dummy; 10 min full load on the charger peaked at 64.9 °C (CPU) | T1, T2 | On mainline zone0 is the GPU (T1); no dummy zone |
+| Input: L2, R2, L3, R3 all report; raw stick values readable | I2, I4 | L3/R3 exist on the SP (K5): the mainline remap table needs them (317/318) |
+
 ## 5. Recommendation
 Shims cover only fb0 vsync (already works) and permissions/mixer defaults. Everything else differs in
 path, name, number or meaning, so the clean route is **a second platform file in the frontend**

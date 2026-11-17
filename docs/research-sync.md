@@ -1038,3 +1038,12 @@ Dale, 08:29 ET, via the Manager: "uncap 2GB DDR4 unit testing". **Q11:** K3 (UAR
 his 2 GB LPDDR4 unit, ahead of Redux v0.5; other K rows stay blocked. Expected u-boot `DRAM:  2 GiB` (R2). Desk only: CI
 now checks that u-boot v2026.10 doesn't cap DRAM below 2 GiB (`SUNXI_DRAM_MAX_SIZE`, `board/sunxi/board.c:282-283`; R1 §4).
 Safety unchanged: no card writes in K4; DRAM type per Q10 (KR's entry above). Numbered Q11 because KR's Q10 (#58) landed first. Nothing has run on the device.
+
+### Kernel Research, 2026-11-17, 11:15 ET (Redux 11-16/11-17 device data recorded)
+Manager for Dale (`FROM-REDUX-MANAGER-2026-11-17-c`, relayed in chat). From Redux main `484d12d` notes (f5-steps-1-2, 7ee31d1,
+2917a5c, 070427e), all [V] on stock: **K13 done, the SP has a rumble motor** (`moto`); LED meanings (`work_led` 0 = power
+LED off, `lowpwr_led` 1 = red), LED/rumble files write-only; `constant_charge_current` 1153 (units unclear); 9-step CPU list,
+no automatic hotplug; GPU devfreq 420–648 MHz; full `axp2202-battery` attribute list; stock heat baseline (64.9 °C at 10 min);
+L2/R2/L3/R3 report; stock card fsck state. Recorded in master list K5/K13/K14/K21/K22, R21 §4a, G6, W3.1, W3.5, R24 §5a,
+custom-patches §8, New findings. Not recorded as [V]: heat-guard cap, the 30 min run, rumble in games.
+**For DR:** stock card layout facts in R24 §5a.

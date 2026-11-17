@@ -86,6 +86,12 @@ u-boot would need `MMC_SUNXI_SLOT_EXTRA=2`, which would also make `mmc 1` = SDC2
 - That u-boot finds the env and extlinux on mmc 0:1 on hardware, and R8's rollback on real u-boot: K17.
 - Slot-2 behaviour of the BROM with a bootable card in TF2 and none in TF1: not tested, not supported.
 
+## 5a. Stock card facts (device-verified, Redux 2026-11-17) [V]
+The stock layout this image must leave alone checks clean: p5 `linuxrootfs`, p6 `appfs` and p7 pass `e2fsck -n` (mounted,
+read-only); p1 (FAT32) only shows the in-use flag while mounted (details: `stock-re-boot-and-userspace.md`, last section).
+A FAT data partition will carry the same flag whenever it is mounted: the Phase 2 read-only design should treat
+exit 1 from `fsck.vfat -n` on a mounted FAT as normal.
+
 ## 6. Recovery
 Nothing here writes a card. When a card is written later: use only a spare card, the image matching the unit's DRAM
 type (Q10: as Dale states it, v1.0 = LPDDR4, or from K3's `select dram para<N>`: 15 = LPDDR4, 14 or 0 = LPDDR3), and

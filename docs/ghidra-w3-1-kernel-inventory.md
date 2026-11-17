@@ -403,3 +403,11 @@ Static analysis with kallsyms names plus a capstone scan for ADRP-based referenc
   | `hallkey` | `dmenu.bin`, `charg.dge`, `muos1/2.bin`, e-book reader, music and video players |
   | `spk_state` | Several emulators, `muos1.bin`, video player |
   | `boot_mode` | `/ctrl/loadapp.sh`, a RetroArch core |
+
+## Device-verified (Redux 2026-11-16/17, stock, Dale's v1.0 2 GB unit) [V]
+- The full `axp2202-battery` attribute list on the device matches table 1's vendor files plus the standard
+  power-supply ones (list in `r21-redux-on-mainline-map.md` §4a).
+- `work_led`, `lowpwr_led`, `led_test`, `moto`, `workled_sleep` are **write-only** (read back empty).
+- `work_led` 0 = green power LED off (stays off until USB-C is plugged or unplugged), 1 = on; `lowpwr_led` 1 = LED
+  red, 0 = green; `moto` 1 = rumble. `constant_charge_current` reads 1153 (units not stated).
+- `/sys/class/leds/` is empty; `/sys/class/pwm/` has `pwmchip0`.

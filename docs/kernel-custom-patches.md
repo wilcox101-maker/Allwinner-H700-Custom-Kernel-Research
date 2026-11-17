@@ -322,7 +322,7 @@ Sources: Redux `reference/stock-202505/board.dts`; torvalds/linux `97d73c8`
 | Wi-Fi | RTL8821CS SDIO, power CLDO4 | mmc1 + pwrseq (reset PG18), CLDO4/ALDO4, host-wake PG15 | inherited |
 | Bluetooth | reset PG19, wake PG17, host-wake PG16, UART1 | same pins, `realtek,rtl8821cs-bt` | inherited |
 | LEDs | low-power LED PI11 | gpio-leds PI12 power, PI11 status | inherited |
-| Rumble | `moto_pwm_gpio` PH2 | none | **not added**: Anbernic's one-DT-for-the-family; motor presence unconfirmed (device task) |
+| Rumble | `moto_pwm_gpio` PH2 | none | **not added yet; now worth doing**: motor confirmed on the SP (K13 [V], Redux 2026-11-17). Needs a PWM node for the H616 plus a `pwm-vibrator` node on PWM2/PH2 |
 
 Also found: Redux's `docs/hardware-map.md` says the SP lacks "the analog-stick mux". The same document
 confirms two sticks on Dale's unit, so that header note is stale for the mux.

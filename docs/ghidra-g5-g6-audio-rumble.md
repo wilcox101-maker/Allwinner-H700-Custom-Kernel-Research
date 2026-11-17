@@ -132,3 +132,9 @@ All under `/sys/class/power_supply/axp2202-battery/`: `work_led`, `lowpwr_led`, 
   that cell gives no invert: **PI3 high = headphones in, speaker amp off**. Device check: `cat …/spk_state` with
   and without headphones.
 - ALSA jack name: not found as a string; left to the device check (`amixer -c 0 controls | grep -i jack`).
+
+## Device-verified (2026-11-17) [V]
+- **The RG34XX-SP has a rumble motor (K13 answered):** writing 1 to `axp2202-battery/moto` for 2 s, then 0, rumbles
+  (Redux note `2026-11-17-dale-hw-result-2917a5c.md` #7); Redux's LED/rumble test passed (`…-070427e.md` #2).
+  `moto` is write-only (reads back empty). Rumble inside games (RetroArch force feedback) is untested.
+- For mainline this makes the `pwm-vibrator` node on PWM2/PH2 worth doing (`kernel-custom-patches.md` §8).
