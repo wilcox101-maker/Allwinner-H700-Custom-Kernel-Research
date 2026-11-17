@@ -12,7 +12,9 @@
 #   5. writes u-boot-rg34xxsp-<ver>-NOTICES.txt: the licence notices of every file compiled into the
 #      binaries (tools/bootloader_notices.py); it must ship with any image that carries them (R9)
 #
-# Usage:  scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources] [--jobs N]
+# Usage:  scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources] [--config-only] [--jobs N]
+#   --config-only  steps 1 and 3 up to the .config checks (fragments, DRAM type, Q10 DRAM size cap), then stop:
+#              no TF-A, no compile; needs only host gcc, make, flex, bison (CI, docs-check workflow)
 #   --sources  also write the corresponding source (GPL/BSD, task R9): pristine u-boot and TF-A
 #              tarballs at the pinned commits, plus this repo's u-boot patches, fragments and script
 #   WORK=<dir>  work directory (default ./.work);  OUT=<dir> results (default $WORK/u-boot-out)
@@ -29,6 +31,7 @@ OUT=${OUT:-$WORK/u-boot-out}
 DRAMS=(lpddr4 lpddr3)
 JOBS=$(nproc)
 SOURCES=0
+CONFIG_ONLY=0
 
 UBOOT_URL=https://github.com/u-boot/u-boot.git
 UBOOT_TAG=v2026.10
@@ -43,8 +46,9 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	--dram) case "${2:-}" in lpddr4|lpddr3) DRAMS=("$2") ;; all) ;; *) echo "--dram lpddr4|lpddr3|all" >&2; exit 2 ;; esac; shift ;;
 	--sources) SOURCES=1 ;;
+	--config-only) CONFIG_ONLY=1 ;;
 	--jobs) JOBS=$2; shift ;;
-	-h|--help) sed -n '2,21p' "$0"; exit 0 ;;
+	-h|--help) sed -n '2,24p' "$0"; exit 0 ;;
 	*) echo "unknown option: $1" >&2; exit 2 ;;
 	esac
 	shift
@@ -69,7 +73,7 @@ fetch() {	# dir url tag sha
 mkdir -p "$WORK" "$OUT"
 log "1. Sources: u-boot $UBOOT_TAG (${UBOOT_SHA:0:12}), TF-A $TFA_TAG (${TFA_SHA:0:12})"
 fetch "$WORK/u-boot" "$UBOOT_URL" "$UBOOT_TAG" "$UBOOT_SHA"
-fetch "$WORK/tf-a" "$TFA_URL" "$TFA_TAG" "$TFA_SHA"
+[ "$CONFIG_ONLY" = 1 ] || fetch "$WORK/tf-a" "$TFA_URL" "$TFA_TAG" "$TFA_SHA"
 for p in "$REPO"/patches/u-boot/*.patch; do
 	git -C "$WORK/u-boot" apply --index "$p" || fail "patch does not apply: $(basename "$p")"
 	echo "  applied $(basename "$p")"
@@ -79,6 +83,7 @@ done
 SOURCE_DATE_EPOCH=$(git -C "$WORK/u-boot" log -1 --format=%ct)
 export SOURCE_DATE_EPOCH
 
+if [ "$CONFIG_ONLY" = 0 ]; then
 log "2. TF-A BL31 (PLAT=sun50i_h616)"
 make -s -C "$WORK/tf-a" CROSS_COMPILE=aarch64-linux-gnu- PLAT=sun50i_h616 DEBUG=0 \
 	BUILD_STRING="$TFA_TAG" -j"$JOBS" bl31 >"$WORK/tf-a-build.log" 2>&1 ||
@@ -86,6 +91,7 @@ make -s -C "$WORK/tf-a" CROSS_COMPILE=aarch64-linux-gnu- PLAT=sun50i_h616 DEBUG=
 BL31=$WORK/tf-a/build/sun50i_h616/release/bl31.bin
 [ -s "$BL31" ] || fail "no $BL31"
 echo "  bl31.bin $(stat -c %s "$BL31") bytes"
+fi
 
 : >"$OUT/SHA256SUMS"
 for dram in "${DRAMS[@]}"; do
@@ -113,6 +119,18 @@ for dram in "${DRAMS[@]}"; do
 	done < <(cat "${FRAGS[@]}")
 	[ "$bad" = 0 ] || fail "$dram: config fragment did not apply cleanly"
 	echo "  all $(cat "${FRAGS[@]}" | grep -c -E '^(CONFIG_|# CONFIG_)') fragment lines hold"
+	grep -q "^CONFIG_SUNXI_DRAM_H616_${dram^^}=y" "$B/.config" || fail "$dram: wrong DRAM type in .config"
+	# Q10 (Dale, 2026-11-17): no cap below 2 GiB (his unit has 2 GB LPDDR4). The SPL measures the size
+	# (rank/width, then rows/cols: arch/arm/mach-sunxi/dram_dw_helpers.c) and passes it in the SPL header;
+	# u-boot proper's dram_init() (board/sunxi/board.c) clamps it to CONFIG_SUNXI_DRAM_MAX_SIZE. If upstream
+	# moves that clamp, stop here so this check gets reviewed instead of passing on nothing.
+	grep -qF 'gd->ram_size = CONFIG_SUNXI_DRAM_MAX_SIZE;' "$WORK/u-boot/board/sunxi/board.c" ||
+		fail "board/sunxi/board.c no longer clamps gd->ram_size to SUNXI_DRAM_MAX_SIZE: review the Q10 check"
+	max=$(sed -n 's/^CONFIG_SUNXI_DRAM_MAX_SIZE=//p' "$B/.config")
+	[ -n "$max" ] && [ $((max)) -ge $((0x80000000)) ] ||
+		fail "$dram: CONFIG_SUNXI_DRAM_MAX_SIZE=${max:-(absent)} caps DRAM below 2 GiB (Q10)"
+	echo "  DRAM cap CONFIG_SUNXI_DRAM_MAX_SIZE=$max (>= 2 GiB, Q10)"
+	[ "$CONFIG_ONLY" = 1 ] && continue
 	"${MAKE[@]}" BL31="$BL31" SCP=/dev/null >"$B/build.log" 2>&1 ||
 		{ tail -30 "$B/build.log"; fail "$dram: u-boot build"; }
 
@@ -138,7 +156,6 @@ PY
 		 "R8: boot limit reached" "U-Boot SPL ${UBOOT_TAG#v}"; do
 		grep -qaF "$s" "$BIN" || fail "$dram: binary lacks \"$s\""
 	done
-	grep -q "^CONFIG_SUNXI_DRAM_H616_${dram^^}=y" "$B/.config" || fail "$dram: wrong DRAM type in .config"
 	name=u-boot-rg34xxsp-$dram-${UBOOT_TAG#v}
 	cp "$BIN" "$OUT/$name.bin"
 	cp "$B/.config" "$OUT/$name.config"
@@ -146,6 +163,11 @@ PY
 	printf '  %s.bin  %s bytes (card gap %s), SPL header + checksum ok, PE6 + R8 code present\n' \
 		"$name" "$size" "$MAX_BYTES"
 done
+
+if [ "$CONFIG_ONLY" = 1 ]; then
+	log "Done (--config-only): fragments, DRAM type and DRAM size cap checked; nothing built."
+	exit 0
+fi
 
 log "4b. Licence notices for the binaries (R9: BSD/ISC/… notices must travel with the binary)"
 python3 -I "$REPO/tools/bootloader_notices.py" --uboot-src "$WORK/u-boot" \

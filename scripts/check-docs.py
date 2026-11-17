@@ -7,6 +7,8 @@
   2. every R/K/Q/H id that heads a row of docs/master-task-list.md is unique, and every id cited in
      docs/research-sync.md appears somewhere in the master list
   3. every handoff-*.md named in README.md or docs/master-task-list.md exists in docs/
+  4. Q10: the FEL kit (docs/r2-fel-test-kit.md) expects u-boot's `DRAM:  2 GiB` on Dale's 2 GB unit, not 1 GiB
+     (the u-boot side, no DRAM size cap below 2 GiB, is `scripts/build-uboot.sh --config-only`)
 
 usage: scripts/check-docs.py [REPO]   exit 0 = clean, 1 = problems (listed), 2 = usage
 """
@@ -87,6 +89,16 @@ def check_handoffs(repo, problems):
     return n
 
 
+def check_dram_size(repo, problems):
+    f = "docs/r2-fel-test-kit.md"
+    text = open(os.path.join(repo, f), encoding="utf-8").read()
+    if not re.search(r"^DRAM:  2 GiB\b", text, re.M):
+        problems.append("%s: expected u-boot line `DRAM:  2 GiB` (Q10) is missing" % f)
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if re.match(r"^DRAM:  ?(1 GiB|1024 MiB)\b", line):
+            problems.append("%s:%d: expects 1 GiB; Q10 says 2 GiB on Dale's unit" % (f, lineno))
+
+
 def main():
     if len(sys.argv) > 2:
         print(__doc__)
@@ -97,10 +109,11 @@ def main():
     links = check_links(repo, files, problems)
     rows, cited = check_ids(repo, problems)
     handoffs = check_handoffs(repo, problems)
+    check_dram_size(repo, problems)
     for p in problems:
         print("FAIL " + p)
     print("check-docs: %d .md files, %d relative links, %d master-list ids, %d ids cited in research-sync, "
-          "%d handoff refs: %s" % (len(files), links, rows, cited, handoffs,
+          "%d handoff refs, r2 DRAM size: %s" % (len(files), links, rows, cited, handoffs,
                                    "OK" if not problems else "%d problem(s)" % len(problems)))
     return 1 if problems else 0
 

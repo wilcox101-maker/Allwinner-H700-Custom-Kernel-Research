@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Doc consistency on every PR (Manager file 2026-11-15-d): relative links resolve, master-list ids are
 # unique and cover every id cited in research-sync, named handoffs exist. scripts/check-docs.py; stdlib only.
+# Q10 (Dale, 2026-11-17): our u-boot must not cap DRAM below 2 GiB. Job uboot-dram-cap fetches u-boot v2026.10,
+# applies our patches and fragments, runs olddefconfig and checks the .config (scripts/build-uboot.sh --config-only).
+# It does not compile u-boot.
 name: docs-check
 
 on:
@@ -19,3 +22,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       - name: Check docs
         run: python3 -I scripts/check-docs.py
+
+  uboot-dram-cap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - name: Install Kconfig tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gcc-aarch64-linux-gnu make flex bison
+      - name: u-boot .config has no DRAM cap below 2 GiB (both DRAM types)
+        run: scripts/build-uboot.sh --config-only

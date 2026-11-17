@@ -91,6 +91,9 @@ Nothing here writes a card. When a card is written later: use only a spare card,
 type from K3 (`select dram para<N>`: 15 = LPDDR4, 14 or 0 = LPDDR3), and keep the stock card untouched. A card that
 doesn't boot is fixed by taking it out; the unit is unchanged.
 
+**Dale's unit (Q10, 2026-11-17):** 2 GB LPDDR4, so its image is `…-uboot-lpddr4.img`. K3's `select dram para15` still
+confirms that before K4 and before any card write: a safety step, not a size cap. Expected size 2 GiB (R1 §4).
+
 ## 7. How to reproduce
 ```sh
 scripts/build-uboot.sh --dram all --sources                 # .work/u-boot-out/
