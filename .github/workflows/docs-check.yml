@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Doc consistency on every PR (Manager file 2026-11-15-d): relative links resolve, master-list ids are
 # unique and cover every id cited in research-sync, named handoffs exist. scripts/check-docs.py; stdlib only.
-# Q10 (Dale, 2026-11-17): our u-boot must not cap DRAM below 2 GiB. Job uboot-dram-cap fetches u-boot v2026.10,
+# Q11 (Dale, 2026-11-17): our u-boot must not cap DRAM below 2 GiB. Job uboot-dram-cap fetches u-boot v2026.10,
 # applies our patches and fragments, runs olddefconfig and checks the .config (scripts/build-uboot.sh --config-only).
 # It does not compile u-boot.
 name: docs-check

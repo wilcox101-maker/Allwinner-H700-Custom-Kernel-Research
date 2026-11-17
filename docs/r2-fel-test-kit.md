@@ -2,7 +2,7 @@
 
 Date: 2026-11-14. Task R2 (Kernel Research). **Written on the desk; none of these commands has run
 against an RG34XX-SP.** Expected output below is what the code prints, not a captured log. Use after
-K3 (serial console); on Dale's 2 GB LPDDR4 unit now (Q10, 2026-11-17), other units after Redux v0.5.
+K3 (serial console); on Dale's 2 GB LPDDR4 unit now (Q11, 2026-11-17), other units after Redux v0.5.
 
 ## What FEL gives us
 The H700's boot ROM has a USB recovery mode (FEL). In FEL, the host sends our SPL + u-boot over USB
@@ -12,9 +12,10 @@ returns the unit to normal. It is the safest first run of our boot chain (R1).
 ## 1. Prerequisites
 - **Serial console (K3)** connected at 115200 8N1. FEL itself gives little feedback; the console shows
   SPL, BL31 and u-boot.
-- **DRAM type known (K3):** stock boot0's line `vaild para:… select dram para15` = LPDDR4 → use the
-  lpddr4 binary. `para14` or `para0` = LPDDR3 → lpddr3 binary. **If unknown, stop**: the wrong binary can
-  put 1.2 V on 1.1 V memory (R1 §4). This is a safety step, not a size cap; it still applies on Dale's unit (Q10).
+- **DRAM type known** (Q10, 2026-11-17): from the hardware version Dale states (v1.0 = 2 GB LPDDR4; Dale's
+  unit) or from stock boot0's line `vaild para:… select dram para15` = LPDDR4 (`para14`/`para0` = LPDDR3).
+  LPDDR4 → lpddr4 binary, LPDDR3 → lpddr3 binary. **If unknown, stop**: the wrong binary can
+  put 1.2 V on 1.1 V memory (R1 §4).
 - Binaries from `scripts/build-uboot.sh` (R1): `u-boot-rg34xxsp-lpddr4-2026.10.bin` (or lpddr3) and
   `SHA256SUMS`. Check: `sha256sum -c SHA256SUMS`.
 - A host with `sunxi-fel`:
@@ -51,7 +52,7 @@ sunxi-fel -v uboot u-boot-rg34xxsp-lpddr4-2026.10.bin
 Expected on the **serial console** (abridged, in order):
 ```
 U-Boot SPL 2026.10-rg34xxsp (Oct 05 2026 - 21:35:33 +0000)
-DRAM: 2048 MiB                 <- Dale's 2 GB unit (Q10); a hang here = wrong DRAM binary/values
+DRAM: 2048 MiB                 <- Dale's 2 GB unit (Q11); a hang here = wrong DRAM binary/values
 Trying to boot from FEL
 NOTICE:  BL31: v2.14.0(release):v2.14.0
 NOTICE:  BL31: Detected Allwinner H616 SoC (1823)

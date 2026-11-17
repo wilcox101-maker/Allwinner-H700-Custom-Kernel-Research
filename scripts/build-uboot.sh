@@ -13,7 +13,7 @@
 #      binaries (tools/bootloader_notices.py); it must ship with any image that carries them (R9)
 #
 # Usage:  scripts/build-uboot.sh [--dram lpddr4|lpddr3|all] [--sources] [--config-only] [--jobs N]
-#   --config-only  steps 1 and 3 up to the .config checks (fragments, DRAM type, Q10 DRAM size cap), then stop:
+#   --config-only  steps 1 and 3 up to the .config checks (fragments, DRAM type, Q11 DRAM size cap), then stop:
 #              no TF-A, no compile; needs only host gcc, make, flex, bison (CI, docs-check workflow)
 #   --sources  also write the corresponding source (GPL/BSD, task R9): pristine u-boot and TF-A
 #              tarballs at the pinned commits, plus this repo's u-boot patches, fragments and script
@@ -120,16 +120,16 @@ for dram in "${DRAMS[@]}"; do
 	[ "$bad" = 0 ] || fail "$dram: config fragment did not apply cleanly"
 	echo "  all $(cat "${FRAGS[@]}" | grep -c -E '^(CONFIG_|# CONFIG_)') fragment lines hold"
 	grep -q "^CONFIG_SUNXI_DRAM_H616_${dram^^}=y" "$B/.config" || fail "$dram: wrong DRAM type in .config"
-	# Q10 (Dale, 2026-11-17): no cap below 2 GiB (his unit has 2 GB LPDDR4). The SPL measures the size
+	# Q11 (Dale, 2026-11-17): no cap below 2 GiB (his unit has 2 GB LPDDR4). The SPL measures the size
 	# (rank/width, then rows/cols: arch/arm/mach-sunxi/dram_dw_helpers.c) and passes it in the SPL header;
 	# u-boot proper's dram_init() (board/sunxi/board.c) clamps it to CONFIG_SUNXI_DRAM_MAX_SIZE. If upstream
 	# moves that clamp, stop here so this check gets reviewed instead of passing on nothing.
 	grep -qF 'gd->ram_size = CONFIG_SUNXI_DRAM_MAX_SIZE;' "$WORK/u-boot/board/sunxi/board.c" ||
-		fail "board/sunxi/board.c no longer clamps gd->ram_size to SUNXI_DRAM_MAX_SIZE: review the Q10 check"
+		fail "board/sunxi/board.c no longer clamps gd->ram_size to SUNXI_DRAM_MAX_SIZE: review the Q11 check"
 	max=$(sed -n 's/^CONFIG_SUNXI_DRAM_MAX_SIZE=//p' "$B/.config")
 	[ -n "$max" ] && [ $((max)) -ge $((0x80000000)) ] ||
-		fail "$dram: CONFIG_SUNXI_DRAM_MAX_SIZE=${max:-(absent)} caps DRAM below 2 GiB (Q10)"
-	echo "  DRAM cap CONFIG_SUNXI_DRAM_MAX_SIZE=$max (>= 2 GiB, Q10)"
+		fail "$dram: CONFIG_SUNXI_DRAM_MAX_SIZE=${max:-(absent)} caps DRAM below 2 GiB (Q11)"
+	echo "  DRAM cap CONFIG_SUNXI_DRAM_MAX_SIZE=$max (>= 2 GiB, Q11)"
 	[ "$CONFIG_ONLY" = 1 ] && continue
 	"${MAKE[@]}" BL31="$BL31" SCP=/dev/null >"$B/build.log" 2>&1 ||
 		{ tail -30 "$B/build.log"; fail "$dram: u-boot build"; }
