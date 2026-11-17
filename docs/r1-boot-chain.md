@@ -51,8 +51,8 @@ checks the layout with `image/check-boot-layout.py` on every such build.
 
 **Wrong-binary risk.** LPDDR3 settings on an LPDDR4 board put 1.2 V on 1.1 V memory; the other way
 round DRAM init most likely fails. Neither image can tell by itself which board it is on. So: name
-images by DRAM type, and confirm a unit's type before the first write. Stock boot0's UART line
-`select dram para<N>` (K3) does that: 15 = LPDDR4, 14 or 0 = LPDDR3 (R3). A single SPL that reads the
+images by DRAM type, and know a unit's type before the first write: Dale's statement of the hardware version
+(Q10, 2026-11-17: v1.0 = 2 GB LPDDR4, Dale's unit), or stock boot0's UART line `select dram para<N>` (K3): 15 = LPDDR4, 14 or 0 = LPDDR3 (R3). A single SPL that reads the
 DRAM straps (PH6/7/8/10) is possible later (R3 §4), not now.
 
 ## 5. Desk results (2026-11-14)
@@ -78,7 +78,7 @@ build's `SHA256SUMS`). Binaries are not committed; they are build outputs, rebui
 - Never write u-boot to the stock card or any card with data on it.
 
 ## 7. Open, needs the device
-1. **K3** (serial) and the stock line `select dram para<N>` → DRAM type of Dale's unit.
+1. **K3** (serial). Dale's unit is LPDDR4 (Q10, v1.0 hardware); the stock line `select dram para<N>` is an optional cross-check.
 2. **K4** (FEL, `docs/r2-fel-test-kit.md`): SPL DRAM init, BL31, u-boot, the PE6 line.
 3. First card boot on a spare card: extlinux, kernel, root; then R8's rollback on hardware (K17).
 4. Not in this build, possible later: charge-only power-on (the PMIC powers the board on when USB is
