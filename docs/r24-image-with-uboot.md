@@ -92,6 +92,9 @@ type (Q10: as Dale states it, v1.0 = LPDDR4, or from K3's `select dram para<N>`:
 keep the stock card untouched. A card that
 doesn't boot is fixed by taking it out; the unit is unchanged.
 
+**Dale's unit (Q10/Q11, 2026-11-17):** v1.0 hardware, 2 GB LPDDR4 (as Dale states, Q10), so its image is `…-uboot-lpddr4.img`;
+K3's `select dram para15` is an optional cross-check. K3 + K4 may run now (Q11). Expected size 2 GiB (R1 §4).
+
 ## 7. How to reproduce
 ```sh
 scripts/build-uboot.sh --dram all --sources                 # .work/u-boot-out/

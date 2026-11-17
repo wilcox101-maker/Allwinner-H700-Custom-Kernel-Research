@@ -1032,3 +1032,9 @@ of the hardware version (v1.0 = 2 GB LPDDR4); K3's `select dram para<N>` is now 
 Dale's unit (v1.0, 2 GB) → **LPDDR4 image**. Updated: master list K3/K4 + Q10, `r1-boot-chain.md`, `r2-fel-test-kit.md`,
 `r24-image-with-uboot.md`. The Project instructions sentence ("confirmed from its stock serial log (K3)") is Dale's to edit.
 **For DR:** Dale's card gets the LPDDR4 image without waiting for K3.
+
+### Redux Manager, 2026-11-17 (Q11: Dale's 2 GB unit, K3 + K4 now)
+Dale, 08:29 ET, via the Manager: "uncap 2GB DDR4 unit testing". **Q11:** K3 (UART) and K4 (FEL, RAM only) may run now on
+his 2 GB LPDDR4 unit, ahead of Redux v0.5; other K rows stay blocked. Expected u-boot `DRAM:  2 GiB` (R2). Desk only: CI
+now checks that u-boot v2026.10 doesn't cap DRAM below 2 GiB (`SUNXI_DRAM_MAX_SIZE`, `board/sunxi/board.c:282-283`; R1 §4).
+Safety unchanged: no card writes in K4; DRAM type per Q10 (KR's entry above). Numbered Q11 because KR's Q10 (#58) landed first. Nothing has run on the device.

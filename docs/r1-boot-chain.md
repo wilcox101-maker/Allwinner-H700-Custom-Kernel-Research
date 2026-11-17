@@ -55,6 +55,22 @@ images by DRAM type, and know a unit's type before the first write: Dale's state
 (Q10, 2026-11-17: v1.0 = 2 GB LPDDR4, Dale's unit), or stock boot0's UART line `select dram para<N>` (K3): 15 = LPDDR4, 14 or 0 = LPDDR3 (R3). A single SPL that reads the
 DRAM straps (PH6/7/8/10) is possible later (R3 §4), not now.
 
+**Size on Dale's unit (Q11, 2026-11-17):** 2 GB LPDDR4, so expect SPL `DRAM: 2048 MiB` and u-boot `DRAM:  2 GiB`.
+Nothing in our build sets the size; the SPL measures it and u-boot only clamps it (u-boot v2026.10):
+
+| Step | Where | What |
+|---|---|---|
+| Rank and bus width | `arch/arm/mach-sunxi/dram_dw_helpers.c:12` | tries 32-bit/2 ranks first, down to 16-bit/1 rank; the first that inits wins |
+| Rows and columns, size | same file `:87`, `:144` | address-bit probe; size = 2^(cols+rows+3) × width × ranks |
+| SPL prints, stores | `board/sunxi/board.c:655-661` | `DRAM: %d MiB`, size into the SPL header for u-boot proper |
+| u-boot proper clamps | `board/sunxi/board.c:282-283` | `gd->ram_size` capped at `CONFIG_SUNXI_DRAM_MAX_SIZE` |
+| The cap | `arch/arm/mach-sunxi/Kconfig:352-354` | `0x100000000` (4 GiB) for `MACH_SUN50I_H616`; no prompt, so a fragment can't change it, only a source patch |
+
+CI guards it: `scripts/build-uboot.sh --config-only` (docs-check workflow, every PR) fails if either `.config` has
+`CONFIG_SUNXI_DRAM_MAX_SIZE` below `0x80000000`, or if the clamp line in `board/sunxi/board.c` moves (so the check
+gets reviewed, not silently passed). A wrong rank/width detection can still show 1 GiB on hardware; only K4 shows that.
+The DRAM *type* check (K3 `select dram para15`) is a safety step, not a cap, and still comes first.
+
 ## 5. Desk results (2026-11-14)
 | Check | Result |
 |---|---|
@@ -65,6 +81,7 @@ DRAM straps (PH6/7/8/10) is possible later (R3 §4), not now.
 | Fits the card gap (≤ 1016 KiB) | yes, 745 KiB |
 | PE6 code + our DTB names, R8 `altbootcmd`, version string `U-Boot SPL 2026.10-rg34xxsp` | present in both |
 | DRAM type and DCDC3 in `.config` | LPDDR4 / 1100 mV; LPDDR3 / 1200 mV |
+| DRAM size cap in `.config` (Q11, added 2026-11-17, `--config-only`) | `SUNXI_DRAM_MAX_SIZE=0x100000000` (4 GiB) in both; two negative controls (cap patched to 1 GiB; clamp line changed) fail |
 | Reproducible | two clean builds: identical SHA-256 |
 
 SHA-256 (this build): lpddr4 `1d0381e1cb846ab2…`, lpddr3 `c0c3de979a2bc127…` (full values in the
@@ -78,8 +95,8 @@ build's `SHA256SUMS`). Binaries are not committed; they are build outputs, rebui
 - Never write u-boot to the stock card or any card with data on it.
 
 ## 7. Open, needs the device
-1. **K3** (serial). Dale's unit is LPDDR4 (Q10, v1.0 hardware); the stock line `select dram para<N>` is an optional cross-check.
-2. **K4** (FEL, `docs/r2-fel-test-kit.md`): SPL DRAM init, BL31, u-boot, the PE6 line.
+1. **K3** (serial). Dale's unit is LPDDR4 (Q10, v1.0 hardware); the stock line `select dram para<N>` is an optional cross-check. Allowed now on his 2 GB unit (Q11).
+2. **K4** (FEL, `docs/r2-fel-test-kit.md`): SPL DRAM init (expect 2 GiB on Dale's unit, Q11), BL31, u-boot, the PE6 line.
 3. First card boot on a spare card: extlinux, kernel, root; then R8's rollback on hardware (K17).
 4. Not in this build, possible later: charge-only power-on (the PMIC powers the board on when USB is
    plugged in; ROCKNIX carries an unmerged AXP717 patch for that); a status LED in SPL; boot delay 2 s

@@ -2,7 +2,7 @@
 
 Date: 2026-11-14. Task R2 (Kernel Research). **Written on the desk; none of these commands has run
 against an RG34XX-SP.** Expected output below is what the code prints, not a captured log. Use after
-K3 (serial console) and after Redux v0.5 frees the device.
+K3 (serial console); on Dale's 2 GB LPDDR4 unit now (Q11, 2026-11-17), other units after Redux v0.5.
 
 ## What FEL gives us
 The H700's boot ROM has a USB recovery mode (FEL). In FEL, the host sends our SPL + u-boot over USB
@@ -52,7 +52,7 @@ sunxi-fel -v uboot u-boot-rg34xxsp-lpddr4-2026.10.bin
 Expected on the **serial console** (abridged, in order):
 ```
 U-Boot SPL 2026.10-rg34xxsp (Oct 05 2026 - 21:35:33 +0000)
-DRAM: 1024 MiB                 <- or the unit's size; a hang here = wrong DRAM binary/values
+DRAM: 2048 MiB                 <- Dale's 2 GB unit (Q11); a hang here = wrong DRAM binary/values
 Trying to boot from FEL
 NOTICE:  BL31: v2.14.0(release):v2.14.0
 NOTICE:  BL31: Detected Allwinner H616 SoC (1823)
@@ -60,7 +60,7 @@ NOTICE:  BL31: Detected Allwinner H616 SoC (1823)
 U-Boot 2026.10-rg34xxsp (Oct 05 2026 - 21:35:33 +0000) Allwinner Technology
 CPU:   Allwinner H616 (SUN50I)
 Model: Anbernic RG35XX 2024     <- u-boot's own DT; expected, see R1 §3
-DRAM:  1 GiB
+DRAM:  2 GiB
 ...
 RG34XX-SP: panel ID PE6=0, fdtfile=allwinner/sun50i-h700-anbernic-rg34xx-sp-redux-panel.dtb
 ...
@@ -74,7 +74,7 @@ With no card, autoboot then finds nothing to boot. Press a key at the prompt, th
 Record:
 - the full console log;
 - `fdtfile` and `panel_id`: `boe` means PE6 low (the original panel);
-- the DRAM size;
+- the DRAM size (SPL `DRAM: 2048 MiB` and u-boot `DRAM:  2 GiB` on Dale's unit; R1 §4 says why nothing caps it);
 - whether the screen stayed dark. u-boot has no display driver here, so a dark screen is expected.
 
 ## 4. Pass / fail
@@ -83,6 +83,7 @@ Record:
 | All lines above, `PE6=0`, `boe` | SPL, DRAM, BL31, u-boot and our patch work on this unit | first spare-card boot (R1 §7) |
 | `PE6=1` | newer panel (K9 case) | record; image boots without display (Q3) |
 | Hang after `U-Boot SPL` / no `DRAM:` | DRAM init failed | power off; recheck K3's DRAM type; do **not** write a card |
+| `DRAM:  1 GiB` (or less) on the 2 GB unit | a size cap, or rank/bus-width detection found half the memory (R1 §4) | log and stop; do **not** write a card |
 | No `BL31` lines, or reset loop | BL31/handoff problem | log and stop |
 | Device not in FEL | cable, port or no-card behaviour | try §2 plan B |
 
