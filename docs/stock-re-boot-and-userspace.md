@@ -1192,3 +1192,10 @@ cat /sys/class/extcon/hdmi/state /sys/class/switch/hdmi/state 2>&1   # both HDMI
 ### Tool installs
 
 None. Only the preinstalled python3, strings, file, readelf, arm-linux-gnueabi-objdump and `/home/claude/re-tools/annot.py` were used, plus two helper scripts in `/tmp/gwscripts/` (a feature matrix and an ARM movw/movt resolver; scratch files, not deliverables).
+
+## Device-verified (Redux 2026-11-17, stock, Dale's v1.0 2 GB unit) [V]
+- `/mnt/mod/ctrl/configs/led_exit.cfg` and `led_launch.cfg`, from which stock `dmenu_ln` writes `work_led`, **don't
+  exist** on Dale's unit; `moto` appears only inside emulator binaries (Redux note `2026-11-17-dale-hw-result-7ee31d1.md` #11).
+- Filesystem state on the stock card (`fsck -n`, mounted, read-only; `…-2917a5c.md` #2, `…-070427e.md` #4): p5
+  `linuxrootfs`, p6 `appfs`, p7 clean. p1 (FAT32) exits 1 only for the dirty/in-use flag (boot-sector offset 65,
+  byte 0x41: 01 vs backup 00) while mounted, 29,670 files. TF2's p1 reports "Weird DATE" (rest of the output cut).
