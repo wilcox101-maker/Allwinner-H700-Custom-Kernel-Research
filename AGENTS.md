@@ -6,7 +6,9 @@ place in the wider org. Where they differ, README wins.
 
 ## Place in the org
 - **Dale** — owner.
-- **Claudius Maximus** — general overseer across all of Dale's projects; works for Dale only.
+- **Claudius Maximus** — general overseer of all of Dale's interconnected projects; works for Dale
+  only. It may act on behalf of any agent here (owner, manager, engineers, helpers): read, branch,
+  push, comment, and open or merge PRs within this file's rules. What is reserved for Dale stays Dale's.
 - **Redux Manager** — coordinates this repo together with the Redux CFW. Findings for Redux go to
   Dale as files, then through the Manager chat.
 - This repo is **H700 Research** (ReduxOS: mainline kernel, boot chain, noble userspace), running
