@@ -37,7 +37,8 @@ For each app: start it, wait until its picture is on screen, then run
 | 5 | DraStic, a game running | `drastic` |
 
 Looks: **PASS** = the `sys` dump lists the enabled layers with channel/layer/zorder, and nothing is enabled on ch3
-(and ideally not on ch2). Note what the video player uses (ch0 expected). **FAIL** = something is on ch3 (then K26 runs
+(and ideally not on ch2). Note what the video player uses. Desk (DR-2): the stock player is `vp.dge` + `ffplay`; expect
+**ch1/l0 only** (ch0, ch2, ch3 empty); a layer on ch0 means a non-stock player. **FAIL** = something is on ch3 (then K26 runs
 with `--ch 2`: ask KR for the one-line change), or the `sys` file is missing (paste the attr list).
 
 ## K25: device nodes
@@ -64,13 +65,15 @@ running normally, brightness working, the bar gone when the step ends, and the k
 the bar not going on `off`.
 
 ## K27: keys and injected typing
-1. `sh /tmp/run-probe.sh K27-keys 40`, then, slowly and in this order: Menu alone; Menu + Select; Menu + X; L3; R3;
-   Select; Start. Write down the order you used.
+1. `sh /tmp/run-probe.sh K27-keys 40`, then, slowly and in this order: Menu alone; Menu + Select; Menu + X; Menu + A;
+   L3; R3; Select; Start. Write down the order you used.
 2. In RetroArch (a game running): press **Menu alone** once. Does the RetroArch menu open on press, on release, or
-   not at all? (Answer on the sheet; nothing to run.)
+   not at all? (Answer on the sheet; nothing to run.) Desk (DR-3): by RetroArch 1.20 logic it does **not** open; **Start
+   held 2 s** does. Then press **Menu + X**: expect pause (or the FPS counter); note which, it settles which code the printed X
+   sends.
 3. Typing: for each app, start it, put the cursor in a text field (or a terminal prompt), run
-   `sh /tmp/run-probe.sh K27-type <label>`, then within 5 s give the app focus: `sdl2port`, `retroarch` (its on-screen
-   search or a text field), `terminal` (Redux Terminal), `sdl12` (an SDL 1.2 app such as a `.dge` emulator menu).
+   `sh /tmp/run-probe.sh K27-type <label>`, then within 5 s give the app focus: `sdl2port`, `retroarch` (in RetroArch's own
+   menu, e.g. its search field, **not** with a game running: there `r`, `e` and `u` are live hotkeys, DR-3), `terminal` (Redux Terminal), `sdl12` (an SDL 1.2 app such as a `.dge` emulator menu).
 
 Looks: **PASS** = every key shows a `type 1` line with a code (Menu is expected to be `BTN_TL2` 312, unverified);
 `redux` appears in the app. **FAIL** = a key shows nothing, or nothing gets typed (note which app).
@@ -83,4 +86,5 @@ the OSK chord can't work over it).
 ## After the session
 `sh /tmp/run-probe.sh logs`, then copy them to the PC:
 `scp -r root@[DEVICE_IP]:/tmp/oskprobe-logs .` and give the folder to the Owner for the hw-result note.
-Answers from DR-2 (video player layer) and DR-3 (RetroArch Menu key), if they arrive first, go in the K24/K27 rows.
+DR-2 (video player layer) and DR-3 (RetroArch Menu key) answers are in the K24/K27 steps above
+(`docs/dr-osk-desk-checks-2026-11-18.md`).

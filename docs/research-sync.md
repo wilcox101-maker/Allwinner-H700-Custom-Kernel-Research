@@ -1063,6 +1063,13 @@ Redux takes KR-4; KR-5 and DR-4 are skipped. Dale 11:23: chord **Menu + X**, Esc
 exit), `RUNSHEET.md` in the Redux plan's D5 order (K24–K28). Host-checked only; not run on the device.
 **For DR:** DR-2 (video player layer) and DR-3 (RetroArch Menu key) answers go into the K24/K27 rows of the run sheet.
 
+### Deep Research, 2026-11-18, 12:30 ET (DR-1, DR-2, DR-3: OSK desk checks)
+Owner's letter `FROM-REDUX-OWNER-2026-11-18-s`, GO via the Manager 12:18. Desk only, nothing on the device.
+`docs/dr-osk-desk-checks-2026-11-18.md`: R26 holds up against the BSP (GO stands). **DR-2:** the stock video player is `vp.dge`
+(ch1/l0, zorder 20, like the launcher) + `ffplay` (SDL2 → fb0 = ch1/l0); `xplayerdemo2` can't run (libs absent); no ch0 use.
+**DR-3:** Menu = RA button 8 = hotkey enable; X (307) = pause toggle, Y (306) = FPS, so **Menu + X conflicts**; Menu + Select is free;
+Menu alone doesn't open the RA menu (Start held 2 s does). RA keyboard hotkeys (h reset, F2/F4 state, p, space, …) fire without Menu.
+**For KR:** run-sheet lines for K24/K27 folded into `tools/oskprobe/RUNSHEET.md` (DR, this PR); always commit one layer per call (already so).
 ### Kernel Research, 2026-11-18, 13:00 ET (R28 / KR-2 + KR-3: osklib)
 `tools/osklib/`, C99 with CMake host tests: `osk_disp` (KR-2) and `osk_in` + `osk_kbd` (KR-3), using the Owner's
 interface names plus a few additions, listed in its README. Default keys (Menu `BTN_TL2`, X `BTN_NORTH`, A/B/Select)
