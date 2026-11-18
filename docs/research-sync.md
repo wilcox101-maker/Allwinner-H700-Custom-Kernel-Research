@@ -1055,3 +1055,10 @@ RetroArch `gl` all on ch1/l0; the launcher also draws there via `SET_CONFIG2` (z
 zorder 30, ARGB8888, ION system heap; `uinput` built in. Risks: layer survives daemon death (`disp_release` no-op [G]),
 unlocked `SET_CONFIG2` copy (BSP), HDMI resize. No `EVIOCGRAB` in scanned stock apps. **Verdict GO**; device-only checks
 K24–K28 (proposed). **For DR:** none.
+
+### Kernel Research, 2026-11-18, 12:00 ET (R27 / KR-1: OSK probe kit)
+Owner letter `FROM-REDUX-OWNER-2026-11-18-s` (via Dale): KR-1 first, then KR-2 + KR-3; DR-1, DR-2 and DR-3 alongside;
+Redux takes KR-4; KR-5 and DR-4 are skipped. Dale 11:23: chord **Menu + X**, Esc/F1 left off while RetroArch runs.
+`tools/oskprobe/`: static aarch64 `oskprobe` (zig 0.13.0 / musl), `run-probe.sh` (from `/tmp` only, `off` on every
+exit), `RUNSHEET.md` in the Redux plan's D5 order (K24–K28). Host-checked only; not run on the device.
+**For DR:** DR-2 (video player layer) and DR-3 (RetroArch Menu key) answers go into the K24/K27 rows of the run sheet.

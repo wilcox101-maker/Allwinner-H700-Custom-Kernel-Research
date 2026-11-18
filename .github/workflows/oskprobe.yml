@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# KR-1 (Redux Owner letter 2026-11-18-s): build the OSK probe as a static aarch64 binary and smoke-run the host
+# build (argument checks only; nothing touches a display). zig 0.13.0 from PyPI. Artifact: oskprobe + build.log.
+name: oskprobe
+
+on:
+  pull_request:
+    paths: ['tools/oskprobe/**', '.github/workflows/oskprobe.yml']
+  push:
+    branches: [main]
+    paths: ['tools/oskprobe/**', '.github/workflows/oskprobe.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - name: Install zig 0.13.0 (PyPI)
+        run: python3 -m venv /tmp/zig && /tmp/zig/bin/pip install ziglang==0.13.0.post1
+      - name: Build
+        run: ZIG='/tmp/zig/bin/python -m ziglang' sh tools/oskprobe/build.sh out
+      - name: Check
+        run: |
+          file out/oskprobe | grep -q 'ARM aarch64.*statically linked'
+          sh -n tools/oskprobe/run-probe.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
+        with:
+          name: oskprobe
+          path: |
+            out/oskprobe
+            out/build.log
