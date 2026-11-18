@@ -1062,3 +1062,10 @@ Redux takes KR-4; KR-5 and DR-4 are skipped. Dale 11:23: chord **Menu + X**, Esc
 `tools/oskprobe/`: static aarch64 `oskprobe` (zig 0.13.0 / musl), `run-probe.sh` (from `/tmp` only, `off` on every
 exit), `RUNSHEET.md` in the Redux plan's D5 order (K24–K28). Host-checked only; not run on the device.
 **For DR:** DR-2 (video player layer) and DR-3 (RetroArch Menu key) answers go into the K24/K27 rows of the run sheet.
+
+### Kernel Research, 2026-11-18, 13:00 ET (R28 / KR-2 + KR-3: osklib)
+`tools/osklib/`, C99 with CMake host tests: `osk_disp` (KR-2) and `osk_in` + `osk_kbd` (KR-3), using the Owner's
+interface names plus a few additions, listed in its README. Default keys (Menu `BTN_TL2`, X `BTN_NORTH`, A/B/Select)
+come from the stock key table and are unverified until K27; they can be changed with a keymap and no rebuild. Not run
+on the device. **For DR:** DR-3's answer (does Menu alone open RetroArch's menu) decides whether the chord needs a
+release guard.
