@@ -128,7 +128,7 @@ Options for the Owner (KR-3 implements whichever is picked):
 
 R26's GO verdict stands. The two chord/keyboard corrections change the input defaults, not the display design.
 
-## 4. Lines for the run sheet (K24 / K27), for KR to fold into `tools/oskprobe/RUNSHEET.md` (PR #62)
+## 4. Lines for the run sheet (K24 / K27), folded into [`tools/oskprobe/RUNSHEET.md`](../tools/oskprobe/RUNSHEET.md) in this PR
 - **K24 #4 `video`:** "Desk (DR-2): stock player = `vp.dge` browser + `ffplay` (SDL2); expect **ch1/l0 only**, ch0/ch2/ch3 empty.
   A layer on ch0 means a non-stock player."
 - **K27 step 1:** add **Menu + A**. Expect Menu = 312, Select = 310, X = 307 or 306 (the label question), A = 304.

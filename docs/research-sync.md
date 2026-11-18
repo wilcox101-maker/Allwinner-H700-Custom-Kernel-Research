@@ -1056,10 +1056,17 @@ zorder 30, ARGB8888, ION system heap; `uinput` built in. Risks: layer survives d
 unlocked `SET_CONFIG2` copy (BSP), HDMI resize. No `EVIOCGRAB` in scanned stock apps. **Verdict GO**; device-only checks
 K24–K28 (proposed). **For DR:** none.
 
+### Kernel Research, 2026-11-18, 12:00 ET (R27 / KR-1: OSK probe kit)
+Owner letter `FROM-REDUX-OWNER-2026-11-18-s` (via Dale): KR-1 first, then KR-2 + KR-3; DR-1, DR-2 and DR-3 alongside;
+Redux takes KR-4; KR-5 and DR-4 are skipped. Dale 11:23: chord **Menu + X**, Esc/F1 left off while RetroArch runs.
+`tools/oskprobe/`: static aarch64 `oskprobe` (zig 0.13.0 / musl), `run-probe.sh` (from `/tmp` only, `off` on every
+exit), `RUNSHEET.md` in the Redux plan's D5 order (K24–K28). Host-checked only; not run on the device.
+**For DR:** DR-2 (video player layer) and DR-3 (RetroArch Menu key) answers go into the K24/K27 rows of the run sheet.
+
 ### Deep Research, 2026-11-18, 12:30 ET (DR-1, DR-2, DR-3: OSK desk checks)
 Owner's letter `FROM-REDUX-OWNER-2026-11-18-s`, GO via the Manager 12:18. Desk only, nothing on the device.
 `docs/dr-osk-desk-checks-2026-11-18.md`: R26 holds up against the BSP (GO stands). **DR-2:** the stock video player is `vp.dge`
 (ch1/l0, zorder 20, like the launcher) + `ffplay` (SDL2 → fb0 = ch1/l0); `xplayerdemo2` can't run (libs absent); no ch0 use.
 **DR-3:** Menu = RA button 8 = hotkey enable; X (307) = pause toggle, Y (306) = FPS, so **Menu + X conflicts**; Menu + Select is free;
 Menu alone doesn't open the RA menu (Start held 2 s does). RA keyboard hotkeys (h reset, F2/F4 state, p, space, …) fire without Menu.
-**For KR:** run-sheet lines for K24/K27 in §4 of the doc (PR #62 is yours); always commit one layer per call (already so).
+**For KR:** run-sheet lines for K24/K27 folded into `tools/oskprobe/RUNSHEET.md` (DR, this PR); always commit one layer per call (already so).
