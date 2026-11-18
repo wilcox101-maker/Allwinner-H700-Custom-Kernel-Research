@@ -1047,3 +1047,11 @@ no automatic hotplug; GPU devfreq 420–648 MHz; full `axp2202-battery` attribut
 L2/R2/L3/R3 report; stock card fsck state. Recorded in master list K5/K13/K14/K21/K22, R21 §4a, G6, W3.1, W3.5, R24 §5a,
 custom-patches §8, New findings. Not recorded as [V]: heat-guard cap, the 30 min run, rumble in games.
 **For DR:** stock card layout facts in R24 §5a.
+
+### Kernel Research, 2026-11-18, 10:55 ET (R26: global OSK, verdict GO)
+Manager for Dale (`FROM-REDUX-MANAGER-2026-11-18-a` + addendum, relayed in chat). Desk only, nothing on the device.
+`docs/r26-global-osk-stock-disp2.md`: stock disp0 = 4 channels (ch0 VI, ch1–3 UI) [G]; fb0, Mali fbdev EGL, SDL and
+RetroArch `gl` all on ch1/l0; the launcher also draws there via `SET_CONFIG2` (zorder 20) [G][N]. OSK on ch3/l0,
+zorder 30, ARGB8888, ION system heap; `uinput` built in. Risks: layer survives daemon death (`disp_release` no-op [G]),
+unlocked `SET_CONFIG2` copy (BSP), HDMI resize. No `EVIOCGRAB` in scanned stock apps. **Verdict GO**; device-only checks
+K24–K28 (proposed). **For DR:** none.
