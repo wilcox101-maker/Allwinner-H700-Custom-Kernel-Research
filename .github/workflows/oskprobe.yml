@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # KR-1 (Redux Owner letter 2026-11-18-s): build the OSK probe as a static aarch64 binary and smoke-run the host
 # build (argument checks only; nothing touches a display). zig 0.13.0 from PyPI. Artifact: oskprobe + build.log.
+# KR-2/KR-3: osklib host unit tests (CMake, gcc) and an aarch64 compile check.
 name: oskprobe
 
 on:
   pull_request:
-    paths: ['tools/oskprobe/**', '.github/workflows/oskprobe.yml']
+    paths: ['tools/oskprobe/**', 'tools/osklib/**', '.github/workflows/oskprobe.yml']
   push:
     branches: [main]
-    paths: ['tools/oskprobe/**', '.github/workflows/oskprobe.yml']
+    paths: ['tools/oskprobe/**', 'tools/osklib/**', '.github/workflows/oskprobe.yml']
 
 permissions:
   contents: read
@@ -33,3 +34,23 @@ jobs:
           path: |
             out/oskprobe
             out/build.log
+
+  osklib:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - name: Host tests (gcc)
+        run: cmake -S tools/osklib -B build && cmake --build build && ctest --test-dir build --output-on-failure
+      - name: Host tests (ASan/UBSan)
+        run: |
+          cmake -S tools/osklib -B build-san -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+                -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build-san && ctest --test-dir build-san --output-on-failure
+      - name: aarch64 compile check (zig 0.13.0, PyPI)
+        run: |
+          python3 -m venv /tmp/zig && /tmp/zig/bin/pip install ziglang==0.13.0.post1
+          for f in tools/osklib/src/*.c; do
+            /tmp/zig/bin/python -m ziglang cc -target aarch64-linux-musl -std=c99 -pedantic -Wall -Wextra -Werror \
+              -Itools/osklib/src -Itools/osklib/tests/redux -c "$f" -o /tmp/$(basename "$f").o
+          done

@@ -1070,3 +1070,9 @@ Owner's letter `FROM-REDUX-OWNER-2026-11-18-s`, GO via the Manager 12:18. Desk o
 **DR-3:** Menu = RA button 8 = hotkey enable; X (307) = pause toggle, Y (306) = FPS, so **Menu + X conflicts**; Menu + Select is free;
 Menu alone doesn't open the RA menu (Start held 2 s does). RA keyboard hotkeys (h reset, F2/F4 state, p, space, …) fire without Menu.
 **For KR:** run-sheet lines for K24/K27 folded into `tools/oskprobe/RUNSHEET.md` (DR, this PR); always commit one layer per call (already so).
+### Kernel Research, 2026-11-18, 13:00 ET (R28 / KR-2 + KR-3: osklib)
+`tools/osklib/`, C99 with CMake host tests: `osk_disp` (KR-2) and `osk_in` + `osk_kbd` (KR-3), using the Owner's
+interface names plus a few additions, listed in its README. Default keys (Menu `BTN_TL2`, X `BTN_NORTH`, A/B/Select)
+come from the stock key table and are unverified until K27; they can be changed with a keymap and no rebuild. Not run
+on the device. **For DR:** DR-3's answer (does Menu alone open RetroArch's menu) decides whether the chord needs a
+release guard.
