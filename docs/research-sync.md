@@ -1147,3 +1147,9 @@ layout, a BIOS **reference manifest** (filenames + md5 + size only, generated fr
 self-contained games kit to Dale's PC. The emulator **cores** for the ~25 unpackaged systems and a **PortMaster**
 port remain (source-build marathon) — proprietary content (PICO-8, BIOS) excluded by request.
 [`reduxos-games-and-bios.md`](reduxos-games-and-bios.md).
+
+### Deep Research, 2026-11-20, 12:07 ET — SWAP
+Handing off. PR #73 open (R31→R36, head `e712212`), CI green bar smoke-in-progress, mergeable. Today: R32
+beta + PS1 fast core + console shell + fly-out OSK, and the R36 games/BIOS framework (no proprietary
+content). All desk only. Pending: R36 cores + PortMaster (marathon), R35 OSK-on-hardware, R34 sticks→P1,
+R33 slim image. Full detail: [`handoff-deep-research-2026-11-20b.md`](handoff-deep-research-2026-11-20b.md).
