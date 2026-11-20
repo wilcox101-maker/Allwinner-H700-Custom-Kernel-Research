@@ -51,3 +51,27 @@ evtest
 v4l-utils
 # ReduxOS security (manifest §3): host firewall, deny inbound
 nftables
+
+# Audio routing: ALSA UCM + plugins (softvol/dmix); panel backlight control
+alsa-ucm-conf
+libasound2-plugins
+brightnessctl
+
+# ReduxOS frontend (R32): RetroArch on KMS/GBM + GL with noble libretro cores. The device boots
+# straight into RetroArch as the unprivileged "player" user on tty1. See docs/reduxos-frontend.md.
+retroarch
+retroarch-assets
+libretro-core-info
+# Cores, one per system, all DFSG-main in noble (no non-free Genesis/SNES cores; see frontend doc)
+libretro-mgba
+libretro-gambatte
+libretro-nestopia
+libretro-bsnes-mercury-performance
+libretro-beetle-pce-fast
+libretro-beetle-wswan
+libretro-beetle-vb
+libretro-beetle-psx
+libretro-desmume
+# Media: mpv (KMS/DRM out) and triggerhappy (volume keys when RetroArch is not in front)
+mpv
+triggerhappy

@@ -55,6 +55,11 @@ fw=$(printf '%s\n' "$OUT" | sed -n 's/^== firewall: //p')
 [ "$fw" = "active 1" ]; check "firewall active, inbound policy drop (ReduxOS)" $? "${fw:-none}"
 rl=$(printf '%s\n' "$OUT" | sed -n 's/^== sshd: //p')
 [ "$rl" = no ]; check "sshd refuses root login (ReduxOS)" $? "permitrootlogin ${rl:-?}"
+fe=$(printf '%s\n' "$OUT" | sed -n 's/^== frontend: //p')
+printf '%s' "$fe" | grep -q 'player=yes' && printf '%s' "$fe" | grep -q 'ra=yes' && printf '%s' "$fe" | grep -qE 'cores=[1-9]'
+check "frontend present (player, retroarch, cores)" $? "${fe:-none}"
+printf '%s' "$fe" | grep -q 'autologin player'
+check "tty1 autologins the player user (ReduxOS)" $? "$(printf '%s' "$fe" | grep -o 'autologin player' || echo missing)"
 kver=$(printf '%s\n' "$OUT" | sed -n 's/^== kernel: //p')
 if [ "$KMODE" = deb ]; then [[ "$kver" == *-rg34xxsp ]]; else [ -n "$kver" ]; fi
 check "kernel is ours ($KMODE)" $? "${kver:-none}"

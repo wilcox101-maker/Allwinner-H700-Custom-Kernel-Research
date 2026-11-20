@@ -23,4 +23,15 @@ t "journal kept across reboots" grep -qx 'Storage=persistent' "$R/etc/systemd/jo
 t "no wiliwili or other stock vendor apps" bash -c "! find '$R' -xdev \( -iname 'wiliwili*' -o -iname '*.dge' -o -iname 'dmenu.bin' \) -print -quit | grep -q ."
 t "no stock dev leftovers (snapd, qemu-user, openmpi, moonlight)" bash -c "! grep -qE '^(snapd|qemu-user[a-z-]*|openmpi-bin|moonlight[a-z-]*)\s' '$R/root/manifest.tsv'"
 t "no hostapd/dnsmasq running at boot" bash -c "! ls '$R'/etc/systemd/system/*.wants/{hostapd,dnsmasq}.service >/dev/null 2>&1"
+
+echo "== frontend check (R32)"
+t "player account exists" bash -c "grep -q '^player:' '$R/etc/passwd'"
+t "player password locked (no login off the console)" bash -c "grep -q '^player:[*!]' '$R/etc/shadow'"
+t "player is NOT in sudo" bash -c "! awk -F: '/^sudo:/{print \$4}' '$R/etc/group' | grep -qw player"
+t "tty1 autologin -> player" grep -q 'autologin player' "$R/etc/systemd/system/getty@tty1.service.d/60-reduxos-autologin.conf"
+t "RetroArch global config present" test -f "$R/etc/retroarch.cfg"
+t "RetroArch gamepad autoconfig present" test -f "$R/etc/retroarch/autoconfig/ReduxOS_RG34XXSP.cfg"
+t "codec mixer baseline service present" test -f "$R/etc/systemd/system/reduxos-audio-init.service"
+t "retroarch installed" grep -qE '^retroarch\s' "$R/root/manifest.tsv"
+t "at least one libretro core installed" bash -c "grep -qE '^libretro-' '$R/root/manifest.tsv'"
 [ "$FAIL" = 0 ] && echo "hardening check: PASS" || { echo "hardening check: FAIL"; exit 1; }

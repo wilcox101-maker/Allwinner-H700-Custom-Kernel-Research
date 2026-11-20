@@ -1115,3 +1115,14 @@ left out, per the private-report rule). Build: TF2 `&mmc2`, ALDO3 always-on, `pw
 (new `NF_TABLES`/`NFT_*` config), SSH defaults, hardware tools; `image/check-hardening.sh`; LPDDR4 image, QEMU 14/14,
 delivered privately to Dale's PC ([results](reduxos-beta-build-2026-11-20.md)). **For KR:** Dale says KR is doing a full
 stock-firmware sweep; DR stays off stock analysis to avoid overlap. The YouTube app (Claudius's [KR] item) is not in the image.
+
+### Deep Research, 2026-11-20, 10:35 ET (R32: full-featured beta, frontend on KMS)
+Dale's request ("continue to compile to full featured beta private release"). Desk/QEMU only. Added the game frontend on top
+of R31: boots to RetroArch (KMS/GLES) as an unprivileged `player` user on tty1 (locked pw, no sudo), 9 noble libretro cores,
+gamepad autoconfig (button indices derived from the kernel keycodes), codec audio (dmix + softvol) + volume keys via
+triggerhappy, mpv. Built **both LPDDR4 and LPDDR3**; QEMU smoke **16/16** each; `check-hardening.sh` + two smoke checks added.
+Delivered privately to `ReduxOS-builds/2026-11-20/frontend-beta/`, checksums verified on-device. Details:
+[`reduxos-frontend.md`](reduxos-frontend.md), [results §R32](reduxos-beta-build-2026-11-20.md). Gaps: sticks not merged to P1,
+PS1 only via slow beetle-psx (pcsx_rearmed build blocked by a tool-permission check), image carries a large font pack from
+retroarch-assets (slim in R33). **Noted:** KR's stock-firmware sweep is complete (private); it reinforces, and does not change,
+the ReduxOS security defaults. DR did not touch stock analysis.

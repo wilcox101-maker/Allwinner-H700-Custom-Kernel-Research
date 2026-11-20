@@ -5,8 +5,11 @@ Maintained by whoever changes the state; details live in the linked documents. `
 
 ## 1. Where we are
 - **Everything builds from source and boots in QEMU.** u-boot v2026.10 + TF-A v2.14.0, mainline kernel `97d73c8` (7.4-rc2) with
-  our patches as noble `.deb` packages, and an 867 MB card image; QEMU smoke test 12/12
-  ([`dr-unknowns-and-rebuild-2026-11-20.md`](dr-unknowns-and-rebuild-2026-11-20.md) §3). CI repeats the kernel and image build on every change.
+  our patches as noble `.deb` packages. The current deliverable is the **full-featured ReduxOS beta (R32)**: it boots
+  straight into RetroArch (KMS/GLES) as an unprivileged `player` user, with 9 libretro cores, codec audio and volume keys,
+  built for both LPDDR4 and LPDDR3. QEMU smoke **16/16** on each; delivered privately to Dale, not published
+  ([`reduxos-beta-build-2026-11-20.md`](reduxos-beta-build-2026-11-20.md) §R32, [`reduxos-frontend.md`](reduxos-frontend.md)).
+  CI repeats the kernel and image build on every change.
 - **Nothing of ours has run on an RG34XX-SP.** Every result is "desk only" unless a document says otherwise. The only
   hardware facts are a few readings Redux took on Dale's unit under **stock** (rows marked **[V]** in the task list: the
   unit has a rumble motor, stock's nine CPU frequency steps, a charge-current reading). The device is blocked until
