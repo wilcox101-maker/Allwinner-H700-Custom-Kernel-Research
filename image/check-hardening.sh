@@ -54,4 +54,14 @@ t "BIOS reference present" test -f "$R/usr/share/reduxos/bios-reference.tsv"
 t "roms setup + bios check tools present" bash -c "test -x '$R/usr/local/bin/redux-setup-roms' && test -x '$R/usr/local/bin/redux-bios-check'"
 t "no BIOS/ROM content shipped (structure only)" bash -c "! find '$R/roms' -type f ! -name '.keep' 2>/dev/null | grep -q ."
 t "retroarch system dir points at /roms/bios" grep -q '^system_directory = \"/roms/bios\"' "$R/etc/retroarch.cfg"
+echo "== cores, launcher, PortMaster check (R36)"
+t "launcher core + info present" bash -c "test -f '$R/usr/lib/aarch64-linux-gnu/libretro/redux_exec_libretro.so' && test -f '$R/usr/share/libretro/info/redux_exec_libretro.info'"
+t "every libretro core is aarch64" bash -c "for f in '$R'/usr/lib/aarch64-linux-gnu/libretro/*.so; do file -b \"\$f\" | grep -q 'ARM aarch64' || exit 1; done"
+t "launch helper allow-lists /roms/PORTS, /roms/APPS, PortMaster only" bash -c "grep -q '/roms/PORTS/\*|/roms/APPS/\*|/opt/tools/PortMaster/\*) ;;' '$R/usr/local/bin/redux-launch'"
+t "playlist scanner + service enabled" bash -c "test -x '$R/usr/local/bin/redux-scan-roms' && test -L '$R/etc/systemd/system/multi-user.target.wants/reduxos-playlists.service'"
+t "uinput limited to the input group (0660)" grep -q 'GROUP="input", MODE="0660"' "$R/etc/udev/rules.d/70-reduxos-uinput.rules"
+# KR V1.0.6 breakdown §8A: stock Anbernic binaries carry a "deeplayer" check and reboot on a kernel without
+# the vendor driver. ReduxOS builds everything from source; this guards against a stock binary slipping in.
+t "no stock deeplayer-checked binary in the image" bash -c "! grep -rlqa -e deeplayer -e debug2_reg2 '$R/usr' '$R/opt' '$R/etc' 2>/dev/null"
+t "PortMaster (if injected) owned by player, not root-run" bash -c "[ ! -d '$R/opt/tools/PortMaster' ] || { [ \"\$(stat -c %U '$R/opt/tools/PortMaster')\" != root ] && test -f '$R/opt/tools/PortMaster/reduxos/launch_hooks.txt'; }"
 [ "$FAIL" = 0 ] && echo "hardening check: PASS" || { echo "hardening check: FAIL"; exit 1; }

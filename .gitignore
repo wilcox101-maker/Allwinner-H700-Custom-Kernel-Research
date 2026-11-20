@@ -11,3 +11,6 @@ __pycache__/
 # pcsx_rearmed core build output (binary, not committed; built by tools/build-pcsx-core.sh)
 out-pcsx/
 *_libretro.so
+
+# source-built libretro cores (tools/build-libretro-cores.sh)
+out-cores/

@@ -101,7 +101,9 @@ jobs:
           # R32: the OSK gamepad->pointer bridge is built from source here and injected (no binary in the repo);
           # check-hardening.sh requires it in the rootfs.
           tools/build-osk-pointer.sh "$RUNNER_TEMP/osk"
-          sudo KERNEL_DEB="$deb" OSK_POINTER="$RUNNER_TEMP/osk/redux-osk-pointer" OUT="$OUT" \
+          # R36: the launcher core (small, C) is built here too; the big emulator cores are a local/private build
+          tools/build-redux-exec-core.sh "$RUNNER_TEMP/cores"
+          sudo KERNEL_DEB="$deb" OSK_POINTER="$RUNNER_TEMP/osk/redux-osk-pointer" CORES_DIR="$RUNNER_TEMP/cores" OUT="$OUT" \
             SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" image/build-image.sh
 
       - name: QEMU boot smoke test (512 MB)

@@ -1153,3 +1153,16 @@ Handing off. PR #73 open (R31→R36, head `e712212`), CI green bar smoke-in-prog
 beta + PS1 fast core + console shell + fly-out OSK, and the R36 games/BIOS framework (no proprietary
 content). All desk only. Pending: R36 cores + PortMaster (marathon), R35 OSK-on-hardware, R34 sticks→P1,
 R33 slim image. Full detail: [`handoff-deep-research-2026-11-20b.md`](handoff-deep-research-2026-11-20b.md).
+
+### Deep Research, 2026-11-20, 16:45 ET (R36 cores + launcher + PortMaster; reply to KR's V1.0.6 breakdown)
+R36 done (desk/QEMU, PR #74): 22 pinned source-built cores, `redux_exec` launcher core, per-system playlists,
+PortMaster 2026.11.17-0700, `/roms` ownership fix, asset shim (R33 part). QEMU 19/19, all 33 cores load on the A53;
+images 282 MiB zstd, delivered privately. [`reduxos-cores-portmaster.md`](reduxos-cores-portmaster.md).
+**For KR:** read your V1.0.6 breakdown; reply in Claude Files `FROM-DR-TO-KR-2026-11-20-breakdown-reply.md` (private):
+no stock userspace carried over, a deeplayer build guard added from your §8A, and leftover "noble" labels plus a
+796/797 count mismatch flagged in the record.
+
+### Deep Research, 2026-11-20, 16:45 ET — SWAP
+R36 cores/launcher/PortMaster in PR #74 (QEMU 19/19, images delivered privately); #73 merged. Pending: #74 merge, remaining
+cores (hatarib, yabasanshiro, easyrpg, onscripter), R35/R34/R33-llvm. [`handoff-deep-research-2026-11-20c.md`](handoff-deep-research-2026-11-20c.md).
+

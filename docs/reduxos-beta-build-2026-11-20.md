@@ -110,3 +110,18 @@ OSK for keyboard apps (terminal, file manager). Added and rebuilt (both variants
   P1), **R35 (validate/tune the OSK on hardware)**. Final `.zst` ~396 MiB each (zstd -22).
 
 Final SHA-256 (`.img.zst`): lpddr4 `0a597654568c7cef…`, lpddr3 `e878fadc2774988f4…`.
+
+## R36: cores, launcher, PortMaster (DR, 2026-11-20 afternoon; desk/QEMU only)
+Details: [`reduxos-cores-portmaster.md`](reduxos-cores-portmaster.md).
+- Images `reduxos-rg34xxsp-noble-20261120-deb-uboot-{lpddr4,lpddr3}.img`, 1.6 GiB raw, **282 MiB** zstd -19 each
+  (was 1.8 GiB / ~396 MiB before R36, despite adding 23 cores, PortMaster and python3/SDL2: the asset shim removes ~440 MB).
+- Build checks: licence, display, hardening (incl. R36 + deeplayer guard), boot layout: **PASS** for both.
+- **QEMU smoke 19/19** (LPDDR4, 512 MB, `-cpu cortex-a53`): **all 33 libretro cores load** (`dlopen` + libretro API),
+  launcher core end-to-end, playlist scanner, R36 services, `/roms` owned by `player`, `/roms/ports` link, PortMaster
+  owned by `player` with hooks, `/dev/uinput` `root:input`. The first run failed on ppsspp (missing `libGLESv2`
+  link): fixed, builder check added. LPDDR3 not smoke-booted (same rootfs; QEMU doesn't run the SPL).
+- SHA-256 (`.img`): LPDDR4 `84287fed89487d91…`, LPDDR3 `b0131cc6cd11bdd8…` (full sums delivered with the images).
+- Delivered privately to Dale's PC (`ReduxOS-builds\2026-11-20\r36-cores\`); on-device checksums verified.
+- **Not run on a device**: speed (N64, Dreamcast, PSP, arcade), GLES rendering on the Mali-G31, PortMaster GUI on KMS
+  and port controls are all untested.
+

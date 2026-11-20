@@ -60,6 +60,15 @@ printf '%s' "$fe" | grep -q 'player=yes' && printf '%s' "$fe" | grep -q 'ra=yes'
 check "frontend present (player, retroarch, cores)" $? "${fe:-none}"
 printf '%s' "$fe" | grep -q 'autologin player'
 check "tty1 autologins the player user (ReduxOS)" $? "$(printf '%s' "$fe" | grep -o 'autologin player' || echo missing)"
+r36=$(printf '%s\n' "$OUT" | sed -n 's/^== r36: //p')
+if printf '%s' "$r36" | grep -q 'cores='; then
+	printf '%s' "$r36" | grep -q 'load_fail=0 ' && ! printf '%s\n' "$OUT" | grep -q '^== r36-fail:'
+	check "every libretro core loads on the emulated A53 (R36)" $? "${r36%% exec=*} $(printf '%s\n' "$OUT" | sed -n 's/^== r36-fail: //p' | head -3 | paste -sd';')"
+	printf '%s' "$r36" | grep -qE 'exec=ok .*scan=[1-9]lists/[1-9]'
+	check "launcher core + playlist scanner work (R36)" $? "$(printf '%s' "$r36" | grep -oE 'exec=[^ ]+ scan=[^ ]+')"
+	printf '%s' "$r36" | grep -qE 'svc=active,active ports=link saves=player:player'
+	check "games tree owned by player, ports link, R36 services (R36)" $? "$(printf '%s' "$r36" | grep -oE 'svc=.*')"
+fi
 kver=$(printf '%s\n' "$OUT" | sed -n 's/^== kernel: //p')
 if [ "$KMODE" = deb ]; then [[ "$kver" == *-rg34xxsp ]]; else [ -n "$kver" ]; fi
 check "kernel is ours ($KMODE)" $? "${kver:-none}"

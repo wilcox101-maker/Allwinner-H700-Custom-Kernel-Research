@@ -6,7 +6,16 @@ if [ "$(tty)" = "/dev/tty1" ] && [ -z "$RETROARCH_RUNNING" ]; then
     export RETROARCH_RUNNING=1
     # Quiet the console cursor/blanking while the frontend owns the screen.
     setterm -cursor off 2>/dev/null || true
-    retroarch --verbose 2>> "$HOME/retroarch-boot.log"
+    # Launcher loop (R36): picking a port/app in RetroArch loads the redux_exec core, which writes the
+    # script path to a request file and closes RetroArch; we run it, then bring RetroArch back.
+    REQ="${XDG_RUNTIME_DIR:-/tmp}/redux-exec.request"; [ -n "${XDG_RUNTIME_DIR:-}" ] || REQ="/tmp/redux-exec-$(id -u).request"
+    while :; do
+        rm -f "$REQ"
+        retroarch --verbose 2>> "$HOME/retroarch-boot.log"
+        [ -s "$REQ" ] || break
+        target=$(head -n1 "$REQ"); rm -f "$REQ"
+        redux-launch "$target" || true
+    done
     setterm -cursor on 2>/dev/null || true
     # RetroArch exited. On a keyboardless handheld a bare console prompt is unusable, so bring up the
     # fly-out OSK terminal (gamepad-driven) if the graphics stack is there; fall back to a plain shell.
