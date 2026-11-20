@@ -98,7 +98,11 @@ jobs:
           deb=$(ls .work/kernel-deb/linux-image-*.deb)
           [ "$(printf '%s\n' "$deb" | wc -l)" = 1 ] || { echo "expected one kernel package: $deb"; exit 1; }
           echo "kernel: $deb"
-          sudo KERNEL_DEB="$deb" OUT="$OUT" SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" image/build-image.sh
+          # R32: the OSK gamepad->pointer bridge is built from source here and injected (no binary in the repo);
+          # check-hardening.sh requires it in the rootfs.
+          tools/build-osk-pointer.sh "$RUNNER_TEMP/osk"
+          sudo KERNEL_DEB="$deb" OSK_POINTER="$RUNNER_TEMP/osk/redux-osk-pointer" OUT="$OUT" \
+            SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" image/build-image.sh
 
       - name: QEMU boot smoke test (512 MB)
         run: |
