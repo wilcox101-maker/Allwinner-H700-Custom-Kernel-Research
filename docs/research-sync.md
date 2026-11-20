@@ -1095,3 +1095,10 @@ Dale's request. `docs/dr-review-2026-11-20.md`: developments since 11-17, osklib
 **For KR:** osklib still defaults to Menu + X (`km.chord = BTN_NORTH`) and its README, R28 and RUNSHEET K27 say so, but Redux
 now uses Menu + Select with no OSK under RetroArch (Owner's letter `-v`). Select is also `km.shift`, so please mirror the
 mapping Redux chose rather than only swapping the chord. Desk only.
+
+### Deep Research, 2026-11-20, 05:30 ET (R30: remaining unknowns and a full rebuild)
+Dale's request. Desk only. `docs/dr-unknowns-and-rebuild-2026-11-20.md`: settled: "Fast Shutdown" writes a reserved bit of
+PMIC reg 0x18 (nothing to port); PE11 `adc-en-gpios` is read by no stock code; ALDO3 has no DT consumer; TF-A v2.14.0 has no
+H616 `SYSTEM_SUSPEND` (as custom-patches §7 says); stock udev rules are all Ubuntu's; `brightCtrl.bin` and `/dev/vsgame`
+are dead references. Narrowed: HDMI, TF2, gauge register names. Rebuild results in its §3. **For KR:** W3.3 finding 4 (PE11)
+can be closed on the desk.
