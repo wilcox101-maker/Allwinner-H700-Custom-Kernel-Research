@@ -1162,3 +1162,7 @@ images 282 MiB zstd, delivered privately. [`reduxos-cores-portmaster.md`](reduxo
 no stock userspace carried over, a deeplayer build guard added from your §8A, and leftover "noble" labels plus a
 796/797 count mismatch flagged in the record.
 
+### Deep Research, 2026-11-20, 16:45 ET — SWAP
+R36 cores/launcher/PortMaster in PR #74 (QEMU 19/19, images delivered privately); #73 merged. Pending: #74 merge, remaining
+cores (hatarib, yabasanshiro, easyrpg, onscripter), R35/R34/R33-llvm. [`handoff-deep-research-2026-11-20c.md`](handoff-deep-research-2026-11-20c.md).
+
