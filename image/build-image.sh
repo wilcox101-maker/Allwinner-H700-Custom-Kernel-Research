@@ -80,7 +80,7 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='echo rg34xxsp > "$1/etc/hostname"; printf "127.0.1.1\trg34xxsp\n" >> "$1/etc/hosts"' \
   --customize-hook='printf "LABEL=rootfs\t/\text4\tdefaults,noatime\t0\t1\nLABEL=BOOT\t/boot\tvfat\tdefaults,noatime,umask=0077\t0\t2\n" > "$1/etc/fstab"' \
   --customize-hook='printf "[Match]\nName=en* eth*\n[Network]\nDHCP=yes\n" > "$1/etc/systemd/network/20-wired.network"; mkdir -p "$1/etc/iwd"; printf "[General]\nEnableNetworkConfiguration=true\n[Network]\nNameResolvingService=systemd\n" > "$1/etc/iwd/main.conf"' \
-  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service triggerhappy.service reduxos-audio-init.service' \
+  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service triggerhappy.service reduxos-audio-init.service reduxos-roms-setup.service' \
   --customize-hook='chroot "$1" systemctl disable motd-news.timer e2scrub_all.timer e2scrub_reap.service 2>/dev/null || true' \
   --customize-hook='G=$(for g in sudo video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${G%,}" dale && echo dale:redux | chroot "$1" chpasswd && chroot "$1" passwd -e dale' \
   --customize-hook='PG=$(for g in video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${PG%,}" player && chroot "$1" passwd -l player && cp "$1/etc/skel-player/.bash_profile" "$1/home/player/.bash_profile" && chroot "$1" chown player:player /home/player/.bash_profile && rm -rf "$1/etc/skel-player"' \

@@ -1137,3 +1137,13 @@ binary injected). RetroArch's own OSK untouched. Both images rebuilt, QEMU 16/16
 [`reduxos-osk.md`](reduxos-osk.md), [results §R32 addendum](reduxos-beta-build-2026-11-20.md). New follow-ups R33/R34/R35.
 **Note for KR (osklib, R28):** this OSK is the mainline **KMS/Wayland** path (cage+wvkbd), separate from your stock disp2
 overlay work — no overlap, but flagging it since OSK is your track.
+
+### Deep Research, 2026-11-20, 12:05 ET (R36 framework: games/BIOS structure, no proprietary content)
+Dale: match the Stock OS Mod's emulators, but "leave proprietary property out; build folder structure and
+framework for dropping in BIOS with ease." Done (desk): a 53-system folder tree mirroring the stock card
+layout, a BIOS **reference manifest** (filenames + md5 + size only, generated from Dale's own known-good set
+— no BIOS content), `redux-setup-roms` (build/repair the tree, runs at first boot) and `redux-bios-check`
+(validate drop-ins, per-system missing-BIOS report). RetroArch pointed at `/roms` + `/roms/bios`. Delivered a
+self-contained games kit to Dale's PC. The emulator **cores** for the ~25 unpackaged systems and a **PortMaster**
+port remain (source-build marathon) — proprietary content (PICO-8, BIOS) excluded by request.
+[`reduxos-games-and-bios.md`](reduxos-games-and-bios.md).

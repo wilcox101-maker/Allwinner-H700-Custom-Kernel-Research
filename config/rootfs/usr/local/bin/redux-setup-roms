@@ -1,0 +1,32 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# redux-setup-roms [TARGET]  — build the ReduxOS game folder tree so ROMs and BIOS drop in with ease.
+# Creates TARGET/roms/<SYSTEM>/ for every system plus TARGET/roms/bios/, each with a README saying
+# which core and which BIOS file(s) it needs. Idempotent. Default TARGET: /roms (the games card).
+# No ROMs or BIOS are created — only the structure. See docs/reduxos-games-and-bios.md.
+set -u
+SYS=/usr/share/reduxos/systems.tsv
+REF=/usr/share/reduxos/bios-reference.tsv
+T=${1:-/roms}
+[ -f "$SYS" ] || { echo "missing $SYS" >&2; exit 1; }
+mkdir -p "$T/bios" || { echo "cannot write $T" >&2; exit 1; }
+# BIOS folder: README + a copy of the reference manifest for redux-bios-check.
+cp "$REF" "$T/bios/bios-reference.tsv" 2>/dev/null
+cat > "$T/bios/README.txt" <<TXT
+Drop BIOS files here (flat, exact filenames). Then run:  redux-bios-check
+This folder is RetroArch's "system" directory. Filenames + md5 of a known-good
+set are in bios-reference.tsv. No BIOS is shipped — add your own legally.
+TXT
+n=0
+while IFS=$'\t' read -r folder label core bios exts; do
+  case "$folder" in ''|\#*) continue;; esac
+  d="$T/$folder"; mkdir -p "$d"; n=$((n+1))
+  { echo "$label"
+    echo "Default core/engine: $core"
+    echo "Extensions: $exts"
+    [ "$bios" = "-" ] && echo "BIOS: none required" || echo "BIOS (into ../bios/): $bios"
+    echo "Put game files for $label in this folder."
+  } > "$d/README.txt"
+done < "$SYS"
+echo "created $n system folders + bios/ under $T"
+echo "next: copy your ROMs into $T/<SYSTEM>/, BIOS into $T/bios/, then run redux-bios-check"
