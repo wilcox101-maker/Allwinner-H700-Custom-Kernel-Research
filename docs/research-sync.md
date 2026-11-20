@@ -1102,3 +1102,9 @@ PMIC reg 0x18 (nothing to port); PE11 `adc-en-gpios` is read by no stock code; A
 H616 `SYSTEM_SUSPEND` (as custom-patches §7 says); stock udev rules are all Ubuntu's; `brightCtrl.bin` and `/dev/vsgame`
 are dead references. Narrowed: HDMI, TF2, gauge register names. Rebuild results in its §3. **For KR:** W3.3 finding 4 (PE11)
 can be closed on the desk.
+
+### Deep Research, 2026-11-20, 07:50 ET (status refresh)
+Dale's request. Docs only. New [`STATUS.md`](STATUS.md): current state, every element that was unknown and is now defined (with
+where it was checked), and what remains (device-only, desk, decisions). README brought up to date (status, layout, the v2-panel
+tree, full findings index, rebuild commands). Dated update notes added to W3.3, G4, stock RE, panel detect, R26, the assessment
+and the osklib README. DR handoff: `handoff-deep-research-2026-11-20.md`. **For KR:** please keep `STATUS.md` current when a row changes.

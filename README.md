@@ -4,13 +4,17 @@ Research and prototypes for **ReduxOS**, a distribution built from **Ubuntu 24.0
 packages for Allwinner H700 handhelds, starting with the **Anbernic RG34XX-SP**: a mainline kernel with our own patches and
 device trees, the boot chain, and a minimal noble userspace.
 
-**Status: research phase, desk work only.** Nothing in this repository has been booted on an H700
-device yet. The test device is unavailable until the Redux v0.5 milestone; device-dependent tasks are
-tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-list.md).
+**Status (2026-11-20): everything builds from source and boots in QEMU; nothing of ours has run on an H700
+device.** u-boot, the kernel packages and the card image are rebuilt by the scripts here and by CI. The test
+device is blocked until the Redux v0.5 milestone, except tasks K3/K4 on Dale's 2 GB unit (decision Q11);
+device-dependent tasks are tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-list.md).
+
+**Start with [`docs/STATUS.md`](docs/STATUS.md):** what is built, what was unknown and is now defined, and what remains.
 
 ## Layout
 | Path | What |
 |---|---|
+| [`docs/STATUS.md`](docs/STATUS.md) | Current status on one page: state, elements now defined, what remains |
 | [`docs/master-task-list.md`](docs/master-task-list.md) | Master task list: device tasks (K-IDs), desk tasks (R-IDs), decisions for Dale (Q-IDs), hand-offs |
 | [`docs/research-sync.md`](docs/research-sync.md) | Running log between the Deep Research and Kernel Research chats |
 | `docs/*.md` | Findings, one document per topic (index below) |
@@ -21,7 +25,8 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host tests: CPU speed-bin decoder (patch 0001); kallsyms reader on a synthetic image |
-| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment), `gen_nv3052c_table.py` (panel init table from a stock image) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) and `kallsyms_49.py` (symbol table of the stock 4.9 Image, Ghidra plan G0.2) |
+| [`tools/`](tools/) | Read-only analysis tools for stock images, the stock OPP table generator, `dt_driver_coverage.py` (DT node → driver → Kconfig check) , `gen_trim_config.py` (module allowlist → config fragment), `gen_nv3052c_table.py` and `gen_gc9703_table.py` (panel init tables from a stock image) and `boot_path.py` (drivers a node needs before it probes, and whether they are built in) and `kallsyms_49.py` (symbol table of the stock 4.9 Image, Ghidra plan G0.2) |
+| [`tools/oskprobe/`](tools/oskprobe/), [`tools/osklib/`](tools/osklib/) | Stock-kernel track for the Redux global on-screen keyboard: device probe kit for K24–K28 and the display/input library (R27, R28; not run on a device) |
 | [`scripts/workbench.sh`](scripts/workbench.sh) | Rebuilds the Linux tree with our patches and runs every desk check |
 | [`config/rg34xxsp.config`](config/rg34xxsp.config) | Kernel config fragment for the RG34XX-SP on Ubuntu 24.04 (every line says why) |
 | [`config/module-keep.txt`](config/module-keep.txt) | Module allowlist: every module not listed (and not a board driver or fragment option) is turned off |
@@ -73,8 +78,21 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`docs/rg35xxh-codeasm-lessons.md`](docs/rg35xxh-codeasm-lessons.md) | CodeAsm RG35XX H notes; FEL-first bring-up; RG35XX SP UART lead |
 | [`docs/h700-brief-and-mainline-boot-2024.md`](docs/h700-brief-and-mainline-boot-2024.md) | H700 product brief; 2024 mainline boot (rg35xx-cfw #205) |
 | [`docs/handoff-deep-research-2026-11-13.md`](docs/handoff-deep-research-2026-11-13.md) | Deep Research handoff, 2026-11-13 |
+| [`docs/handoff-deep-research-2026-11-14b.md`](docs/handoff-deep-research-2026-11-14b.md) | Deep Research handoff, 2026-11-14 (second swap) |
+| [`docs/handoff-deep-research-2026-11-20.md`](docs/handoff-deep-research-2026-11-20.md) | Deep Research handoff, 2026-11-20: state after R29/R30, open items, next step |
+| [`docs/stock-re-boot-and-userspace.md`](docs/stock-re-boot-and-userspace.md) | Stock firmware RE (G3, W3.4–W3.6): boot chain, boot scripts, launcher, power daemon, emulators |
+| [`docs/r21-redux-on-mainline-map.md`](docs/r21-redux-on-mainline-map.md) | R21: Redux frontend on mainline, interface by interface |
+| [`docs/r22-upstream-prep.md`](docs/r22-upstream-prep.md) | R22: upstream preparation for patches 0006 and 0007 |
+| [`docs/r23-ci-qemu-smoke.md`](docs/r23-ci-qemu-smoke.md) | R23: QEMU boot smoke test of the image in CI |
+| [`docs/r24-image-with-uboot.md`](docs/r24-image-with-uboot.md) | R24: card image with the real u-boot; the R8 `mmc 0:1` check |
+| [`docs/r26-global-osk-stock-disp2.md`](docs/r26-global-osk-stock-disp2.md) | R26: global on-screen keyboard over any app on the stock kernel (verdict GO) |
+| [`docs/dr-osk-desk-checks-2026-11-18.md`](docs/dr-osk-desk-checks-2026-11-18.md) | DR-1/2/3: R26 review, stock video player layers, RetroArch Menu key and OSK chord |
+| [`docs/k9-newer-panel-gc9703.md`](docs/k9-newer-panel-gc9703.md) | K9 desk part: the newer panel's controller is a GalaxyCore GC9703-family part |
+| [`docs/r29-gc9703-panel-driver.md`](docs/r29-gc9703-panel-driver.md) | R29: kernel driver, binding, table generator and opt-in tree for the newer panel |
+| [`docs/dr-review-2026-11-20.md`](docs/dr-review-2026-11-20.md) | DR review 2026-11-20: developments since 11-17, osklib/oskprobe code review, kernel gap table |
+| [`docs/dr-unknowns-and-rebuild-2026-11-20.md`](docs/dr-unknowns-and-rebuild-2026-11-20.md) | R30: remaining stock unknowns settled or narrowed; full rebuild from source; two outside repos reviewed |
 
-All Deep Research documents from the Claude Project are here. The Kernel Research chat's documents (custom kernel patches, device checklist, open-question findings) are to be added by that chat.
+Every document in `docs/` is listed above or linked from [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Kernel work at a glance
 | # | Patch (`patches/linux/`) | Why |
@@ -96,12 +114,14 @@ All Deep Research documents from the Claude Project are here. The Kernel Researc
 | `sun50i-h700-redux-gpu-opp.dtsi` | GPU 420–600 MHz at 0.94 V (648 MHz waits on a stock DCDC2 reading) |
 | `sun50i-h700-redux-stock-thermal.dtsi` | Q1: stock's 115 °C CPU critical trip, no GPU/VE/DDR trips (as stock); included by `-redux` |
 | `sun50i-h700-redux-display.dtsi` | Display (R19, needs the display layer): DE → TCON → RGB panel over 3-wire SPI, PWM backlight |
-| `sun50i-h700-anbernic-rg34xx-sp-redux-panel.dts` | `-redux` + display for the original panel (PE6 low; u-boot picks it). The newer panel (PE6 high) has no driver yet |
+| `sun50i-h700-anbernic-rg34xx-sp-redux-panel.dts` | `-redux` + display for the original panel (PE6 low; u-boot picks it) |
+| `sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel.dts` | `-redux` + display for the newer panel (GC9703 family, R29). **Opt-in only**: u-boot never selects it; PE6 high still boots the plain `-redux` tree |
 
 Display needs the separate display layer (`--display` below; mainline alone has no H616 LCD TCON
 or PWM support). No tree ever guesses a panel: the plain `-redux` tree has no display nodes.
-The original panel's init sequence is in our NV3052C driver patch (decision Q8), generated from
-a stock image by `tools/gen_nv3052c_table.py`; stock images themselves are never stored here.
+Both panels' init sequences are in our kernel patches (decision Q8): the original panel's in the
+NV3052C entry, the newer panel's in the new GC9703 driver, each generated from a stock image by
+`tools/gen_nv3052c_table.py` / `tools/gen_gc9703_table.py`; stock images themselves are never stored here.
 Comments inside some `dts/` files still say `phase2-mainline/`, their path in the Redux package.
 
 ### Running the kernel checks
@@ -121,6 +141,11 @@ scripts/build-kernel.sh --build      # + make bindeb-pkg and size report
 scripts/build-kernel.sh --no-trim    # same, without the module allowlist (for comparison)
 scripts/build-kernel.sh --display --build   # with the display layer (after workbench.sh --display)
 scripts/build-kernel.sh --fragment config/rg34xxsp-builtin-trim.config --build   # R20 trial
+
+# boot chain and card image (R1, R7, R24); the image step needs root, mmdebstrap, genimage and qemu-user-static
+scripts/build-uboot.sh --dram all
+KERNEL_DEB=<linux-image .deb> UBOOT_BIN=<u-boot-rg34xxsp-lpddr4-2026.10.bin> image/build-image.sh
+image/qemu/smoke-test.sh <image> 512
 ```
 It works in `./.work/` (git-ignored; override with `WORK=`), never touches a device, card or image,
 and stops at the first failure. Last full run: see the newest Kernel Research entry in
@@ -128,8 +153,9 @@ and stops at the first failure. Last full run: see the newest Kernel Research en
 
 ## Ground rules
 - **Never write to stock images or to any card.** Tools here only read images.
-- Stock-derived data (panel init sequences, vendor config blobs) is **not** committed: its
-  redistribution terms are unknown (task R9). Use `tools/extract_rg34xxsp_panels.py` on your own image.
+- Stock-derived data (vendor config blobs, binaries, raw sequences) is **not** committed: its
+  redistribution terms are unknown (task R9). The one exception is decision Q8: the board's two panel init
+  sequences, as GPL C tables inside our kernel patches. Use `tools/extract_rg34xxsp_panels.py` on your own image.
   Hardware facts (pins, voltages, frequencies) are recorded as numbers with their source.
 - **No binaries, and no patches copied from other projects** (ROCKNIX, Knulli and others): link
   them by name and commit.

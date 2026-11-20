@@ -1,5 +1,7 @@
 # G4: stock battery gauge and charger (Ghidra plan, 2026-11-15)
 
+> **Update 2026-11-20:** the registers this note calls undocumented have BSP names (0x0C `CURVE_CHECK`, 0xA1 `GAUGE_BROM`, 0xA2 `GAUGE_CONFIG`, 0xB0/0xB2 gauge FG address/data), and "Fast Shutdown" writes a reserved bit of register 0x18: see [`dr-unknowns-and-rebuild-2026-11-20.md`](dr-unknowns-and-rebuild-2026-11-20.md). Desk only.
+
 Kernel Research chat, desk only. Stock V1.0.6 kernel `4.9.170 #9` (names from kallsyms) and its DT. The PMIC is
 the X-Powers AXP717 (stock driver name `axp2202`; mainline register names from `include/linux/mfd/axp20x.h`,
 torvalds/linux master, read 2026-11-15). Tags: **[G]** static analysis of the stock kernel, **[D]** device

@@ -1,5 +1,7 @@
 # Ubuntu 24.04 LTS arm64 for the Anbernic RG34XXSP: compatibility assessment
 
+> **Update 2026-11-20:** current state against the milestones is on one page in [`STATUS.md`](STATUS.md): the desk parts of M0–M5 are done and QEMU-checked; no hardware part has started.
+
 Stage 2 (research and compatibility assessment), 2026-11-13. Research only: nothing was built, flashed or tested on hardware.
 
 > **Update 2026-11-14 (Dale's decision Q6):** the kernel base is **mainline (torvalds/linux `97d73c8`, v7.4-rc2) + our own patches** (`patches/linux/`, built by `scripts/build-kernel.sh`), not ROCKNIX's 7.2 + its H700 set. ROCKNIX's patches are used only as references (names, commits), never copied. The display (DE33, LCD/TCON, panel, PWM backlight) comes as a **separate, pinned layer** of upstream series (task R19, Kernel Research). Sections 3–5 below are updated where they assumed ROCKNIX 7.2; the ROCKNIX survey in §2 stays as background.
