@@ -16,6 +16,8 @@ P2END=$(sfdisk -d "$W/disk.img" | awk -F'size= *' '/img2/{split($2,a,",");print 
 dd if="$W/disk.img" of="$W/p2" bs=512 skip="$P2" count="$P2END" status=none
 debugfs -w -R "write $HERE/r7-check /usr/local/sbin/r7-check" "$W/p2" >/dev/null 2>&1
 debugfs -w -R "sif /usr/local/sbin/r7-check mode 0100755" "$W/p2" >/dev/null 2>&1
+debugfs -w -R "write $HERE/r36-check.py /usr/local/sbin/r36-check.py" "$W/p2" >/dev/null 2>&1
+debugfs -w -R "sif /usr/local/sbin/r36-check.py mode 0100755" "$W/p2" >/dev/null 2>&1
 printf '[Unit]\nAfter=multi-user.target\n[Service]\nType=simple\nExecStart=/usr/local/sbin/r7-check\nStandardOutput=journal+console\n[Install]\nWantedBy=multi-user.target\n' > "$W/r7-check.service"
 debugfs -w -R "write $W/r7-check.service /etc/systemd/system/r7-check.service" "$W/p2" >/dev/null 2>&1
 debugfs -w -R "symlink /etc/systemd/system/multi-user.target.wants/r7-check.service /etc/systemd/system/r7-check.service" "$W/p2" >/dev/null 2>&1

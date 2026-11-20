@@ -13,6 +13,10 @@
 #   UBOOT_BIN   SPL+u-boot for the board's DRAM type, from scripts/build-uboot.sh (R1/R3). The image is
 #               then named …-uboot-<dram>.img and checked by image/check-boot-layout.py. Without it the
 #               image has NO bootloader and can only be tested in QEMU.
+#   Injected at build, never committed (each from its tools/ script): PCSX_CORE=<.so> (build-pcsx-core.sh),
+#   OSK_POINTER=<bin> (build-osk-pointer.sh), CORES_DIR=<dir of *_libretro.so> (build-libretro-cores.sh,
+#   build-redux-exec-core.sh; R36), PORTMASTER_ZIP=<zip> (fetch-portmaster.sh; R36).
+#   RA_SLIM=0   keep retroarch-assets (~440 MB of fonts) for the xmb/ozone menus; default 1 = shim (R33/R36).
 # Writes only under $OUT. It never touches a block device: writing the image to a card is a separate,
 # deliberate step (see docs/r7-image-tooling.md). Publishing it needs the source bundle from
 # image/release-sources.sh (R9). Needs: mmdebstrap genimage dosfstools mtools e2fsprogs
@@ -54,6 +58,29 @@ log() { printf '== %s\n' "$*"; }
 awk -v r="$OUT/rootfs/" 'index($2, r) == 1 {print $2}' /proc/mounts | sort -r | while read -r m; do umount -l "$m"; done
 rm -rf "$OUT/rootfs" "$OUT/tmp" "$OUT/genimage"; mkdir -p "$OUT/rootfs" "$OUT/tmp" "$OUT/genimage"
 PKGS=$(grep -v '^\s*#' "$HERE/packages.txt" | grep . | paste -sd,)
+# R33/R36: retroarch hard-depends on retroarch-assets, which pulls ~440 MB of fonts (fonts-noto-extra).
+# The rgui menu ReduxOS uses needs none of it, so a tiny generated shim (no binary in the repo) provides
+# the dependency instead. RA_SLIM=0 keeps the real assets (xmb/ozone menus).
+LOCAL_SRC=()
+if [ "${RA_SLIM:-1}" = 1 ]; then
+	S="$OUT/tmp/ra-slim"; mkdir -p "$S/DEBIAN"
+	printf '%s\n' "Package: reduxos-retroarch-slim" "Version: 1.0" "Architecture: all" \
+	  "Maintainer: ReduxOS <noreply@example.invalid>" "Provides: retroarch-assets (= 1.20.0+reduxos1)" \
+	  "Conflicts: retroarch-assets" "Description: ReduxOS shim: retroarch without the asset/font pack" \
+	  " rgui needs no assets; install retroarch-assets for the xmb/ozone menus." > "$S/DEBIAN/control"
+	mkdir -p "$S/usr/share/doc/reduxos-retroarch-slim"
+	printf '%s\n' "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/" \
+	  "Upstream-Name: reduxos-retroarch-slim" "Source: image/build-image.sh (ReduxOS)" "" \
+	  "Files: *" "Copyright: ReduxOS contributors" "License: GPL-2.0-only" \
+	  " On Debian systems, the full text is in /usr/share/common-licenses/GPL-2." \
+	  > "$S/usr/share/doc/reduxos-retroarch-slim/copyright"
+	# a one-package local apt source (copy://), so the shim is resolved like any archive package
+	mkdir -p "$OUT/tmp/localrepo"
+	dpkg-deb --root-owner-group -Zxz --build "$S" "$OUT/tmp/localrepo/reduxos-retroarch-slim_1.0_all.deb" >/dev/null
+	(cd "$OUT/tmp/localrepo" && dpkg-scanpackages --multiversion . /dev/null > Packages 2>/dev/null)
+	LOCAL_SRC=("deb [trusted=yes] copy://$OUT/tmp/localrepo ./")
+	PKGS="$PKGS,reduxos-retroarch-slim"; PKGS=${PKGS/,retroarch-assets,/,}
+fi
 [ "$KMODE" = ubuntu ] && PKGS="$PKGS,initramfs-tools,linux-image-6.8.0-149-generic,linux-modules-extra-6.8.0-149-generic"
 
 # Our kernel boots without an initramfs (R18, KR R20 boot-path check); only Ubuntu's QEMU-test kernel needs one.
@@ -80,7 +107,7 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='echo rg34xxsp > "$1/etc/hostname"; printf "127.0.1.1\trg34xxsp\n" >> "$1/etc/hosts"' \
   --customize-hook='printf "LABEL=rootfs\t/\text4\tdefaults,noatime\t0\t1\nLABEL=BOOT\t/boot\tvfat\tdefaults,noatime,umask=0077\t0\t2\n" > "$1/etc/fstab"' \
   --customize-hook='printf "[Match]\nName=en* eth*\n[Network]\nDHCP=yes\n" > "$1/etc/systemd/network/20-wired.network"; mkdir -p "$1/etc/iwd"; printf "[General]\nEnableNetworkConfiguration=true\n[Network]\nNameResolvingService=systemd\n" > "$1/etc/iwd/main.conf"' \
-  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service triggerhappy.service reduxos-audio-init.service reduxos-roms-setup.service' \
+  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service triggerhappy.service reduxos-audio-init.service reduxos-roms-setup.service reduxos-playlists.service' \
   --customize-hook='chroot "$1" systemctl disable motd-news.timer e2scrub_all.timer e2scrub_reap.service 2>/dev/null || true' \
   --customize-hook='G=$(for g in sudo video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${G%,}" dale && echo dale:redux | chroot "$1" chpasswd && chroot "$1" passwd -e dale' \
   --customize-hook='PG=$(for g in video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${PG%,}" player && chroot "$1" passwd -l player && cp "$1/etc/skel-player/.bash_profile" "$1/home/player/.bash_profile" && chroot "$1" chown player:player /home/player/.bash_profile && rm -rf "$1/etc/skel-player"' \
@@ -88,10 +115,12 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='chroot "$1" passwd -l root >/dev/null && rm -f "$1/root/.ssh/authorized_keys"' \
   --customize-hook='[ -z "'"${PCSX_CORE:-}"'" ] || { install -D -m 0644 "'"${PCSX_CORE:-/dev/null}"'" "$1/usr/lib/aarch64-linux-gnu/libretro/pcsx_rearmed_libretro.so" && echo "injected pcsx_rearmed core"; }' \
   --customize-hook='[ -z "'"${OSK_POINTER:-}"'" ] || { install -D -m 0755 "'"${OSK_POINTER:-/dev/null}"'" "$1/usr/local/bin/redux-osk-pointer" && echo "injected redux-osk-pointer"; }' \
+  --customize-hook='[ -z "'"${CORES_DIR:-}"'" ] || { D="'"${CORES_DIR:-/nonexistent}"'"; L="$1/usr/lib/aarch64-linux-gnu/libretro"; mkdir -p "$L" "$1/usr/share/doc/reduxos-cores"; for f in "$D"/*_libretro.so; do install -m 0644 "$f" "$L/"; done; [ -d "$D/licences" ] && cp -a "$D/licences/." "$1/usr/share/doc/reduxos-cores/"; cp "$D/BUILD-SUMMARY.tsv" "$1/usr/share/doc/reduxos-cores/" 2>/dev/null; echo "injected $(ls "$D"/*_libretro.so | wc -l) source-built cores"; }' \
+  --customize-hook='[ -z "'"${PORTMASTER_ZIP:-}"'" ] || { mkdir -p "$1/opt/tools" && unzip -q -o "'"${PORTMASTER_ZIP:-/dev/null}"'" -d "$1/opt/tools/" && install -D -m 0644 "'"$REPO"'/config/portmaster/launch_hooks.txt" "$1/opt/tools/PortMaster/reduxos/launch_hooks.txt" && chroot "$1" chown -R player:player /opt/tools/PortMaster && echo "injected PortMaster $(cat "$1/opt/tools/PortMaster/version")"; }' \
   --customize-hook='chroot "$1" dpkg-query -W -f="\${Package}\t\${Version}\t\${Installed-Size}\n" > "$1/root/manifest.tsv"' \
   --customize-hook='mkdir -p "'"$OUT/tmp/boot"'" && cp -a "$1/boot/." "'"$OUT/tmp/boot"'/" && umount "$1/boot"' \
   "$SUITE" "$OUT/rootfs" \
-  "deb $MIRROR $SUITE main universe" "deb $MIRROR $SUITE-updates main universe" "deb $MIRROR $SUITE-security main universe"
+  "deb $MIRROR $SUITE main universe" "deb $MIRROR $SUITE-updates main universe" "deb $MIRROR $SUITE-security main universe" "${LOCAL_SRC[@]}"
 
 log "2. stage /boot content into the rootfs tree for genimage"
 # mmdebstrap empties /etc/machine-id at the end; systemd only runs ConditionFirstBoot= units when it

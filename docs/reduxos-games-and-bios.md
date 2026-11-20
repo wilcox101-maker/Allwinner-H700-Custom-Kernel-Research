@@ -40,3 +40,5 @@ today (see [`reduxos-frontend.md`](reduxos-frontend.md)); the rest are to be bui
 is deliberately excluded** (no PICO-8 binary, no BIOS) — those stay user-supplied. Non-commercially
 licensed cores keep this a **private** build, never the public release. A53 performance for Saturn,
 Dreamcast, PSP, N64 and NAOMI is unproven and will need the device to judge.
+
+**Cores, launcher, PortMaster (R36 part 2):** see [`reduxos-cores-portmaster.md`](reduxos-cores-portmaster.md).

@@ -90,3 +90,10 @@ cage
 wvkbd
 foot
 mc
+# R36: PortMaster (python GUI on pySDL2; ports use SDL2 on KMS)
+python3
+libsdl2-2.0-0
+libsdl2-ttf-2.0-0
+libsdl2-image-2.0-0
+libsdl2-mixer-2.0-0
+unzip
