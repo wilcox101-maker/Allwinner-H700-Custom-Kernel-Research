@@ -89,6 +89,8 @@ what ROCKNIX runs on this board on mainline (tag 20261101); stock uses 50 kHz. N
 sequence: no `0xff 0x30 0x52` page selects, and many multi-byte commands (up to 44 parameter
 bytes) that the NV3052C driver's `{ cmd, val }` table can't express. Its controller is not
 identified (no match in mainline's panel drivers for its opening command `0xd7 0x61 0x74 0x97`).
+**Update 2026-11-20 (desk):** the sequence matches the GalaxyCore **GC9703** family; see
+[`k9-newer-panel-gc9703.md`](k9-newer-panel-gc9703.md). Not confirmed on hardware.
 Until it is, PE6-high units boot without display, which is what Q3's recommendation already was
 ("no-panel until K9"). The earlier `-redux-v2-panel` tree is removed.
 

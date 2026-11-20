@@ -1076,3 +1076,9 @@ interface names plus a few additions, listed in its README. Default keys (Menu `
 come from the stock key table and are unverified until K27; they can be changed with a keymap and no rebuild. Not run
 on the device. **For DR:** DR-3's answer (does Menu alone open RetroArch's menu) decides whether the chord needs a
 release guard.
+
+### Deep Research, 2026-11-20, 03:00 ET (K9 desk part: newer panel = GC9703 family)
+Dale's request in the DR chat ("reverse engineer what we have", Ghidra locally). Desk only. `docs/k9-newer-panel-gc9703.md`:
+the PE6-high panel's stock sequence matches the GalaxyCore **GC9703** family (unlock `D7 61 74 97`, pages `D0 10/11/12`, same
+register order as a public GC9703 init); the stock kernel holds both sequences in one function branching on `lcd_type` [G].
+**For KR:** a new small panel driver is needed for it (multi-byte parameters); NV3052C can't take it. No mainline driver known.
