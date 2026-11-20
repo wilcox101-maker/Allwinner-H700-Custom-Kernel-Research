@@ -1,0 +1,538 @@
+From bc1b4953aece01c67fd7e2e0b3fda05b9a3e0f9d Mon Sep 17 00:00:00 2001
+From: Redux Deep Research <redux@invalid>
+Date: Fri, 20 Nov 2026 03:01:08 -0500
+Subject: [PATCH 5/5] drm/panel: add GalaxyCore GC9703 driver for the RG34XX-SP
+ v2 panel
+
+Later Anbernic RG34XX-SP handhelds (board strap PE6 high) carry a
+second 3.4" 720x480 panel: 24-bit parallel RGB, set up over 3-wire
+SPI. Its register sequence opens with the GalaxyCore GC9703 command-set
+enable (0xd7 0x61 0x74 0x97) and follows that controller's page layout
+(0xd0 0x10/0x11/0x12), with parameters of up to 44 bytes, so it does
+not fit the existing { cmd, val } table drivers. Add a small driver for
+GC9703 panels of this kind, with this panel as its first entry.
+
+The table is the sequence the stock Anbernic u-boot (U-Boot 2018.05)
+sends for this panel, without its trailing exit-sleep and display-on,
+which the driver sends. The same sequence, timing (26 MHz, 60 Hz) and
+delays (10 ms reset, 50 ms before the first command, 120 ms after
+exit-sleep, 120 ms before the backlight) drive this panel on mainline
+in ROCKNIX (tag 20261101) through a generic table-driven panel driver.
+The table was generated with tools/gen_gc9703_table.py in
+Allwinner-H700-Custom-Kernel-Research from the stock image, which
+checks the result against that working file.
+
+The controller was identified from the sequence, not from a marking on
+the part or a datasheet.
+
+This patch was drafted with an AI coding assistant (Claude) and checked
+by building with W=1 (arm64, gcc 13.3.0). It has not been tested on
+hardware.
+---
+ drivers/gpu/drm/panel/Kconfig                 |  11 +
+ drivers/gpu/drm/panel/Makefile                |   1 +
+ .../gpu/drm/panel/panel-galaxycore-gc9703.c   | 458 ++++++++++++++++++
+ 3 files changed, 470 insertions(+)
+ create mode 100644 drivers/gpu/drm/panel/panel-galaxycore-gc9703.c
+
+diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
+index 7a520b4d6..38bd51ede 100644
+--- a/drivers/gpu/drm/panel/Kconfig
++++ b/drivers/gpu/drm/panel/Kconfig
+@@ -209,6 +209,17 @@ config DRM_PANEL_LVDS
+ 	  handling of power supplies or control signals. It implements automatic
+ 	  backlight handling if the panel is attached to a backlight controller.
+ 
++config DRM_PANEL_GALAXYCORE_GC9703
++	tristate "GalaxyCore GC9703 RGB/SPI panel"
++	depends on OF && SPI
++	depends on BACKLIGHT_CLASS_DEVICE
++	select DRM_MIPI_DBI
++	help
++	  Say Y here if you want to enable support for the parallel RGB
++	  panels built around the GalaxyCore GC9703 display controller and
++	  set up over SPI, such as the second panel version of the Anbernic
++	  RG34XX-SP handheld. The panel's backlight is handled separately.
++
+ config DRM_PANEL_HIMAX_HX8279
+ 	tristate "Himax HX8279-based panels"
+ 	depends on OF
+diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
+index da5175909..711afe8d7 100644
+--- a/drivers/gpu/drm/panel/Makefile
++++ b/drivers/gpu/drm/panel/Makefile
+@@ -21,6 +21,7 @@ obj-$(CONFIG_DRM_PANEL_ELIDA_KD35T133) += panel-elida-kd35t133.o
+ obj-$(CONFIG_DRM_PANEL_FEIXIN_K101_IM2BA02) += panel-feixin-k101-im2ba02.o
+ obj-$(CONFIG_DRM_PANEL_FEIYANG_FY07024DI26A30D) += panel-feiyang-fy07024di26a30d.o
+ obj-$(CONFIG_DRM_PANEL_FOCALTECH_OTA7290B) += panel-focaltech-ota7290b.o
++obj-$(CONFIG_DRM_PANEL_GALAXYCORE_GC9703) += panel-galaxycore-gc9703.o
+ obj-$(CONFIG_DRM_PANEL_HIMAX_HX8279) += panel-himax-hx8279.o
+ obj-$(CONFIG_DRM_PANEL_HIMAX_HX83102) += panel-himax-hx83102.o
+ obj-$(CONFIG_DRM_PANEL_HIMAX_HX83112A) += panel-himax-hx83112a.o
+diff --git a/drivers/gpu/drm/panel/panel-galaxycore-gc9703.c b/drivers/gpu/drm/panel/panel-galaxycore-gc9703.c
+new file mode 100644
+index 000000000..0300e7ae1
+--- /dev/null
++++ b/drivers/gpu/drm/panel/panel-galaxycore-gc9703.c
+@@ -0,0 +1,458 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * GalaxyCore GC9703 LCD panel driver (parallel RGB panels set up over SPI)
++ *
++ * The controller was identified from its register sequence, not from a
++ * datasheet or a marking: the sequence opens with the GC9703 command-set
++ * enable (0xd7 0x61 0x74 0x97) and uses that controller's page select
++ * (0xd0) and register layout.
++ */
++
++#include <linux/delay.h>
++#include <linux/device.h>
++#include <linux/gpio/consumer.h>
++#include <linux/media-bus-format.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regulator/consumer.h>
++#include <linux/spi/spi.h>
++#include <video/mipi_display.h>
++#include <drm/drm_mipi_dbi.h>
++#include <drm/drm_modes.h>
++#include <drm/drm_panel.h>
++
++struct gc9703_panel_info {
++	const struct drm_display_mode *display_modes;
++	unsigned int num_modes;
++	u16 width_mm, height_mm;
++	u32 bus_format, bus_flags;
++	/*
++	 * The panel vendor's register sequence. One entry per command:
++	 * number of parameter bytes, command, parameters.
++	 */
++	const u8 *init;
++	unsigned int init_len;
++};
++
++struct gc9703 {
++	struct device *dev;
++	struct drm_panel panel;
++	struct mipi_dbi dbi;
++	struct regulator *supply;
++	struct gpio_desc *reset_gpio;
++	const struct gc9703_panel_info *panel_info;
++};
++
++/*
++ * Anbernic RG34XX-SP, newer panel (board strap PE6 high): the sequence the
++ * stock Anbernic u-boot sends, without its trailing exit-sleep and display-on.
++ */
++static const u8 anbernic_rg34xx_sp_v2_init[] = {
++	/* command set enable */
++	3, 0xd7, 0x61, 0x74, 0x97,
++	/* page 0x10 */
++	1, 0xd0, 0x10,
++	1, 0x60, 0xff,
++	1, 0x61, 0xff,
++	1, 0x62, 0xff,
++	1, 0x63, 0xff,
++	1, 0x64, 0xff,
++	1, 0x65, 0xff,
++	1, 0x66, 0xff,
++	1, 0x67, 0xff,
++	1, 0x68, 0xff,
++	1, 0x69, 0xff,
++	1, 0x6a, 0xff,
++	1, 0x6b, 0xff,
++	1, 0x6c, 0xff,
++	1, 0x6d, 0xff,
++	1, 0x6e, 0xff,
++	1, 0x6f, 0xff,
++	1, 0xa9, 0x13,
++	1, 0xa8, 0x59,
++	1, 0xf5, 0xaa,
++	1, 0xfd, 0x92,
++	1, 0x9d, 0x9e,
++	1, 0xa5, 0x00,
++	2, 0xa6, 0xc0, 0x80,
++	1, 0x7a, 0x25,
++	1, 0x7b, 0x76,
++	1, 0x88, 0x32,
++	1, 0x8a, 0x20,
++	1, 0xae, 0xf1,
++	1, 0xc1, 0xc0,
++	2, 0xb8, 0x01, 0xdf,
++	1, 0xb7, 0x30,
++	1, 0xb5, 0x00,
++	4, 0x92, 0x0f, 0x24, 0x2c, 0x36,
++	/* page 0x11 */
++	1, 0xd0, 0x11,
++	1, 0x60, 0xff,
++	1, 0x61, 0xff,
++	1, 0x62, 0xff,
++	1, 0x63, 0xff,
++	1, 0x64, 0xff,
++	1, 0x65, 0xff,
++	1, 0x66, 0xff,
++	1, 0x67, 0xff,
++	1, 0x68, 0xff,
++	1, 0x69, 0xff,
++	1, 0x6a, 0xff,
++	1, 0x6b, 0xff,
++	1, 0x6c, 0xff,
++	1, 0x6d, 0xff,
++	1, 0xb8, 0xff,
++	1, 0xb9, 0xff,
++	1, 0xba, 0x8f,
++	44, 0xb3,
++		0x3e, 0x36, 0x01, 0x03, 0x34, 0x28, 0x29, 0x37, 0x0d, 0x0f, 0x09, 0x0b,
++		0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3e, 0x36,
++		0x00, 0x02, 0x34, 0x28, 0x29, 0x37, 0x0c, 0x0e, 0x08, 0x0a, 0x3f, 0x3f,
++		0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f,
++	1, 0xb7, 0x07,
++	2, 0xbc, 0x00, 0x10,
++	8, 0xa0, 0x30, 0x05, 0x69, 0x69, 0x30, 0x07, 0x69, 0x69,
++	8, 0xa1, 0x30, 0x05, 0x69, 0x69, 0x30, 0x07, 0x69, 0x69,
++	10, 0xa3, 0x70, 0x00, 0x69, 0x69, 0x30, 0x00, 0x30, 0x00, 0x69, 0x69,
++	5, 0xa7, 0x33, 0x69, 0x69, 0x69, 0x69,
++	10, 0xa8, 0x00, 0x09, 0x01, 0xf1, 0x00, 0x00, 0x09, 0x01, 0xf1, 0x00,
++	7, 0xa4, 0x3c, 0x01, 0xf7, 0x01, 0xf7, 0x00, 0x26,
++	7, 0xb0, 0x33, 0x00, 0x33, 0x22, 0x33, 0x33, 0xf0,
++	1, 0xc3, 0x1b,
++	2, 0xe5, 0x07, 0x0a,
++	1, 0xf8, 0x99,
++	1, 0xac, 0xc1,
++	1, 0xf4, 0xff,
++	1, 0xf5, 0x00,
++	1, 0xf6, 0xff,
++	1, 0xf7, 0x00,
++	1, 0xe4, 0xe6,
++	/* page 0x12 */
++	1, 0xd0, 0x12,
++	16, 0x80,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x8a, 0x00, 0xa0,
++		0x00, 0xb5, 0x00, 0xc3,
++	16, 0x81,
++		0x00, 0xd3, 0x00, 0xef, 0x01, 0x0f, 0x01, 0x2c, 0x01, 0x55, 0x01, 0x8f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x82,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x83, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	16, 0x84,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x8a, 0x00, 0xa0,
++		0x00, 0xb5, 0x00, 0xc3,
++	16, 0x85,
++		0x00, 0xd3, 0x00, 0xef, 0x01, 0x0f, 0x01, 0x2c, 0x01, 0x55, 0x01, 0x8f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x86,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x87, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	16, 0x88,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x8a, 0x00, 0xa0,
++		0x00, 0xb5, 0x00, 0xc3,
++	16, 0x89,
++		0x00, 0xd3, 0x00, 0xef, 0x01, 0x0f, 0x01, 0x2c, 0x01, 0x55, 0x01, 0x8f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x8a,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x8b, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	16, 0x90,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x7a, 0x00, 0x90,
++		0x00, 0xa5, 0x00, 0xb3,
++	16, 0x91,
++		0x00, 0xc3, 0x00, 0xdf, 0x00, 0xef, 0x01, 0x1c, 0x01, 0x45, 0x01, 0x7f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x92,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x93, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	16, 0x94,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x7a, 0x00, 0x90,
++		0x00, 0xa5, 0x00, 0xb3,
++	16, 0x95,
++		0x00, 0xc3, 0x00, 0xdf, 0x00, 0xef, 0x01, 0x1c, 0x01, 0x45, 0x01, 0x7f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x96,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x97, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	16, 0x98,
++		0x00, 0x2b, 0x00, 0x2e, 0x00, 0x4a, 0x00, 0x69, 0x00, 0x7a, 0x00, 0x90,
++		0x00, 0xa5, 0x00, 0xb3,
++	16, 0x99,
++		0x00, 0xc3, 0x00, 0xdf, 0x00, 0xef, 0x01, 0x1c, 0x01, 0x45, 0x01, 0x7f,
++		0x01, 0xbc, 0x01, 0xbe,
++	16, 0x9a,
++		0x01, 0xfb, 0x02, 0x45, 0x02, 0x79, 0x02, 0xba, 0x02, 0xe5, 0x03, 0x1b,
++		0x03, 0x2b, 0x03, 0x3c,
++	12, 0x9b, 0x03, 0x60, 0x03, 0x77, 0x03, 0x91, 0x03, 0xaf, 0x03, 0xd4, 0x03, 0xff,
++	1, 0x36, 0x09,
++};
++
++static inline struct gc9703 *to_gc9703(struct drm_panel *panel)
++{
++	return container_of(panel, struct gc9703, panel);
++}
++
++static int gc9703_send_init(struct gc9703 *priv)
++{
++	const u8 *init = priv->panel_info->init;
++	unsigned int len = priv->panel_info->init_len;
++	unsigned int i = 0;
++	int err;
++
++	while (i < len) {
++		unsigned int num_params = init[i];
++
++		if (i + 2 + num_params > len) {
++			dev_err(priv->dev, "Malformed init sequence at offset %u\n", i);
++			return -EINVAL;
++		}
++
++		err = mipi_dbi_command_stackbuf(&priv->dbi, init[i + 1],
++						&init[i + 2], num_params);
++		if (err) {
++			dev_err(priv->dev, "Unable to send command %#04x: %d\n",
++				init[i + 1], err);
++			return err;
++		}
++
++		i += 2 + num_params;
++	}
++
++	return 0;
++}
++
++static int gc9703_prepare(struct drm_panel *panel)
++{
++	struct gc9703 *priv = to_gc9703(panel);
++	int err;
++
++	err = regulator_enable(priv->supply);
++	if (err) {
++		dev_err(priv->dev, "Failed to enable power supply: %d\n", err);
++		return err;
++	}
++
++	/* Reset the chip */
++	gpiod_set_value_cansleep(priv->reset_gpio, 1);
++	usleep_range(10000, 11000);
++	gpiod_set_value_cansleep(priv->reset_gpio, 0);
++	msleep(50);
++
++	err = gc9703_send_init(priv);
++	if (err)
++		goto err_disable_regulator;
++
++	err = mipi_dbi_command(&priv->dbi, MIPI_DCS_EXIT_SLEEP_MODE);
++	if (err) {
++		dev_err(priv->dev, "Unable to exit sleep mode: %d\n", err);
++		goto err_disable_regulator;
++	}
++
++	msleep(120);
++
++	return 0;
++
++err_disable_regulator:
++	gpiod_set_value_cansleep(priv->reset_gpio, 1);
++	regulator_disable(priv->supply);
++	return err;
++}
++
++static int gc9703_unprepare(struct drm_panel *panel)
++{
++	struct gc9703 *priv = to_gc9703(panel);
++	int err;
++
++	err = mipi_dbi_command(&priv->dbi, MIPI_DCS_ENTER_SLEEP_MODE);
++	if (err)
++		dev_err(priv->dev, "Unable to enter sleep mode: %d\n", err);
++
++	msleep(120);
++
++	gpiod_set_value_cansleep(priv->reset_gpio, 1);
++	regulator_disable(priv->supply);
++
++	return 0;
++}
++
++static int gc9703_enable(struct drm_panel *panel)
++{
++	struct gc9703 *priv = to_gc9703(panel);
++	int err;
++
++	err = mipi_dbi_command(&priv->dbi, MIPI_DCS_SET_DISPLAY_ON);
++	if (err) {
++		dev_err(priv->dev, "Unable to enable display: %d\n", err);
++		return err;
++	}
++
++	/* Let the first frames settle before the backlight comes on */
++	if (panel->backlight)
++		msleep(120);
++
++	return 0;
++}
++
++static int gc9703_disable(struct drm_panel *panel)
++{
++	struct gc9703 *priv = to_gc9703(panel);
++	int err;
++
++	err = mipi_dbi_command(&priv->dbi, MIPI_DCS_SET_DISPLAY_OFF);
++	if (err) {
++		dev_err(priv->dev, "Unable to disable display: %d\n", err);
++		return err;
++	}
++
++	return 0;
++}
++
++static int gc9703_get_modes(struct drm_panel *panel,
++			    struct drm_connector *connector)
++{
++	struct gc9703 *priv = to_gc9703(panel);
++	const struct gc9703_panel_info *panel_info = priv->panel_info;
++	struct drm_display_mode *mode;
++	unsigned int i;
++
++	for (i = 0; i < panel_info->num_modes; i++) {
++		mode = drm_mode_duplicate(connector->dev,
++					  &panel_info->display_modes[i]);
++		if (!mode)
++			return -ENOMEM;
++
++		drm_mode_set_name(mode);
++
++		mode->type = DRM_MODE_TYPE_DRIVER;
++		if (panel_info->num_modes == 1)
++			mode->type |= DRM_MODE_TYPE_PREFERRED;
++
++		drm_mode_probed_add(connector, mode);
++	}
++
++	connector->display_info.bpc = 8;
++	connector->display_info.width_mm = panel_info->width_mm;
++	connector->display_info.height_mm = panel_info->height_mm;
++
++	drm_display_info_set_bus_formats(&connector->display_info,
++					 &panel_info->bus_format, 1);
++	connector->display_info.bus_flags = panel_info->bus_flags;
++
++	return panel_info->num_modes;
++}
++
++static const struct drm_panel_funcs gc9703_funcs = {
++	.prepare	= gc9703_prepare,
++	.unprepare	= gc9703_unprepare,
++	.enable		= gc9703_enable,
++	.disable	= gc9703_disable,
++	.get_modes	= gc9703_get_modes,
++};
++
++static int gc9703_probe(struct spi_device *spi)
++{
++	struct device *dev = &spi->dev;
++	struct gc9703 *priv;
++	int err;
++
++	priv = devm_drm_panel_alloc(dev, struct gc9703, panel, &gc9703_funcs,
++				    DRM_MODE_CONNECTOR_DPI);
++	if (IS_ERR(priv))
++		return PTR_ERR(priv);
++
++	priv->dev = dev;
++
++	priv->panel_info = of_device_get_match_data(dev);
++	if (!priv->panel_info)
++		return -EINVAL;
++
++	priv->supply = devm_regulator_get(dev, "power");
++	if (IS_ERR(priv->supply))
++		return dev_err_probe(dev, PTR_ERR(priv->supply), "Failed to get power supply\n");
++
++	priv->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++	if (IS_ERR(priv->reset_gpio))
++		return dev_err_probe(dev, PTR_ERR(priv->reset_gpio), "Failed to get reset GPIO\n");
++
++	err = mipi_dbi_spi_init(spi, &priv->dbi, NULL);
++	if (err)
++		return dev_err_probe(dev, err, "MIPI DBI init failed\n");
++
++	priv->dbi.read_commands = NULL;
++
++	spi_set_drvdata(spi, priv);
++
++	err = drm_panel_of_backlight(&priv->panel);
++	if (err)
++		return dev_err_probe(dev, err, "Failed to attach backlight\n");
++
++	drm_panel_add(&priv->panel);
++
++	return 0;
++}
++
++static void gc9703_remove(struct spi_device *spi)
++{
++	struct gc9703 *priv = spi_get_drvdata(spi);
++
++	drm_panel_remove(&priv->panel);
++	drm_panel_disable(&priv->panel);
++	drm_panel_unprepare(&priv->panel);
++}
++
++static const struct drm_display_mode anbernic_rg34xx_sp_v2_modes[] = {
++	{ /* 60 Hz */
++		.clock = 26000,
++		.hdisplay = 720,
++		.hsync_start = 720 + 47,
++		.hsync_end = 720 + 47 + 4,
++		.htotal = 720 + 47 + 4 + 42,
++		.vdisplay = 480,
++		.vsync_start = 480 + 33,
++		.vsync_end = 480 + 33 + 4,
++		.vtotal = 480 + 33 + 4 + 16,
++		.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
++	},
++};
++
++static const struct gc9703_panel_info anbernic_rg34xx_sp_v2_panel_info = {
++	.display_modes = anbernic_rg34xx_sp_v2_modes,
++	.num_modes = ARRAY_SIZE(anbernic_rg34xx_sp_v2_modes),
++	.width_mm = 71,
++	.height_mm = 48,
++	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
++	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE,
++	.init = anbernic_rg34xx_sp_v2_init,
++	.init_len = ARRAY_SIZE(anbernic_rg34xx_sp_v2_init),
++};
++
++static const struct spi_device_id gc9703_ids[] = {
++	{ "rg34xx-sp-v2-panel", },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(spi, gc9703_ids);
++
++static const struct of_device_id gc9703_of_match[] = {
++	{ .compatible = "anbernic,rg34xx-sp-v2-panel", .data = &anbernic_rg34xx_sp_v2_panel_info },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, gc9703_of_match);
++
++static struct spi_driver gc9703_driver = {
++	.driver = {
++		.name = "gc9703",
++		.of_match_table = gc9703_of_match,
++	},
++	.id_table = gc9703_ids,
++	.probe = gc9703_probe,
++	.remove = gc9703_remove,
++};
++module_spi_driver(gc9703_driver);
++
++MODULE_DESCRIPTION("GalaxyCore GC9703 RGB/SPI panel driver");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

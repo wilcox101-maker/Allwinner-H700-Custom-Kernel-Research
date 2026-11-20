@@ -96,7 +96,7 @@ cp "$REPO"/dts/*.dts "$REPO"/dts/*.dtsi "$LINUX/$DTS/"
 	printf '\n#include "sun50i-h700-redux-cpu-opp-stock.dtsi"\n'
 } >"$LINUX/$DTS/sun50i-h700-anbernic-rg34xx-sp-reduxstock.dts"
 VARIANTS=(redux reduxstock)
-[ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel)
+[ "$DISPLAY" = 1 ] && VARIANTS+=(redux-panel redux-v2-panel)
 for v in "${VARIANTS[@]}"; do
 	line="dtb-\$(CONFIG_ARCH_SUNXI) += sun50i-h700-anbernic-rg34xx-sp-$v.dtb"
 	grep -qxF "$line" "$LINUX/$DTS/Makefile" || echo "$line" >>"$LINUX/$DTS/Makefile"
@@ -109,6 +109,7 @@ DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
 if [ "$DISPLAY" = 1 ]; then
 	# The panel tree, plus the upstream trees that inherit the new h616 display nodes.
 	DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel
+	       sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel
 	       sun50i-h700-anbernic-rg35xx-2024 sun50i-h700-anbernic-rg35xx-plus
 	       sun50i-h700-anbernic-rg35xx-h sun50i-h700-anbernic-rg35xx-sp)
 fi
@@ -128,7 +129,7 @@ log "4b. W=1 build of every C file the patches touch (any warning counts as a fa
 "$LINUX/scripts/config" --file "$OUT/.config" -m SND_SUN4I_CODEC -m ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM \
 	-m DRM_SUN4I
 [ "$DISPLAY" = 1 ] && "$LINUX/scripts/config" --file "$OUT/.config" -m PWM_SUN8I -m SPI_GPIO \
-	-m DRM_PANEL_NEWVISION_NV3052C
+	-m DRM_PANEL_NEWVISION_NV3052C -m DRM_PANEL_GALAXYCORE_GC9703
 "${MAKE[@]}" olddefconfig >/dev/null
 mapfile -t CFILES < <(git -C "$LINUX" diff --name-only "$LINUX_SHA" HEAD -- '*.c')
 [ "${#CFILES[@]}" -gt 0 ] || fail "no touched C files found"
@@ -185,6 +186,7 @@ if [ "$BINDINGS" = 1 ]; then
 	SCHEMAS=("sound/allwinner,sun4i-a10-codec.yaml" "opp/allwinner,sun50i-h6-operating-points.yaml"
 		 "arm/sunxi.yaml")
 	[ "$DISPLAY" = 1 ] && SCHEMAS+=("display/panel/anbernic,rg34xx-sp-panel.yaml"
+		"display/panel/anbernic,rg34xx-sp-v2-panel.yaml"
 		"bus/allwinner,sun50i-a64-de2.yaml" "display/allwinner,sun4i-a10-display-engine.yaml"
 		"display/allwinner,sun4i-a10-tcon.yaml" "display/allwinner,sun8i-r40-tcon-top.yaml"
 		"pwm/allwinner,sun4i-a10-pwm.yaml")

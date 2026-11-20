@@ -17,7 +17,7 @@ tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-li
 | [`patches/linux/`](patches/linux/) | Our Linux patches: a 7-patch `git am` series against torvalds/linux `97d73c8` (compile- and schema-checked, not booted) |
 | [`patches/upstream/base-layer.txt`](patches/upstream/base-layer.txt) | Base layer (R11): upstream patches by reference for every build, today the H616 CPU cooling map; dropped once merged |
 | [`patches/upstream/display-layer.txt`](patches/upstream/display-layer.txt) | Display layer (R19): upstream H616 display and PWM series, pinned by patchwork ID and `git patch-id`; applied by `tools/apply_upstream.py`, never copied here |
-| [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer: RG34XX-SP entry in the upstream NV3052C panel driver (init table from stock u-boot, decision Q8) and its binding |
+| [`patches/linux-display/`](patches/linux-display/) | Our patches on top of the display layer (0004–0005: GC9703 driver for the newer panel, opt-in tree only, see [`docs/r29-gc9703-panel-driver.md`](docs/r29-gc9703-panel-driver.md)): RG34XX-SP entry in the upstream NV3052C panel driver (init table from stock u-boot, decision Q8) and its binding |
 | [`patches/u-boot/`](patches/u-boot/) | Our u-boot patches (build-tested, not booted) |
 | [`dts/`](dts/) | RG34XX-SP board trees and include files, copied into `arch/arm64/boot/dts/allwinner/` |
 | [`tests/`](tests/) | Host tests: CPU speed-bin decoder (patch 0001); kallsyms reader on a synthetic image |
