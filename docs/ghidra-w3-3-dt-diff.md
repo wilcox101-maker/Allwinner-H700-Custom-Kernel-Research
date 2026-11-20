@@ -1,5 +1,7 @@
 # W3.3: stock V1.0.6 device tree vs the mainline RG34XX-SP trees (Ghidra plan, 2026-11-15)
 
+> **Update 2026-11-20:** the three mainline gaps are narrowed in [`dr-unknowns-and-rebuild-2026-11-20.md`](dr-unknowns-and-rebuild-2026-11-20.md): PE11 (`adc-en-gpios`) is read by no stock code, so mainline need not drive it; ALDO3 has no DT consumer (keep it on until its voltage is read); TF2's full stock wiring is listed there. Desk only.
+
 Kernel Research chat, desk only. Stock = `dtb.dts` from the V1.0.6 `boot.img` (575 nodes; the DT the 4.9 kernel
 boots with, before any u-boot fix-ups). Mainline = our trees in `dts/` (`sun50i-h700-anbernic-rg34xx-sp.dts`,
 `-redux.dts`, `-redux-panel.dts` and the `redux-*.dtsi` includes), which build on upstream

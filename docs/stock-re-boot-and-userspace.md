@@ -1,5 +1,7 @@
 # Stock firmware RE, boot chain and userspace (Deep Research part of the Ghidra plan)
 
+> **Update 2026-11-20:** the open items left here are closed in [`dr-unknowns-and-rebuild-2026-11-20.md`](dr-unknowns-and-rebuild-2026-11-20.md) §1: `brightCtrl.bin` is not shipped in V1.0.6 and `/dev/vsgame` does not exist (both dead references); all 76 stock udev rules are unmodified Ubuntu files; "Fast Shutdown" has no documented effect. Desk only.
+
 Items **G3, W3.4, W3.5, W3.6** of the Ghidra plan (Manager files 2026-11-15-e/-f; the plan itself is KR's
 `docs/ghidra-plan.md`). One PR per item; this file is the record.
 

@@ -1,5 +1,7 @@
 # R26: global on-screen keyboard (OSK) over any app, on the stock kernel (desk only)
 
+> **Update 2026-11-20:** reviewed in [`dr-osk-desk-checks-2026-11-18.md`](dr-osk-desk-checks-2026-11-18.md): the verdict stands; the stock video player uses channel 1 (not channel 0); Menu + X is a RetroArch hotkey, and Redux has since chosen **Menu + Select** with no OSK while RetroArch runs ([`dr-review-2026-11-20.md`](dr-review-2026-11-20.md)).
+
 Date: 2026-11-18. Kernel Research, for the Redux Manager (letter `FROM-REDUX-MANAGER-2026-11-18-a`, pasted in chat;
 Dale said yes at 10:38). Manager advice, not a command. Goal: a background OSK daemon that Redux starts at boot. An app,
 a Settings switch, a Stock OS Mod APPS entry or a Redux `extras.ini` `app =` entry only turns it on and off. Input comes

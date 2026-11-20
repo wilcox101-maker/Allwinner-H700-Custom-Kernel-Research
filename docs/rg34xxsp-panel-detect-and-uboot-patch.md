@@ -1,5 +1,7 @@
 # RG34XX-SP panel identification: stock u-boot decoded, and a u-boot patch
 
+> **Update 2026-11-20:** the newer panel (PE6 high on V1.0.6-era firmware) is identified on the desk as a GalaxyCore GC9703-family part and has a driver and an opt-in tree: [`k9-newer-panel-gc9703.md`](k9-newer-panel-gc9703.md), [`r29-gc9703-panel-driver.md`](r29-gc9703-panel-driver.md). The u-boot mapping described here is unchanged.
+
 Research note, 2026-11-13 (Deep Research chat). Static analysis of the stock bootloader on Dale's PC (read-only copies of `RG34XXSP.img`, 2025, and `RG34XXSP-V1.0.6-EN16GB-260526.IMG`). ROCKNIX `4fc79d7`, u-boot `v2026.01`. **Nothing here has run on the device.** The u-boot patch is build-tested only.
 
 ## 1. Results

@@ -1,5 +1,7 @@
 # osklib: display layer (KR-2) and input + keyboard (KR-3) for the Redux global OSK
 
+> **Update 2026-11-20:** Redux now uses **Menu + Select** and opens no OSK while RetroArch runs (Owner's letter `-v`, 2026-11-18). The defaults below still say Menu + X; Select is also the default Shift key here, so the default needs a mapping decision first ([`docs/dr-review-2026-11-20.md`](../../docs/dr-review-2026-11-20.md) §2).
+
 For the Redux Owner's letter `FROM-REDUX-OWNER-2026-11-18-s`. Evidence: [`docs/r26-global-osk-stock-disp2.md`](../../docs/r26-global-osk-stock-disp2.md).
 **Nothing here has run on the device.** The host unit tests pass (gcc, clang, ASan/UBSan) and the code cross-compiles
 for aarch64 (musl and glibc). K24–K28 ([`tools/oskprobe/RUNSHEET.md`](../oskprobe/RUNSHEET.md)) check the assumptions it rests on.
