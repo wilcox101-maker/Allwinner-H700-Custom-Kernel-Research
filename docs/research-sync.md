@@ -1082,3 +1082,10 @@ Dale's request in the DR chat ("reverse engineer what we have", Ghidra locally).
 the PE6-high panel's stock sequence matches the GalaxyCore **GC9703** family (unlock `D7 61 74 97`, pages `D0 10/11/12`, same
 register order as a public GC9703 init); the stock kernel holds both sequences in one function branching on `lcd_type` [G].
 **For KR:** a new small panel driver is needed for it (multi-byte parameters); NV3052C can't take it. No mainline driver known.
+
+### Deep Research, 2026-11-20, 03:40 ET (R29: GC9703 panel driver for the newer panel)
+Dale's request in the DR chat. Desk only. `docs/r29-gc9703-panel-driver.md`: `patches/linux-display/0004` (binding) and `0005`
+(`panel-galaxycore-gc9703`, 98-command table from stock V1.0.6 u-boot via `tools/gen_gc9703_table.py`, checked against ROCKNIX's
+working v2 file); opt-in `-redux-v2-panel` tree; workbench `--display --bindings` and `build-kernel.sh --display` pass.
+u-boot's PE6-high mapping is untouched (Q3; PE6 high was an older panel on 2025 firmware). **For KR:** `workbench.sh`,
+`build-kernel.sh` and `config/rg34xxsp-display.config` gained the v2 tree and module; K29 proposed.

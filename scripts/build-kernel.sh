@@ -95,7 +95,8 @@ cp "$OUT/.config" "$OUT/base.config"
 "${MAKE[@]}" dtbs >/dev/null
 BOARD_DTBS=(sun50i-h700-anbernic-rg34xx-sp sun50i-h700-anbernic-rg34xx-sp-redux
 	    sun50i-h700-anbernic-rg34xx-sp-reduxstock)
-[ "$DISPLAY" = 1 ] && BOARD_DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel)
+[ "$DISPLAY" = 1 ] && BOARD_DTBS+=(sun50i-h700-anbernic-rg34xx-sp-redux-panel
+					 sun50i-h700-anbernic-rg34xx-sp-redux-v2-panel)
 
 if [ "$TRIM" = 1 ]; then
 	log "1b. Module trim (allowlist: config/module-keep.txt)"

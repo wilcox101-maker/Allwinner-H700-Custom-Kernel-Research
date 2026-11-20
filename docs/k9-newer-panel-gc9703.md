@@ -36,7 +36,7 @@ Ghidra 12.2 headless, read-only, on Dale's existing project (`REA\BootImage\ghid
 
 ## What this changes
 - Q3 (a) stays: PE6-high units boot without display until a driver exists. The fallback (b) is no longer needed as a guess.
-- New desk task candidate: a `panel-galaxycore-gc9703` SPI/DPI driver with the sequence generated locally from a stock image,
+- **Done as R29** ([`r29-gc9703-panel-driver.md`](r29-gc9703-panel-driver.md)): a `panel-galaxycore-gc9703` SPI/DPI driver with the sequence generated from a stock image,
   the same way as the NV3052C table (Q8 (a) pattern). Needs a PE6-high unit to test. Which panel Dale's unit has is not recorded here (K4 prints the PE6 line).
 
 ## Local files (Dale's PC, not in git)

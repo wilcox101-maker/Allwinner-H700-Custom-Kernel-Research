@@ -5,15 +5,17 @@
  * Needs the display layer (patches/upstream/display-layer.txt: H616 display engine and LCD TCON,
  * H616 PWM) and patches/linux-display/ for the panel (NV3052C driver entry and binding).
  *
- * Pipeline: mixer0 -> TCON TOP -> LCD TCON0 -> 24-bit RGB panel (NV3052C controller).
+ * Pipeline: mixer0 -> TCON TOP -> LCD TCON0 -> 24-bit RGB panel (NV3052C controller; the
+ * -redux-v2-panel tree overrides the compatible for the newer GC9703 panel).
  * Wiring, from the stock tree (lcd0 lcd_gpio_0..4, pwm0 pins) and identical to the upstream
  * RG35XX family: panel set-up over bit-banged 3-wire SPI on PI8 (CS), PI9 (SCK), PI10 (MOSI);
  * panel reset PI14 (active low); panel power PI15; backlight PWM0 on PD28.
  *
  * The panel's init sequence and timing are in the kernel (panel-newvision-nv3052c.c, decision
- * Q8). Only the original panel (PE6 strap low) is known; the newer panel's controller is not
- * identified. Never include this file unless the panel has been identified (u-boot reads the
- * PE6 strap and picks the DTB); boards with an unknown panel boot the plain -redux tree.
+ * Q8). u-boot reads the PE6 strap and picks the DTB only for the original panel (PE6 low). The
+ * newer panel (GC9703 family, identified on the desk only) has an opt-in tree that u-boot never
+ * selects. Never include this file unless the panel has been identified; boards with an unknown
+ * panel boot the plain -redux tree.
  */
 
 / {

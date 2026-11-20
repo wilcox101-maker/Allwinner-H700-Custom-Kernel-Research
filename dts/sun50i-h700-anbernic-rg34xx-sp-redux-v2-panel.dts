@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Anbernic RG34XX-SP, Redux tree with the NEWER panel (PE6 strap high on V1.0.6-era units).
+ * Panel driver: panel-galaxycore-gc9703 (patches/linux-display/0004, 0005).
+ * DRAFT, NOT BOOTED. OPT-IN ONLY: our u-boot never selects this tree (decision Q3: PE6 high
+ * boots the plain -redux tree). PE6 high does not prove this panel: the 2025 stock firmware
+ * used PE6 high for an older, different panel. Use it only on a unit whose panel is known.
+ */
+
+#include "sun50i-h700-anbernic-rg34xx-sp-redux.dts"
+#include "sun50i-h700-redux-display.dtsi"
+
+&redux_panel {
+	compatible = "anbernic,rg34xx-sp-v2-panel";
+};
