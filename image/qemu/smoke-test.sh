@@ -60,6 +60,9 @@ printf '%s' "$fe" | grep -q 'player=yes' && printf '%s' "$fe" | grep -q 'ra=yes'
 check "frontend present (player, retroarch, cores)" $? "${fe:-none}"
 printf '%s' "$fe" | grep -q 'autologin player'
 check "tty1 autologins the player user (ReduxOS)" $? "$(printf '%s' "$fe" | grep -o 'autologin player' || echo missing)"
+raf=$(printf '%s\n' "$OUT" | sed -n 's/^== ra-features: //p')
+ok=0; for f in KMS EGL OpenGLES UDEV ALSA; do printf '%s' "$raf" | grep -qiE "(^| )$f-[^ ]*:yes" || ok=1; done
+check "RetroArch runs on the A53 with KMS/EGL/GLES/udev/ALSA (R33)" $ok "$(printf '%s' "$raf" | cut -c1-160)"
 r36=$(printf '%s\n' "$OUT" | sed -n 's/^== r36: //p')
 if printf '%s' "$r36" | grep -q 'cores='; then
 	printf '%s' "$r36" | grep -q 'load_fail=0 ' && ! printf '%s\n' "$OUT" | grep -q '^== r36-fail:'

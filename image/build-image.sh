@@ -16,6 +16,7 @@
 #   Injected at build, never committed (each from its tools/ script): PCSX_CORE=<.so> (build-pcsx-core.sh),
 #   OSK_POINTER=<bin> (build-osk-pointer.sh), CORES_DIR=<dir of *_libretro.so> (build-libretro-cores.sh,
 #   build-redux-exec-core.sh; R36), PORTMASTER_ZIP=<zip> (fetch-portmaster.sh; R36).
+#   RETROARCH_DEB=<deb> (build-retroarch.sh; R33): lean upstream RetroArch instead of noble's.
 #   RA_SLIM=0   keep retroarch-assets (~440 MB of fonts) for the xmb/ozone menus; default 1 = shim (R33/R36).
 # Writes only under $OUT. It never touches a block device: writing the image to a card is a separate,
 # deliberate step (see docs/r7-image-tooling.md). Publishing it needs the source bundle from
@@ -58,11 +59,19 @@ log() { printf '== %s\n' "$*"; }
 awk -v r="$OUT/rootfs/" 'index($2, r) == 1 {print $2}' /proc/mounts | sort -r | while read -r m; do umount -l "$m"; done
 rm -rf "$OUT/rootfs" "$OUT/tmp" "$OUT/genimage"; mkdir -p "$OUT/rootfs" "$OUT/tmp" "$OUT/genimage"
 PKGS=$(grep -v '^\s*#' "$HERE/packages.txt" | grep . | paste -sd,)
-# R33/R36: retroarch hard-depends on retroarch-assets, which pulls ~440 MB of fonts (fonts-noto-extra).
-# The rgui menu ReduxOS uses needs none of it, so a tiny generated shim (no binary in the repo) provides
-# the dependency instead. RA_SLIM=0 keeps the real assets (xmb/ozone menus).
+# R33: two ways to get a lean RetroArch, both through a local apt source (copy://, generated here; no
+# binary in the repo):
+#  - RETROARCH_DEB=<.deb> from tools/build-retroarch.sh: upstream RetroArch built for KMS/GLES only (no Qt,
+#    X11, Wayland, PulseAudio, JACK, SDL; no asset pack). It Provides retroarch + libretro-frontend.
+#  - otherwise noble's retroarch, whose hard dependency on retroarch-assets (~440 MB of fonts) is met by a
+#    tiny generated shim (R36); RA_SLIM=0 keeps the real assets (xmb/ozone menus).
 LOCAL_SRC=()
-if [ "${RA_SLIM:-1}" = 1 ]; then
+L="$OUT/tmp/localrepo"; mkdir -p "$L"
+if [ -n "${RETROARCH_DEB:-}" ]; then
+	[ -f "$RETROARCH_DEB" ] || { echo "RETROARCH_DEB not found: $RETROARCH_DEB" >&2; exit 1; }
+	cp "$RETROARCH_DEB" "$L/"
+	PKGS="$PKGS,"; PKGS=${PKGS/,retroarch,/,reduxos-retroarch,}; PKGS=${PKGS/,retroarch-assets,/,}; PKGS=${PKGS%,}
+elif [ "${RA_SLIM:-1}" = 1 ]; then
 	S="$OUT/tmp/ra-slim"; mkdir -p "$S/DEBIAN"
 	printf '%s\n' "Package: reduxos-retroarch-slim" "Version: 1.0" "Architecture: all" \
 	  "Maintainer: ReduxOS <noreply@example.invalid>" "Provides: retroarch-assets (= 1.20.0+reduxos1)" \
@@ -74,12 +83,12 @@ if [ "${RA_SLIM:-1}" = 1 ]; then
 	  "Files: *" "Copyright: ReduxOS contributors" "License: GPL-2.0-only" \
 	  " On Debian systems, the full text is in /usr/share/common-licenses/GPL-2." \
 	  > "$S/usr/share/doc/reduxos-retroarch-slim/copyright"
-	# a one-package local apt source (copy://), so the shim is resolved like any archive package
-	mkdir -p "$OUT/tmp/localrepo"
-	dpkg-deb --root-owner-group -Zxz --build "$S" "$OUT/tmp/localrepo/reduxos-retroarch-slim_1.0_all.deb" >/dev/null
-	(cd "$OUT/tmp/localrepo" && dpkg-scanpackages --multiversion . /dev/null > Packages 2>/dev/null)
-	LOCAL_SRC=("deb [trusted=yes] copy://$OUT/tmp/localrepo ./")
+	dpkg-deb --root-owner-group -Zxz --build "$S" "$L/reduxos-retroarch-slim_1.0_all.deb" >/dev/null
 	PKGS="$PKGS,reduxos-retroarch-slim"; PKGS=${PKGS/,retroarch-assets,/,}
+fi
+if ls "$L"/*.deb >/dev/null 2>&1; then
+	(cd "$L" && dpkg-scanpackages --multiversion . /dev/null > Packages 2>/dev/null)
+	LOCAL_SRC=("deb [trusted=yes] copy://$L ./")
 fi
 [ "$KMODE" = ubuntu ] && PKGS="$PKGS,initramfs-tools,linux-image-6.8.0-149-generic,linux-modules-extra-6.8.0-149-generic"
 
