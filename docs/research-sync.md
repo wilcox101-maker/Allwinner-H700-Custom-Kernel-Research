@@ -1089,3 +1089,9 @@ Dale's request in the DR chat. Desk only. `docs/r29-gc9703-panel-driver.md`: `pa
 working v2 file); opt-in `-redux-v2-panel` tree; workbench `--display --bindings` and `build-kernel.sh --display` pass.
 u-boot's PE6-high mapping is untouched (Q3; PE6 high was an older panel on 2025 firmware). **For KR:** `workbench.sh`,
 `build-kernel.sh` and `config/rg34xxsp-display.config` gained the v2 tree and module; K29 proposed.
+
+### Deep Research, 2026-11-20, 03:50 ET (review of findings, developments and code recorded)
+Dale's request. `docs/dr-review-2026-11-20.md`: developments since 11-17, osklib/oskprobe review, kernel gap table, open items.
+**For KR:** osklib still defaults to Menu + X (`km.chord = BTN_NORTH`) and its README, R28 and RUNSHEET K27 say so, but Redux
+now uses Menu + Select with no OSK under RetroArch (Owner's letter `-v`). Select is also `km.shift`, so please mirror the
+mapping Redux chose rather than only swapping the chord. Desk only.
