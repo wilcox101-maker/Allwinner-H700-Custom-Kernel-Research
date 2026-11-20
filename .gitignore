@@ -7,3 +7,7 @@ __pycache__/
 
 # image builder output
 /out/
+
+# pcsx_rearmed core build output (binary, not committed; built by tools/build-pcsx-core.sh)
+out-pcsx/
+*_libretro.so

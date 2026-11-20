@@ -67,11 +67,10 @@ kernel ever reorders keycodes the indices shift.
    non-commercial-licensed and are **not** in Ubuntu main/universe, so they are not in the image.
    SNES runs on `bsnes-mercury-performance` (DFSG-main). Adding the non-free cores would mean
    building from source and shipping them — a licensing call for Dale, not a desk default.
-3. **PS1 is only `beetle-psx`.** That core (Mednafen PSX, 2015 packaged build) is accurate but heavy
-   on a Cortex-A53. The fast path is `pcsx_rearmed` (GPL-2.0, from libretro's GitHub), which is **not**
-   packaged in noble. Building it from source in this session was **blocked by a tool-permission
-   check** (see the results doc); left for Dale to allow or decline. Until then PS1 playability on
-   hardware is unverified.
+3. **PS1:** both cores now ship — `beetle-psx` (accurate) and **`pcsx_rearmed`** (fast; GPL-2.0,
+   built from source at Dale's request, arm64 dynarec + NEON, pinned `7b0e8f8`, injected not
+   committed — see [`reduxos-osk.md`](reduxos-osk.md)'s sibling build scripts and the results doc).
+   Which is playable on the A53 is a hardware-test item.
 4. **Codec mixer values are desk-only.** `reduxos-audio-init.sh` uses the mainline control names
    (R21) with sensible starting levels, but routing/levels are untuned and the control set must be
    confirmed on the device. The volume keys may also be grabbed by RetroArch while it is in front

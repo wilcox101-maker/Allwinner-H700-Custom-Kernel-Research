@@ -1126,3 +1126,14 @@ Delivered privately to `ReduxOS-builds/2026-11-20/frontend-beta/`, checksums ver
 PS1 only via slow beetle-psx (pcsx_rearmed build blocked by a tool-permission check), image carries a large font pack from
 retroarch-assets (slim in R33). **Noted:** KR's stock-firmware sweep is complete (private); it reinforces, and does not change,
 the ReduxOS security defaults. DR did not touch stock analysis.
+
+### Deep Research, 2026-11-20, 11:45 ET (R32 addendum: PS1 fast core, console shell, fly-out OSK)
+Dale's follow-ups. Desk/QEMU only. (1) **pcsx_rearmed** PS1 core built from GPL-2.0 source (pinned `7b0e8f8`, arm64 dynarec +
+NEON) via `tools/build-pcsx-core.sh`, injected at image build (not committed); 10 cores now. The earlier auto-mode block was
+cleared by Dale's explicit request. (2) **Console shell**: legible Terminus font, `kbd`/`console-setup`, profile.d, `tmux`.
+(3) **Fly-out OSK** for non-RetroArch keyboard apps (terminal/file-manager): `cage`+`wvkbd`+`foot`+`mc`, launchers
+`redux-kbapp`/`redux-shell`/`redux-files`, and a cross-built gamepad→pointer bridge `redux-osk-pointer` (source committed,
+binary injected). RetroArch's own OSK untouched. Both images rebuilt, QEMU 16/16, re-delivered privately.
+[`reduxos-osk.md`](reduxos-osk.md), [results §R32 addendum](reduxos-beta-build-2026-11-20.md). New follow-ups R33/R34/R35.
+**Note for KR (osklib, R28):** this OSK is the mainline **KMS/Wayland** path (cage+wvkbd), separate from your stock disp2
+overlay work — no overlap, but flagging it since OSK is your track.

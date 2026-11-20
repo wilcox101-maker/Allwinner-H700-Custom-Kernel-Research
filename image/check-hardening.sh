@@ -34,4 +34,16 @@ t "RetroArch gamepad autoconfig present" test -f "$R/etc/retroarch/autoconfig/Re
 t "codec mixer baseline service present" test -f "$R/etc/systemd/system/reduxos-audio-init.service"
 t "retroarch installed" grep -qE '^retroarch\s' "$R/root/manifest.tsv"
 t "at least one libretro core installed" bash -c "grep -qE '^libretro-' '$R/root/manifest.tsv'"
+t "console font tools present (kbd)" grep -qE '^kbd\s' "$R/root/manifest.tsv"
+t "legible console font configured (vconsole.conf)" grep -q '^FONT=Lat15-Terminus' "$R/etc/vconsole.conf"
+t "console font file present for setfont" bash -c "ls '$R'/usr/share/consolefonts/Lat15-Terminus20x10.psf* >/dev/null 2>&1"
+t "interactive shell env installed" test -f "$R/etc/profile.d/10-reduxos.sh"
+
+echo "== fly-out OSK check (R32)"
+t "cage kiosk compositor installed" grep -qE '^cage\s' "$R/root/manifest.tsv"
+t "wvkbd fly-out keyboard installed" grep -qE '^wvkbd\s' "$R/root/manifest.tsv"
+t "wayland terminal (foot) installed" grep -qE '^foot\s' "$R/root/manifest.tsv"
+t "OSK launcher present" test -x "$R/usr/local/bin/redux-kbapp"
+t "OSK shell + file-manager launchers present" bash -c "test -x '$R/usr/local/bin/redux-shell' && test -x '$R/usr/local/bin/redux-files'"
+t "gamepad->pointer bridge injected (aarch64)" bash -c "test -x '$R/usr/local/bin/redux-osk-pointer' && file '$R/usr/local/bin/redux-osk-pointer' | grep -q 'ARM aarch64'"
 [ "$FAIL" = 0 ] && echo "hardening check: PASS" || { echo "hardening check: FAIL"; exit 1; }

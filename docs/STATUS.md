@@ -6,9 +6,11 @@ Maintained by whoever changes the state; details live in the linked documents. `
 ## 1. Where we are
 - **Everything builds from source and boots in QEMU.** u-boot v2026.10 + TF-A v2.14.0, mainline kernel `97d73c8` (7.4-rc2) with
   our patches as noble `.deb` packages. The current deliverable is the **full-featured ReduxOS beta (R32)**: it boots
-  straight into RetroArch (KMS/GLES) as an unprivileged `player` user, with 9 libretro cores, codec audio and volume keys,
-  built for both LPDDR4 and LPDDR3. QEMU smoke **16/16** on each; delivered privately to Dale, not published
-  ([`reduxos-beta-build-2026-11-20.md`](reduxos-beta-build-2026-11-20.md) §R32, [`reduxos-frontend.md`](reduxos-frontend.md)).
+  straight into RetroArch (KMS/GLES) as an unprivileged `player` user, with 10 libretro cores (PS1 via both
+  beetle-psx and a source-built pcsx_rearmed), codec audio and volume keys, a legible console shell, and a
+  fly-out on-screen keyboard for non-RetroArch apps (terminal, file manager). Built for both LPDDR4 and LPDDR3;
+  QEMU smoke **16/16** on each; delivered privately to Dale, not published
+  ([`reduxos-beta-build-2026-11-20.md`](reduxos-beta-build-2026-11-20.md) §R32, [`reduxos-frontend.md`](reduxos-frontend.md), [`reduxos-osk.md`](reduxos-osk.md)).
   CI repeats the kernel and image build on every change.
 - **Nothing of ours has run on an RG34XX-SP.** Every result is "desk only" unless a document says otherwise. The only
   hardware facts are a few readings Redux took on Dale's unit under **stock** (rows marked **[V]** in the task list: the

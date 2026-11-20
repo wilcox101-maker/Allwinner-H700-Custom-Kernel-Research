@@ -93,3 +93,20 @@ Kernel Research finished its full Ghidra sweep of the stock firmware on 2026-11-
 **private (Claude Files, not this repo)** per the standing rule. In short, they reinforce the
 ReduxOS security defaults already built in R31/R32 (no root login, no default AP, inbound-drop
 firewall, no shell-building launcher). Specifics are for Dale and the Manager, not the public repo.
+
+### R32 addendum — PS1 fast core, console shell, fly-out OSK (same day)
+After the first R32 images, Dale asked for the PS1 fast core, a usable console shell, and a fly-out
+OSK for keyboard apps (terminal, file manager). Added and rebuilt (both variants, QEMU **16/16**):
+- **pcsx_rearmed** (GPL-2.0, pinned `7b0e8f8`, arm64 dynarec + NEON) cross-built by
+  `tools/build-pcsx-core.sh` and injected at image build (`PCSX_CORE=`); the `.so` is not committed.
+  Core count is now 10 (beetle-psx kept for accuracy).
+- **Console/shell:** `kbd` + `console-setup` with a legible Terminus 20x10 console font
+  (`/etc/vconsole.conf`), a friendly `/etc/profile.d/10-reduxos.sh` (prompt, `redux-help`), `tmux`.
+- **Fly-out OSK** ([`reduxos-osk.md`](reduxos-osk.md)): `cage` + `wvkbd` + `foot` + `mc`, launchers
+  `redux-kbapp` / `redux-shell` / `redux-files`, and a cross-built gamepad→pointer bridge
+  `redux-osk-pointer` (`tools/redux-osk-pointer.c`, injected via `OSK_POINTER=`, not committed).
+  RetroArch's own OSK is untouched. The player console opens `redux-shell` on RetroArch exit.
+- `check-hardening.sh` gained console + OSK checks. New follow-ups: R33 (slim image), R34 (sticks to
+  P1), **R35 (validate/tune the OSK on hardware)**. Final `.zst` ~396 MiB each (zstd -22).
+
+Final SHA-256 (`.img.zst`): lpddr4 `0a597654568c7cef…`, lpddr3 `e878fadc2774988f4…`.
