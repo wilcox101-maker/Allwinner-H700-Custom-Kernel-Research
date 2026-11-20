@@ -15,7 +15,9 @@ t "no SSH host keys in the image (made on first boot)" bash -c "! ls '$R'/etc/ss
 t "machine-id not set in the image (made on first boot)" bash -c "[ ! -s '$R/etc/machine-id' ] || grep -qx uninitialized '$R/etc/machine-id'"
 t "root has no password (locked)" bash -c "grep -q '^root:[*!]' '$R/etc/shadow'"
 t "user password expired (must change at first login)" bash -c "awk -F: '\$1==\"dale\" && \$3==0 {f=1} END {exit !f}' '$R/etc/shadow'"
-t "sshd: root login off" grep -qx 'PermitRootLogin no' "$R/etc/ssh/sshd_config.d/60-reduxos.conf"
+t "sshd: root login not blocked (Dale 2026-11-20)" grep -qx 'PermitRootLogin yes' "$R/etc/ssh/sshd_config.d/60-reduxos.conf"
+t "no root SSH key shipped (no /root/.ssh/authorized_keys)" bash -c "! test -e '$R/root/.ssh/authorized_keys'"
+t "no authorized_keys shipped for any user" bash -c "! find '$R/root' '$R/home' '$R/etc/ssh' -name 'authorized_keys*' 2>/dev/null | grep -q ."
 t "firewall enabled (nftables.service)" en sysinit.target.wants nftables.service
 t "firewall drops inbound by default" grep -q 'type filter hook input priority filter; policy drop;' "$R/etc/nftables.conf"
 t "motd-news timer off (no fetch of motd.ubuntu.com)" test ! -e "$R/etc/systemd/system/timers.target.wants/motd-news.timer"

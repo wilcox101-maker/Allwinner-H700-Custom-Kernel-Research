@@ -13,7 +13,7 @@ echo "== services"; systemctl is-active systemd-networkd iwd earlyoom systemd-re
 echo "== network"; networkctl --no-pager list; resolvectl query ports.ubuntu.com 2>&1 | head -2
 echo "== firewall: $(systemctl is-active nftables) $(nft list chain inet reduxos input 2>/dev/null | grep -c 'policy drop')"
 install -d -m 0755 /run/sshd	# sshd -T needs it; ssh.socket starts sshd per connection, so it may not exist yet
-echo "== sshd: $(sshd -T 2>&1 | grep -E '^permitrootlogin |rror' | head -1 | sed 's/^permitrootlogin //')"
+echo "== sshd: $(sshd -T 2>&1 | grep -E '^permitrootlogin |rror' | head -1 | sed 's/^permitrootlogin //') rootpw=$(passwd -S root | awk '{print $2}') rootkeys=$(test -e /root/.ssh/authorized_keys && echo yes || echo none)"
 echo "== frontend: player=$(getent passwd player >/dev/null && echo yes || echo no) ra=$(command -v retroarch >/dev/null && echo yes || echo no) cores=$(ls /usr/lib/aarch64-linux-gnu/libretro/*.so 2>/dev/null | wc -l) autologin=$(grep -ho 'autologin player' /etc/systemd/system/getty@tty1.service.d/*.conf 2>/dev/null | head -1) thd=$(systemctl is-active triggerhappy) audio=$(systemctl is-active reduxos-audio-init)"
 echo "== kernel: $(uname -r)"; cat /proc/cmdline
 echo "== extlinux"; grep -E '^\s*(linux|fdtdir|fdt|append)' /boot/extlinux/extlinux.conf | head -4

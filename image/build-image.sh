@@ -85,6 +85,7 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='G=$(for g in sudo video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${G%,}" dale && echo dale:redux | chroot "$1" chpasswd && chroot "$1" passwd -e dale' \
   --customize-hook='PG=$(for g in video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${PG%,}" player && chroot "$1" passwd -l player && cp "$1/etc/skel-player/.bash_profile" "$1/home/player/.bash_profile" && chroot "$1" chown player:player /home/player/.bash_profile && rm -rf "$1/etc/skel-player"' \
   --customize-hook='rm -f "$1"/etc/ssh/ssh_host_* "$1/var/lib/dbus/machine-id"' \
+  --customize-hook='chroot "$1" passwd -l root >/dev/null && rm -f "$1/root/.ssh/authorized_keys"' \
   --customize-hook='[ -z "'"${PCSX_CORE:-}"'" ] || { install -D -m 0644 "'"${PCSX_CORE:-/dev/null}"'" "$1/usr/lib/aarch64-linux-gnu/libretro/pcsx_rearmed_libretro.so" && echo "injected pcsx_rearmed core"; }' \
   --customize-hook='[ -z "'"${OSK_POINTER:-}"'" ] || { install -D -m 0755 "'"${OSK_POINTER:-/dev/null}"'" "$1/usr/local/bin/redux-osk-pointer" && echo "injected redux-osk-pointer"; }' \
   --customize-hook='chroot "$1" dpkg-query -W -f="\${Package}\t\${Version}\t\${Installed-Size}\n" > "$1/root/manifest.tsv"' \

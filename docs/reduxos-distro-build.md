@@ -64,7 +64,7 @@ Network setup is `iwctl` (iwd), not `nmtui`: the image uses iwd + systemd-networ
 | Rule | How |
 |---|---|
 | No shared secrets in the image | SSH host keys and machine-id are made on first boot (`h700-firstboot`); none ship |
-| Root cannot log in | root password locked; `PermitRootLogin no` |
+| No root credential shipped | `PermitRootLogin yes` (Dale, 2026-11-20: root SSH is not blocked), but the image sets **no root password** (locked, `!` in `/etc/shadow`, Ubuntu default) and ships **no root `authorized_keys`**, so remote root is unusable until the owner sets their own password or key. No backdoor, no default login. Checked by `check-hardening.sh` and the QEMU smoke test |
 | User password must be changed | the default user's password is expired in the image |
 | SSH | on for the beta (only remote access before the frontend exists); password login for the user account until a key is added; `X11Forwarding no`, `MaxAuthTries 3`. Opt-in SSH is a later choice for Dale |
 | Firewall on | nftables, `policy drop` on input: loopback, replies, ICMP, DHCP client, SSH only; forward dropped |

@@ -54,7 +54,7 @@ check "wired network configured (routable)" $? "$(section network | grep -E 'eth
 fw=$(printf '%s\n' "$OUT" | sed -n 's/^== firewall: //p')
 [ "$fw" = "active 1" ]; check "firewall active, inbound policy drop (ReduxOS)" $? "${fw:-none}"
 rl=$(printf '%s\n' "$OUT" | sed -n 's/^== sshd: //p')
-[ "$rl" = no ]; check "sshd refuses root login (ReduxOS)" $? "permitrootlogin ${rl:-?}"
+[ "$rl" = "yes rootpw=L rootkeys=none" ]; check "root SSH allowed but no root credential shipped (locked, no key)" $? "permitrootlogin ${rl:-?}"
 fe=$(printf '%s\n' "$OUT" | sed -n 's/^== frontend: //p')
 printf '%s' "$fe" | grep -q 'player=yes' && printf '%s' "$fe" | grep -q 'ra=yes' && printf '%s' "$fe" | grep -qE 'cores=[1-9]'
 check "frontend present (player, retroarch, cores)" $? "${fe:-none}"
