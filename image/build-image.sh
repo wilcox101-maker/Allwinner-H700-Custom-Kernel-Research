@@ -80,7 +80,7 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='echo rg34xxsp > "$1/etc/hostname"; printf "127.0.1.1\trg34xxsp\n" >> "$1/etc/hosts"' \
   --customize-hook='printf "LABEL=rootfs\t/\text4\tdefaults,noatime\t0\t1\nLABEL=BOOT\t/boot\tvfat\tdefaults,noatime,umask=0077\t0\t2\n" > "$1/etc/fstab"' \
   --customize-hook='printf "[Match]\nName=en* eth*\n[Network]\nDHCP=yes\n" > "$1/etc/systemd/network/20-wired.network"; mkdir -p "$1/etc/iwd"; printf "[General]\nEnableNetworkConfiguration=true\n[Network]\nNameResolvingService=systemd\n" > "$1/etc/iwd/main.conf"' \
-  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom h700-firstboot.service h700-boot-ok.service' \
+  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service' \
   --customize-hook='chroot "$1" systemctl disable motd-news.timer e2scrub_all.timer e2scrub_reap.service 2>/dev/null || true' \
   --customize-hook='G=$(for g in sudo video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${G%,}" dale && echo dale:redux | chroot "$1" chpasswd && chroot "$1" passwd -e dale' \
   --customize-hook='rm -f "$1"/etc/ssh/ssh_host_* "$1/var/lib/dbus/machine-id"' \
@@ -106,6 +106,7 @@ fi
 dpkg-query --admindir="$OUT/rootfs/var/lib/dpkg" -W -f='${source:Package}\t${source:Version}\n' | LC_ALL=C sort -u > "$OUT/$NAME.sources.tsv"
 "$HERE/check-licences.sh" "$OUT/rootfs"
 "$HERE/check-display.sh" "$OUT/rootfs"
+"$HERE/check-hardening.sh" "$OUT/rootfs"
 ROOT_KB=$(du -sxk --exclude=./boot "$OUT/rootfs" | cut -f1)
 ROOT_MB=$(( ROOT_KB / 1024 * 120 / 100 + 64 ))           # content + 20 % + 64 MiB; grown on first boot
 log "   root content $((ROOT_KB / 1024)) MiB -> partition $ROOT_MB MiB; /boot $(du -sm "$OUT/rootfs/boot" | cut -f1) MiB of $BOOT_MB"

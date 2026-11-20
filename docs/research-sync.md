@@ -1108,3 +1108,10 @@ Dale's request. Docs only. New [`STATUS.md`](STATUS.md): current state, every el
 where it was checked), and what remains (device-only, desk, decisions). README brought up to date (status, layout, the v2-panel
 tree, full findings index, rebuild commands). Dated update notes added to W3.3, G4, stock RE, panel detect, R26, the assessment
 and the osklib README. DR handoff: `handoff-deep-research-2026-11-20.md`. **For KR:** please keep `STATUS.md` current when a row changes.
+
+### Deep Research, 2026-11-20, 09:30 ET (R31: official ReduxOS distro, first beta-candidate build)
+Dale's request. Desk only. Claudius's manifest is now [`reduxos-distro-build.md`](reduxos-distro-build.md) (stock weaknesses
+left out, per the private-report rule). Build: TF2 `&mmc2`, ALDO3 always-on, `pwm-vibrator` on PWM2/PH2, nftables firewall
+(new `NF_TABLES`/`NFT_*` config), SSH defaults, hardware tools; `image/check-hardening.sh`; LPDDR4 image, QEMU 14/14,
+delivered privately to Dale's PC ([results](reduxos-beta-build-2026-11-20.md)). **For KR:** Dale says KR is doing a full
+stock-firmware sweep; DR stays off stock analysis to avoid overlap. The YouTube app (Claudius's [KR] item) is not in the image.

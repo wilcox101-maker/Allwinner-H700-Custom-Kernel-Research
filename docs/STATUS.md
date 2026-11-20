@@ -29,11 +29,11 @@ Maintained by whoever changes the state; details live in the linked documents. `
 | Thermal and GPU rail | Stock 115 °C CPU critical trip; GPU on the fixed 0.94 V rail, 420–600 MHz | desk | [custom patches](kernel-custom-patches.md) |
 | Battery and charger | AXP717 (stock name `axp2202`): gauge and charger registers, DT properties, 128-byte gauge model; undocumented registers named from the BSP | desk | [G4](ghidra-g4-battery-gauge.md), [R30](dr-unknowns-and-rebuild-2026-11-20.md) §2 |
 | "Fast Shutdown" | Writes a reserved bit of PMIC register 0x18; no documented effect; nothing to port | desk (Ghidra + datasheet) | [R30](dr-unknowns-and-rebuild-2026-11-20.md) §1 |
-| Inputs | Key pins and codes, stick mux (PI0/PI1/PI2), lid via the PMIC driver (Hall sensor PE7), rumble PWM2/PH2 | desk; rumble motor confirmed on Dale's unit under stock (K13) | [W3.1](ghidra-w3-1-kernel-inventory.md), [G5/G6](ghidra-g5-g6-audio-rumble.md) |
+| Inputs | Key pins and codes, stick mux (PI0/PI1/PI2), lid switch on PE7 (`gpio-keys`, wake source), rumble PWM2/PH2 | desk; rumble motor confirmed on Dale's unit under stock (K13) | [W3.1](ghidra-w3-1-kernel-inventory.md), [G5/G6](ghidra-g5-g6-audio-rumble.md) |
 | PE11 (`adc-en-gpios`) | Read by no stock code; mainline need not drive it | desk | [R30](dr-unknowns-and-rebuild-2026-11-20.md) §1 |
 | Audio | Internal codec, speaker amp enable PI5 (100 ms delay in stock, patches 0002/0003), headphone detect PI3 | desk | [G5/G6](ghidra-g5-g6-audio-rumble.md) |
 | Wi-Fi / Bluetooth | RTL8821CS on SDIO; in-tree `rtw88`; firmware in noble; BT config file gap | desk | [R4](r4-noble-firmware-audit.md), [W3.2](ghidra-w3-2-stock-modules.md) |
-| Second card slot (TF2) | `mmc2`, 4-bit, card detect PE22 (polled), slot power PE4, ALDO1 I/O rail, 50 MHz | desk (stock DT) | [W3.3](ghidra-w3-3-dt-diff.md), [R30](dr-unknowns-and-rebuild-2026-11-20.md) §2 |
+| Second card slot (TF2) | `mmc2`, 4-bit, card detect PE22 (polled), slot power PE4, ALDO1 I/O rail, 50 MHz; node in our `-redux` tree since 2026-11-20 | desk (stock DT; schema-checked) | [W3.3](ghidra-w3-3-dt-diff.md), [R30](dr-unknowns-and-rebuild-2026-11-20.md) §2 |
 | HDMI (stock side) | `hdmi@06000000`, HDCP and CEC on, always-on supplies | desk (stock DT) | [R30](dr-unknowns-and-rebuild-2026-11-20.md) §2 |
 | Deep suspend | Upstream TF-A has no system suspend for this SoC; only the ROCKNIX patch + SRAM stub route is known | desk | [custom patches](kernel-custom-patches.md) §7 |
 | Stock userspace | Boot scripts, launcher, power daemon, 11 emulators' `deeplayer` check; udev rules are all Ubuntu's; `brightCtrl.bin` and `/dev/vsgame` are dead references | desk | [stock RE](stock-re-boot-and-userspace.md), [R30](dr-unknowns-and-rebuild-2026-11-20.md) §1 |
@@ -42,6 +42,7 @@ Maintained by whoever changes the state; details live in the linked documents. `
 | Userspace base | Minimal noble arm64 rootfs; RAM-tier defaults; Mesa/Panfrost packages; update and rollback design | desk + QEMU | [R5](r5-noble-userspace-prototype.md), [R13](r13-ram-tier-defaults.md), [R6](r6-mesa-panfrost-noble.md), [R8](r8-update-rollback.md) |
 | Licences | Per-component licences, source bundle, notices; image name is ReduxOS | desk | [R9](r9-licensing-redistribution.md) |
 | Frontend on mainline | 22 stock interfaces mapped; 21 need changes | desk | [R21](r21-redux-on-mainline-map.md) |
+| ReduxOS composition | Base, full hardware set (incl. TF2 node, rumble motor, ALDO3 kept on, video engine), security rules, app set | desk + QEMU | [manifest](reduxos-distro-build.md), [beta build](reduxos-beta-build-2026-11-20.md) |
 
 ## 3. What remains
 ### 3a. Only the device can answer (tasks in [`master-task-list.md`](master-task-list.md) §A)
@@ -61,10 +62,10 @@ Maintained by whoever changes the state; details live in the linked documents. `
 | Item | Note |
 |---|---|
 | HDMI on mainline | no H616 HDMI nodes in our base; upstream series watched in R11 |
-| TF2 device-tree node | wiring known; write and schema-check the node |
 | Deep suspend | port or rewrite the TF-A suspend path (licence question on the ROCKNIX patch) |
 | Older third panel (2025 firmware, PE6 high) | needs a 2025 stock image to trace |
 | osklib default chord | still Menu + X here; Redux uses Menu + Select, and Select is osklib's Shift key ([review](dr-review-2026-11-20.md) §2) |
+| Video decode in players | Cedrus (kernel) is built; noble's FFmpeg/mpv lack v4l2-request ([manifest](reduxos-distro-build.md) §2) |
 | Signed apt repository; release test matrix; recovery instructions tested | M5/M6 |
 | Frontend port to mainline | R21 map, Redux's work |
 | 512 MB and 1 GB tiers | deferred by the Project instructions |

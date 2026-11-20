@@ -93,6 +93,19 @@
 		settle-time-us = <100>;
 	};
 
+	/*
+	 * Second card slot (TF2) power: stock sdc2 "pwr-gpios" = PE4, driven high (W3.3 finding 1).
+	 * UNVERIFIED on mainline; same pin and level as stock.
+	 */
+	redux_reg_vcc_tf2: regulator-vcc-tf2 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-tf2";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pio 4 4 GPIO_ACTIVE_HIGH>;	/* PE4 */
+		enable-active-high;
+	};
+
 	redux_gpio_mux: mux-controller {
 		compatible = "gpio-mux";
 		mux-gpios = <&pio 8 1 GPIO_ACTIVE_LOW>,	/* PI1 = stock A0 */
@@ -111,6 +124,36 @@
 	voltage-max-design-microvolt = <4100000>;
 	charge-full-design-microamp-hours = <3000000>;
 	factory-internal-resistance-micro-ohms = <170000>;
+};
+
+/*
+ * Second card slot (TF2), as stock wires it (W3.3 finding 1, R30): 4-bit SD on the PC pins, card
+ * detect polled (stock sets broken-cd beside its PE22 line), slot power PE4, I/O supply ALDO1.
+ * ALDO1 has no voltage constraints upstream, so the MMC core can only switch it on and off, as
+ * stock does (sunxi-dis-signal-vol-sw): its voltage is never changed. 50 MHz, no 1.8 V modes.
+ * UNVERIFIED: not run on hardware.
+ */
+&mmc2 {
+	vmmc-supply = <&redux_reg_vcc_tf2>;
+	vqmmc-supply = <&reg_aldo1>;
+	bus-width = <4>;
+	broken-cd;
+	disable-wp;
+	cap-sd-highspeed;
+	no-1-8-v;
+	no-sdio;
+	no-mmc;
+	max-frequency = <50000000>;
+	status = "okay";
+};
+
+/*
+ * ALDO3 is always-on in stock with no named consumer (W3.3 finding 3, R30). Upstream leaves it
+ * unused, so mainline would switch it off at late init. Keep it on, at the voltage the boot
+ * chain left, until a device check shows what it feeds.
+ */
+&reg_aldo3 {
+	regulator-always-on;
 };
 
 &codec {

@@ -31,6 +31,17 @@
 		default-brightness-level = <50>;	/* stock lcd_backlight */
 	};
 
+	/*
+	 * Rumble motor: PWM2 on PH2, 2 kHz, as stock drives it (G6); the unit has a motor (K13,
+	 * checked on Dale's unit under stock). Lives here because the H616 PWM driver comes with
+	 * the display layer. Full duty = stock level 100. UNVERIFIED on mainline.
+	 */
+	vibrator {
+		compatible = "pwm-vibrator";
+		pwms = <&pwm 2 500000 0>;
+		pwm-names = "enable";
+	};
+
 	reg_lcd: regulator-lcd {
 		compatible = "regulator-fixed";
 		regulator-name = "vdd-lcd";
@@ -74,7 +85,7 @@
 };
 
 &pwm {
-	pinctrl-0 = <&pwm0_pin>;
+	pinctrl-0 = <&pwm0_pin>, <&pwm2_pin>;
 	pinctrl-names = "default";
 	status = "okay";
 };

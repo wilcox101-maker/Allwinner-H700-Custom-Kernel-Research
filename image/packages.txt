@@ -42,3 +42,12 @@ libegl1
 libgles2
 libgbm1
 libgl1-mesa-dri
+# ReduxOS hardware set (2026-11-20, Dale: "leave out nothing that benefits this device's hardware")
+alsa-utils
+bluez
+rfkill
+iw
+evtest
+v4l-utils
+# ReduxOS security (manifest §3): host firewall, deny inbound
+nftables

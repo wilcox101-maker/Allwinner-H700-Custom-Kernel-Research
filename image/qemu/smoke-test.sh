@@ -51,6 +51,10 @@ svc=$(section services | sed -n 2p)
 check "networkd, iwd, earlyoom, resolved, zram, ssh.socket active" $? "${svc:-none}"
 section network | grep -qE '^ *[0-9]+ (eth0|en[a-z0-9]+) +ether +routable +configured'
 check "wired network configured (routable)" $? "$(section network | grep -E 'eth0|en[a-z0-9]' | head -1 | tr -s ' ')"
+fw=$(printf '%s\n' "$OUT" | sed -n 's/^== firewall: //p')
+[ "$fw" = "active 1" ]; check "firewall active, inbound policy drop (ReduxOS)" $? "${fw:-none}"
+rl=$(printf '%s\n' "$OUT" | sed -n 's/^== sshd: //p')
+[ "$rl" = no ]; check "sshd refuses root login (ReduxOS)" $? "permitrootlogin ${rl:-?}"
 kver=$(printf '%s\n' "$OUT" | sed -n 's/^== kernel: //p')
 if [ "$KMODE" = deb ]; then [[ "$kver" == *-rg34xxsp ]]; else [ -n "$kver" ]; fi
 check "kernel is ours ($KMODE)" $? "${kver:-none}"

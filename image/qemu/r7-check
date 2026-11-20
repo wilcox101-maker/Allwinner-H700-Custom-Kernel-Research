@@ -11,6 +11,9 @@ echo "== machine-id: $(cat /etc/machine-id)"
 echo "== apt: $(apt --version 2>&1 | head -1)"
 echo "== services"; systemctl is-active systemd-networkd iwd earlyoom systemd-resolved systemd-zram-setup@zram0 ssh.socket | paste -sd' '
 echo "== network"; networkctl --no-pager list; resolvectl query ports.ubuntu.com 2>&1 | head -2
+echo "== firewall: $(systemctl is-active nftables) $(nft list chain inet reduxos input 2>/dev/null | grep -c 'policy drop')"
+install -d -m 0755 /run/sshd	# sshd -T needs it; ssh.socket starts sshd per connection, so it may not exist yet
+echo "== sshd: $(sshd -T 2>&1 | grep -E '^permitrootlogin |rror' | head -1 | sed 's/^permitrootlogin //')"
 echo "== kernel: $(uname -r)"; cat /proc/cmdline
 echo "== extlinux"; grep -E '^\s*(linux|fdtdir|fdt|append)' /boot/extlinux/extlinux.conf | head -4
 echo "== mem"; free -m | head -2
