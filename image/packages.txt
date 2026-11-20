@@ -42,3 +42,51 @@ libegl1
 libgles2
 libgbm1
 libgl1-mesa-dri
+# ReduxOS hardware set (2026-11-20, Dale: "leave out nothing that benefits this device's hardware")
+alsa-utils
+bluez
+rfkill
+iw
+evtest
+v4l-utils
+# ReduxOS security (manifest §3): host firewall, deny inbound
+nftables
+
+# Audio routing: ALSA UCM + plugins (softvol/dmix); panel backlight control
+alsa-ucm-conf
+libasound2-plugins
+brightnessctl
+
+# ReduxOS frontend (R32): RetroArch on KMS/GBM + GL with noble libretro cores. The device boots
+# straight into RetroArch as the unprivileged "player" user on tty1. See docs/reduxos-frontend.md.
+retroarch
+retroarch-assets
+libretro-core-info
+# Cores, one per system, all DFSG-main in noble (no non-free Genesis/SNES cores; see frontend doc)
+libretro-mgba
+libretro-gambatte
+libretro-nestopia
+libretro-bsnes-mercury-performance
+libretro-beetle-pce-fast
+libretro-beetle-wswan
+libretro-beetle-vb
+libretro-beetle-psx
+libretro-desmume
+# Media: mpv (KMS/DRM out) and triggerhappy (volume keys when RetroArch is not in front)
+mpv
+triggerhappy
+
+# ReduxOS console/shell (R32, "a usable shell appropriate for this device"): a legible console font
+# for the 720x480 panel (setfont from kbd + Terminus fonts from console-setup), plus tmux.
+kbd
+console-setup
+tmux
+
+# ReduxOS fly-out OSK (R32) for NON-RetroArch "keyboard apps" (shell, future browser/YouTube app).
+# RetroArch keeps its own built-in OSK and is untouched. Everything else can run under a tiny
+# wlroots kiosk compositor (cage) with wvkbd, a fly-out on-screen keyboard that slides up from the
+# bottom edge. foot is a lightweight Wayland terminal to type into. See docs/reduxos-osk.md.
+cage
+wvkbd
+foot
+mc

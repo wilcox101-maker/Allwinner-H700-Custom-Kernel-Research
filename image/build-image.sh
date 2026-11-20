@@ -80,10 +80,14 @@ mmdebstrap --variant=minbase --arch=arm64 --components=main,universe \
   --customize-hook='echo rg34xxsp > "$1/etc/hostname"; printf "127.0.1.1\trg34xxsp\n" >> "$1/etc/hosts"' \
   --customize-hook='printf "LABEL=rootfs\t/\text4\tdefaults,noatime\t0\t1\nLABEL=BOOT\t/boot\tvfat\tdefaults,noatime,umask=0077\t0\t2\n" > "$1/etc/fstab"' \
   --customize-hook='printf "[Match]\nName=en* eth*\n[Network]\nDHCP=yes\n" > "$1/etc/systemd/network/20-wired.network"; mkdir -p "$1/etc/iwd"; printf "[General]\nEnableNetworkConfiguration=true\n[Network]\nNameResolvingService=systemd\n" > "$1/etc/iwd/main.conf"' \
-  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom h700-firstboot.service h700-boot-ok.service' \
+  --customize-hook='chroot "$1" systemctl enable systemd-networkd iwd earlyoom nftables h700-firstboot.service h700-boot-ok.service triggerhappy.service reduxos-audio-init.service reduxos-roms-setup.service' \
   --customize-hook='chroot "$1" systemctl disable motd-news.timer e2scrub_all.timer e2scrub_reap.service 2>/dev/null || true' \
   --customize-hook='G=$(for g in sudo video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${G%,}" dale && echo dale:redux | chroot "$1" chpasswd && chroot "$1" passwd -e dale' \
+  --customize-hook='PG=$(for g in video render input audio; do chroot "$1" getent group $g >/dev/null && printf "%s," $g; done); chroot "$1" useradd -m -s /bin/bash -G "${PG%,}" player && chroot "$1" passwd -l player && cp "$1/etc/skel-player/.bash_profile" "$1/home/player/.bash_profile" && chroot "$1" chown player:player /home/player/.bash_profile && rm -rf "$1/etc/skel-player"' \
   --customize-hook='rm -f "$1"/etc/ssh/ssh_host_* "$1/var/lib/dbus/machine-id"' \
+  --customize-hook='chroot "$1" passwd -l root >/dev/null && rm -f "$1/root/.ssh/authorized_keys"' \
+  --customize-hook='[ -z "'"${PCSX_CORE:-}"'" ] || { install -D -m 0644 "'"${PCSX_CORE:-/dev/null}"'" "$1/usr/lib/aarch64-linux-gnu/libretro/pcsx_rearmed_libretro.so" && echo "injected pcsx_rearmed core"; }' \
+  --customize-hook='[ -z "'"${OSK_POINTER:-}"'" ] || { install -D -m 0755 "'"${OSK_POINTER:-/dev/null}"'" "$1/usr/local/bin/redux-osk-pointer" && echo "injected redux-osk-pointer"; }' \
   --customize-hook='chroot "$1" dpkg-query -W -f="\${Package}\t\${Version}\t\${Installed-Size}\n" > "$1/root/manifest.tsv"' \
   --customize-hook='mkdir -p "'"$OUT/tmp/boot"'" && cp -a "$1/boot/." "'"$OUT/tmp/boot"'/" && umount "$1/boot"' \
   "$SUITE" "$OUT/rootfs" \
@@ -106,6 +110,7 @@ fi
 dpkg-query --admindir="$OUT/rootfs/var/lib/dpkg" -W -f='${source:Package}\t${source:Version}\n' | LC_ALL=C sort -u > "$OUT/$NAME.sources.tsv"
 "$HERE/check-licences.sh" "$OUT/rootfs"
 "$HERE/check-display.sh" "$OUT/rootfs"
+"$HERE/check-hardening.sh" "$OUT/rootfs"
 ROOT_KB=$(du -sxk --exclude=./boot "$OUT/rootfs" | cut -f1)
 ROOT_MB=$(( ROOT_KB / 1024 * 120 / 100 + 64 ))           # content + 20 % + 64 MiB; grown on first boot
 log "   root content $((ROOT_KB / 1024)) MiB -> partition $ROOT_MB MiB; /boot $(du -sm "$OUT/rootfs/boot" | cut -f1) MiB of $BOOT_MB"

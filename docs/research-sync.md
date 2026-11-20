@@ -1108,3 +1108,48 @@ Dale's request. Docs only. New [`STATUS.md`](STATUS.md): current state, every el
 where it was checked), and what remains (device-only, desk, decisions). README brought up to date (status, layout, the v2-panel
 tree, full findings index, rebuild commands). Dated update notes added to W3.3, G4, stock RE, panel detect, R26, the assessment
 and the osklib README. DR handoff: `handoff-deep-research-2026-11-20.md`. **For KR:** please keep `STATUS.md` current when a row changes.
+
+### Deep Research, 2026-11-20, 09:30 ET (R31: official ReduxOS distro, first beta-candidate build)
+Dale's request. Desk only. Claudius's manifest is now [`reduxos-distro-build.md`](reduxos-distro-build.md) (stock weaknesses
+left out, per the private-report rule). Build: TF2 `&mmc2`, ALDO3 always-on, `pwm-vibrator` on PWM2/PH2, nftables firewall
+(new `NF_TABLES`/`NFT_*` config), SSH defaults, hardware tools; `image/check-hardening.sh`; LPDDR4 image, QEMU 14/14,
+delivered privately to Dale's PC ([results](reduxos-beta-build-2026-11-20.md)). **For KR:** Dale says KR is doing a full
+stock-firmware sweep; DR stays off stock analysis to avoid overlap. The YouTube app (Claudius's [KR] item) is not in the image.
+
+### Deep Research, 2026-11-20, 10:35 ET (R32: full-featured beta, frontend on KMS)
+Dale's request ("continue to compile to full featured beta private release"). Desk/QEMU only. Added the game frontend on top
+of R31: boots to RetroArch (KMS/GLES) as an unprivileged `player` user on tty1 (locked pw, no sudo), 9 noble libretro cores,
+gamepad autoconfig (button indices derived from the kernel keycodes), codec audio (dmix + softvol) + volume keys via
+triggerhappy, mpv. Built **both LPDDR4 and LPDDR3**; QEMU smoke **16/16** each; `check-hardening.sh` + two smoke checks added.
+Delivered privately to `ReduxOS-builds/2026-11-20/frontend-beta/`, checksums verified on-device. Details:
+[`reduxos-frontend.md`](reduxos-frontend.md), [results §R32](reduxos-beta-build-2026-11-20.md). Gaps: sticks not merged to P1,
+PS1 only via slow beetle-psx (pcsx_rearmed build blocked by a tool-permission check), image carries a large font pack from
+retroarch-assets (slim in R33). **Noted:** KR's stock-firmware sweep is complete (private); it reinforces, and does not change,
+the ReduxOS security defaults. DR did not touch stock analysis.
+
+### Deep Research, 2026-11-20, 11:45 ET (R32 addendum: PS1 fast core, console shell, fly-out OSK)
+Dale's follow-ups. Desk/QEMU only. (1) **pcsx_rearmed** PS1 core built from GPL-2.0 source (pinned `7b0e8f8`, arm64 dynarec +
+NEON) via `tools/build-pcsx-core.sh`, injected at image build (not committed); 10 cores now. The earlier auto-mode block was
+cleared by Dale's explicit request. (2) **Console shell**: legible Terminus font, `kbd`/`console-setup`, profile.d, `tmux`.
+(3) **Fly-out OSK** for non-RetroArch keyboard apps (terminal/file-manager): `cage`+`wvkbd`+`foot`+`mc`, launchers
+`redux-kbapp`/`redux-shell`/`redux-files`, and a cross-built gamepad→pointer bridge `redux-osk-pointer` (source committed,
+binary injected). RetroArch's own OSK untouched. Both images rebuilt, QEMU 16/16, re-delivered privately.
+[`reduxos-osk.md`](reduxos-osk.md), [results §R32 addendum](reduxos-beta-build-2026-11-20.md). New follow-ups R33/R34/R35.
+**Note for KR (osklib, R28):** this OSK is the mainline **KMS/Wayland** path (cage+wvkbd), separate from your stock disp2
+overlay work — no overlap, but flagging it since OSK is your track.
+
+### Deep Research, 2026-11-20, 12:05 ET (R36 framework: games/BIOS structure, no proprietary content)
+Dale: match the Stock OS Mod's emulators, but "leave proprietary property out; build folder structure and
+framework for dropping in BIOS with ease." Done (desk): a 53-system folder tree mirroring the stock card
+layout, a BIOS **reference manifest** (filenames + md5 + size only, generated from Dale's own known-good set
+— no BIOS content), `redux-setup-roms` (build/repair the tree, runs at first boot) and `redux-bios-check`
+(validate drop-ins, per-system missing-BIOS report). RetroArch pointed at `/roms` + `/roms/bios`. Delivered a
+self-contained games kit to Dale's PC. The emulator **cores** for the ~25 unpackaged systems and a **PortMaster**
+port remain (source-build marathon) — proprietary content (PICO-8, BIOS) excluded by request.
+[`reduxos-games-and-bios.md`](reduxos-games-and-bios.md).
+
+### Deep Research, 2026-11-20, 12:07 ET — SWAP
+Handing off. PR #73 open (R31→R36, head `e712212`), CI green bar smoke-in-progress, mergeable. Today: R32
+beta + PS1 fast core + console shell + fly-out OSK, and the R36 games/BIOS framework (no proprietary
+content). All desk only. Pending: R36 cores + PortMaster (marathon), R35 OSK-on-hardware, R34 sticks→P1,
+R33 slim image. Full detail: [`handoff-deep-research-2026-11-20b.md`](handoff-deep-research-2026-11-20b.md).

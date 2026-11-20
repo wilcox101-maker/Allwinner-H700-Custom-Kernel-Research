@@ -51,6 +51,15 @@ svc=$(section services | sed -n 2p)
 check "networkd, iwd, earlyoom, resolved, zram, ssh.socket active" $? "${svc:-none}"
 section network | grep -qE '^ *[0-9]+ (eth0|en[a-z0-9]+) +ether +routable +configured'
 check "wired network configured (routable)" $? "$(section network | grep -E 'eth0|en[a-z0-9]' | head -1 | tr -s ' ')"
+fw=$(printf '%s\n' "$OUT" | sed -n 's/^== firewall: //p')
+[ "$fw" = "active 1" ]; check "firewall active, inbound policy drop (ReduxOS)" $? "${fw:-none}"
+rl=$(printf '%s\n' "$OUT" | sed -n 's/^== sshd: //p')
+[ "$rl" = "yes rootpw=L rootkeys=none" ]; check "root SSH allowed but no root credential shipped (locked, no key)" $? "permitrootlogin ${rl:-?}"
+fe=$(printf '%s\n' "$OUT" | sed -n 's/^== frontend: //p')
+printf '%s' "$fe" | grep -q 'player=yes' && printf '%s' "$fe" | grep -q 'ra=yes' && printf '%s' "$fe" | grep -qE 'cores=[1-9]'
+check "frontend present (player, retroarch, cores)" $? "${fe:-none}"
+printf '%s' "$fe" | grep -q 'autologin player'
+check "tty1 autologins the player user (ReduxOS)" $? "$(printf '%s' "$fe" | grep -o 'autologin player' || echo missing)"
 kver=$(printf '%s\n' "$OUT" | sed -n 's/^== kernel: //p')
 if [ "$KMODE" = deb ]; then [[ "$kver" == *-rg34xxsp ]]; else [ -n "$kver" ]; fi
 check "kernel is ours ($KMODE)" $? "${kver:-none}"

@@ -93,6 +93,11 @@ NF_DEFRAG_IPV6
 NF_LOG_*
 IP_NF_IPTABLES
 IP6_NF_IPTABLES
+NF_TABLES*              # nftables host firewall (ReduxOS manifest §3)
+NFT_*
+NF_NAT                  # NAT/masquerade for a later Wi-Fi hotspot
+NF_REJECT_IPV4
+NF_REJECT_IPV6
 
 ## USB
 USB_ACM                 # USB serial devices (CDC ACM)
