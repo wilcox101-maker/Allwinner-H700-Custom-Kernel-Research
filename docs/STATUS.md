@@ -70,7 +70,7 @@ Maintained by whoever changes the state; details live in the linked documents. `
 | 512 MB and 1 GB tiers | deferred by the Project instructions |
 
 ### 3c. Decisions and paperwork
-- **Q7** image naming detail, **Q9** Unicode notice for u-boot: open.
+- All of Q1–Q11 are decided (Q7: the name is ReduxOS; Q9: ship the Unicode licence text in the notices). No Q-item is open.
 - **Q8**: both panel tables are now in GPL kernel patches (the newer one in a new driver, merged with #69).
 - **u-boot mapping for PE6 high**: unchanged (no display) until K9/K29; a new decision after that.
 - u-boot binman SPDX patch: drafted, not sent. Hand-offs H1–H3 and H5: pending.
