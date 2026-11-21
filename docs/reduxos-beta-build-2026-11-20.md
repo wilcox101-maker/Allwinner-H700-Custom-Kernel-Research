@@ -125,3 +125,13 @@ Details: [`reduxos-cores-portmaster.md`](reduxos-cores-portmaster.md).
 - **Not run on a device**: speed (N64, Dreamcast, PSP, arcade), GLES rendering on the Mali-G31, PortMaster GUI on KMS
   and port controls are all untested.
 
+## R33: lean RetroArch (DR, 2026-11-20 evening; desk/QEMU only)
+Details: [`reduxos-r33-slim.md`](reduxos-r33-slim.md).
+- `reduxos-retroarch` 1.22.2 (KMS/GLES only) replaces noble's 1.18: rootfs packages 789 → **733 MB** (485 → 469 pkgs,
+  Qt5 gone); image zstd 282 → **273 MiB** (1.6 GiB raw).
+- Build checks (licence, display, hardening incl. no desktop stacks, boot layout): **PASS** for LPDDR4 and LPDDR3.
+- **QEMU smoke 20/20** (LPDDR4, 512 MB, `-cpu cortex-a53`), including `retroarch --features`
+  (KMS/EGL/GLES/udev/ALSA) and all 33 cores loading. LPDDR4 `.img` SHA-256 begins `73d6ca00c09733db`.
+- Delivered privately to `ReduxOS-builds\2026-11-20\r33-slim\`; checksums verified on the PC.
+- **Not run on a device**: RetroArch 1.22 rendering on the Mali-G31 (GLES 3.1 context) is untested.
+
