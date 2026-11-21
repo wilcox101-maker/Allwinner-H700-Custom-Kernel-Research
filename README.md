@@ -5,9 +5,9 @@ packages for Allwinner H700 handhelds, starting with the **Anbernic RG34XX-SP**:
 device trees, the boot chain, and a minimal noble userspace.
 
 **Status (2026-11-20): everything builds from source and boots in QEMU; nothing of ours has run on an H700
-device.** u-boot, the kernel packages and the card image are rebuilt by the scripts here and by CI. The test
-device is blocked until the Redux v0.5 milestone, except tasks K3/K4 on Dale's 2 GB unit (decision Q11);
-device-dependent tasks are tracked as `blocked: device` in [`docs/master-task-list.md`](docs/master-task-list.md).
+device.** u-boot, the kernel packages and the card image are rebuilt by the scripts here and by CI. The Redux v0.5
+device gate is **lifted** (Dale, 2026-11-21, decision Q12): the goal is the new firmware, ReduxOS, tested on the
+device and led by the Redux CFW Owner; device tasks are tracked in [`docs/master-task-list.md`](docs/master-task-list.md) §A.
 
 **Start with [`docs/STATUS.md`](docs/STATUS.md):** what is built, what was unknown and is now defined, and what remains.
 
