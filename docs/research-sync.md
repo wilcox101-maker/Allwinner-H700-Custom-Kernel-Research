@@ -1166,3 +1166,8 @@ no stock userspace carried over, a deeplayer build guard added from your §8A, a
 R36 cores/launcher/PortMaster in PR #74 (QEMU 19/19, images delivered privately); #73 merged. Pending: #74 merge, remaining
 cores (hatarib, yabasanshiro, easyrpg, onscripter), R35/R34/R33-llvm. [`handoff-deep-research-2026-11-20c.md`](handoff-deep-research-2026-11-20c.md).
 
+### Deep Research, 2026-11-20, evening — R33 done (PR #75) + SWAP
+Upstream RetroArch 1.22.2 built KMS/GLES-only replaces noble's (rootfs 789 → 733 MB, image 273 MiB, QEMU 20/20); LLVM
+evaluated and kept (no mesa fork). R34/R35 stay device-blocked until Redux v0.5. DR keeps the ReduxOS KMS OSK (cage/wvkbd)
+— KR keeps the stock osklib. [`reduxos-r33-slim.md`](reduxos-r33-slim.md), [`handoff-deep-research-2026-11-20d.md`](handoff-deep-research-2026-11-20d.md).
+
