@@ -14,8 +14,8 @@ Maintained by whoever changes the state; details live in the linked documents. `
   CI repeats the kernel and image build on every change.
 - **Nothing of ours has run on an RG34XX-SP.** Every result is "desk only" unless a document says otherwise. The only
   hardware facts are a few readings Redux took on Dale's unit under **stock** (rows marked **[V]** in the task list: the
-  unit has a rumble motor, stock's nine CPU frequency steps, a charge-current reading). The device is blocked until
-  Redux v0.5, except K3/K4 on Dale's 2 GB LPDDR4 unit (decision Q11).
+  unit has a rumble motor, stock's nine CPU frequency steps, a charge-current reading). The Redux v0.5 device gate
+  is lifted (Dale, 2026-11-21, Q12): the goal is the new firmware, ReduxOS, tested on the device, led by the Redux CFW Owner.
 - Milestones ([assessment](ubuntu-2404-rg34xxsp-assessment.md)): the desk parts of M0–M5 are done; the hardware
   parts of M0–M4 have not started; M6 (release) is not started.
 - Separate track, stock kernel: the global on-screen keyboard (R26–R28, DR-1 to DR-3). Redux has merged its daemon; the

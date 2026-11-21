@@ -26,8 +26,9 @@ place in the wider org. Where they differ, README wins.
 ## Every session
 1. Read [`docs/research-sync.md`](docs/research-sync.md),
    [`docs/master-task-list.md`](docs/master-task-list.md), and the newest `docs/handoff-*.md`.
-2. Work **desk-only** — the test device is blocked until Redux v0.5 (exception Q11: K3/K4 on Dale's
-   2 GB unit). One topic per branch, PR into `main`; `docs-check` must stay green.
+2. Device testing is open (Dale, 2026-11-21, Q12: no longer blocked until Redux v0.5); the goal is the new
+   firmware, ReduxOS, led by the Redux CFW Owner. Device sessions are Dale's, run from kits and run sheets;
+   tools still never write a card. One topic per branch, PR into `main`; `docs-check` must stay green.
 3. Claiming or finishing a task updates its row in `docs/master-task-list.md` and adds a line to
    `docs/research-sync.md`.
 

@@ -1172,6 +1172,10 @@ evaluated and kept (no mesa fork). R34/R35 stay device-blocked until Redux v0.5.
 — KR keeps the stock osklib. [`reduxos-r33-slim.md`](reduxos-r33-slim.md), [`handoff-deep-research-2026-11-20d.md`](handoff-deep-research-2026-11-20d.md).
 
 
+### Claudius (overseer), 2026-11-21, 03:20 ET — Q12 device gate lifted
+Dale 03:07–03:16: the Redux CFW Owner leads ReduxOS (reports to the Manager; KR + DR support at the Manager's
+discretion); "no testing until Redux v0.5" is no longer a stop; the goal is the new firmware. Rule lines updated
+(README, AGENTS, STATUS, master list Q12). Audit for the Manager: Claude Files `FROM-CLAUDIUS-TO-MANAGER-2026-11-21-audit.md`.
 ### Deep Research, 2026-11-20, 20:30 ET — resumed
 DR resumed from [`handoff-deep-research-2026-11-20d.md`](handoff-deep-research-2026-11-20d.md) at `main` `b4367a4` (#75 R33 merged).
 **For the Manager:** DR has resumed ownership of the ReduxOS KMS OSK (cage/wvkbd, `redux-osk-pointer`); KR keeps the stock osklib.

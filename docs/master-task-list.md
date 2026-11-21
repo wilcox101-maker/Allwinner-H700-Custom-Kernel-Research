@@ -1,6 +1,6 @@
 # Master task list: H700 Ubuntu 24.04 project
 
-Created 2026-11-13 21:25 ET by the Deep Research chat, at Dale's request. **The test device is unavailable for kernel research until Redux reaches v0.5**, so every task that needs the device is **pending (blocked: device)**, except K3 + K4 on Dale's 2 GB unit (Q11, 2026-11-17). Desk tasks continue.
+Created 2026-11-13 21:25 ET by the Deep Research chat, at Dale's request. Device gate (history): the device was unavailable until Redux v0.5, except K3 + K4 (Q11, 2026-11-17). **Lifted 2026-11-21 (Q12, Dale): device tasks may now run, for the new firmware ReduxOS, led by the Redux CFW Owner.** Rows still marked `blocked: device` are no longer gated by v0.5; the Owner/Manager re-status them as sessions are planned.
 
 How to use it:
 - One row per task.
@@ -8,8 +8,8 @@ How to use it:
 - Owners: **DR** = Deep Research chat, **KR** = Kernel Research chat, **Dale**.
 - Either chat may change a row's status or add rows. When claiming or finishing a task, add a line to `docs/research-sync.md` too. Done tasks move to the bottom.
 
-## A. Device tasks: pending until v0.5 (blocked: device)
-**Exception (Q11, Dale, 2026-11-17 08:29):** K3 and K4 may run now on Dale's own 2 GB LPDDR4 unit, ahead of v0.5. Every other K row stays blocked until v0.5.
+## A. Device tasks
+**Gate lifted (Q12, Dale, 2026-11-21 03:16):** "No longer a stop: 'no testing until Redux v0.5'. Owner is lead and goal is new firmware." Every K row may run on the device (history: Q11 let K3/K4 run early, 2026-11-17).
 
 IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kernel-research-device-pending.md` (Kernel Research package g). **K10–K12** are Deep Research additions, proposed to Redux in hand-off package DR-a. **K13–K15** are Kernel Research additions (KR package j carries K1–K15 to Redux). **K16** is a Deep Research addition (from R4), not yet in any Redux package. **K17** is a Deep Research addition (from R8). **K18–K22** are Kernel Research additions (from R19, R20, R11, Q2). K23 is a Kernel Research addition (from R21). K24–K28 are Kernel Research additions (from R26), not yet in a Redux package. KR package **l** (2026-11-14, `FROM-REDUX-KERNEL-2026-11-14-l.md`) carries K1–K23 to Redux in a new note, `notes/2026-11-14-claude-message-kernel-research-device-pending.md`, replacing the K1–K16 note of package k. **Nothing writes to the stock card or internal storage**; writes go to a spare card only.
 
@@ -82,6 +82,7 @@ IDs **K1–K9** match the Redux task note `notes/2026-11-13-claude-message-kerne
 | Q9 | Unicode-DFS-2016 notice for u-boot's `include/capitalization.h` (R9 finding, PR #37) | (A) ship the licence text in the bootloader notices, no binary change; (B) turn `CONFIG_EFI_UNICODE_CAPITALIZATION` off (changes the R1 binary, new FEL check) | **decided 2026-11-14 21:07 (Dale): (A).** Applied: `tools/licences/Unicode-DFS-2016.txt` (SPDX text) in the notices; note `decisions/2026-11-14-dale-unicode-dfs-notice.md`. binman's `Intel` tag stays flagged; upstream report drafted, not sent (`upstream-drafts/u-boot-binman-spdx.md`) |
 | Q10 | How a unit's DRAM type is established before a card is written | **Decided (Dale, 2026-11-17 08:07): change the rule.** Dale's statement of the hardware version is enough: **v1.0 hardware = 2 GB LPDDR4**, and Dale's unit is v1.0 (2 GB) → LPDDR4 image. The K3 line `select dram para<N>` becomes an optional cross-check, no longer a gate. Revised units (LPDDR3) still need their type stated or read before a card | decided |
 | Q11 | Device gate and expected DRAM size for Dale's 2 GB LPDDR4 unit ("uncap 2GB DDR4 unit testing") | K3 + K4 on that unit before Redux v0.5; u-boot `DRAM:  2 GiB`; CI guard against a size cap. Safety stays: FEL in RAM only, no card writes in K4, never the stock card or internal storage, DRAM type per Q10 (v1.0 = LPDDR4 as Dale states; K3's `select dram para` line an optional cross-check) | **decided 2026-11-17 08:29 (Dale, via Manager):** K3 and K4 may run now on that unit, ahead of Redux v0.5; expected u-boot DRAM 2 GiB; CI guards against a size cap (`scripts/build-uboot.sh --config-only` in docs-check; R1 §4) |
+| Q12 | Device gate ("blocked until Redux v0.5") | **Decided (Dale, 2026-11-21 03:16): lifted.** "No longer a stop: 'no testing until Redux v0.5'. Owner is lead and goal is new firmware." Device work now aims at the ReduxOS release, led by the Redux CFW Owner (reports to the Redux Manager; KR + DR support at the Manager's discretion). Card/device rules unchanged. Record: Claudius-Maximus `notes/decision-2026-11-21-redux-owner-leads-reduxos.md` | decided |
 
 ## D. Hand-offs to the Redux Manager chat (files via `redux-work\Claude Files`)
 | ID | Item | Status |
