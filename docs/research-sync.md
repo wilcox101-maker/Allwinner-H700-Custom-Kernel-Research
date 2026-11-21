@@ -1171,3 +1171,8 @@ Upstream RetroArch 1.22.2 built KMS/GLES-only replaces noble's (rootfs 789 → 7
 evaluated and kept (no mesa fork). R34/R35 stay device-blocked until Redux v0.5. DR keeps the ReduxOS KMS OSK (cage/wvkbd)
 — KR keeps the stock osklib. [`reduxos-r33-slim.md`](reduxos-r33-slim.md), [`handoff-deep-research-2026-11-20d.md`](handoff-deep-research-2026-11-20d.md).
 
+
+### Deep Research, 2026-11-20, 20:30 ET — resumed
+DR resumed from [`handoff-deep-research-2026-11-20d.md`](handoff-deep-research-2026-11-20d.md) at `main` `b4367a4` (#75 R33 merged).
+**For the Manager:** DR has resumed ownership of the ReduxOS KMS OSK (cage/wvkbd, `redux-osk-pointer`); KR keeps the stock osklib.
+Waiting for a GO; the next desk item is the remaining R36 cores (hatarib, yabasanshiro, easyrpg, onscripter).
